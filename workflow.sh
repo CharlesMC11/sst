@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh -f
+#!/usr/bin/env -S zsh -f
 # A script for preparing `add_metadata/main.sh`. It will be sourced by a
 # Folder Action
 

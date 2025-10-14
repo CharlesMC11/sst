@@ -1,4 +1,4 @@
-#!/usr/bin/env /zsh -f
+#!/usr/bin/env -S zsh -f
 # A script for renaming screenshots and adding certain metadata
 
 readonly SCRIPT_NAME=${0:t2:r}
