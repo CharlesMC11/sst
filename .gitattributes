@@ -1,5 +1,8 @@
 *      text=auto
 
-*.md   text diff=markdown
 *.png -text diff=lfs filter=lfs merge=lfs
 *.sh   text eol=lf
+*.md   text diff=markdown
+
+.git*  text
+
