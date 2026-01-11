@@ -95,7 +95,11 @@ exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}"
          ${=tag_files}                       --\
          ${==screenshot_files}               || exit 3
 
-tar -czf "${output_dir}/Screenshots_$(date +%y%m%d_%H%M%S).tar.gz"\
-    ${is_verbose:+'-v'} --options gzip:compression-level=1 ${==screenshot_files}
-
-rm ${==screenshot_files}
+if tar -czf "${output_dir}/Screenshots_$(date +%y%m%d_%H%M%S).tar.gz"\
+    ${is_verbose:+'-v'} --options gzip:compression-level=1 \
+    ${==screenshot_files}; then
+    rm ${==screenshot_files}
+else
+    echo "Failed to create archive in ${output_dir}" 1>&2
+    exit 4
+fi
