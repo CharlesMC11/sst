@@ -1,6 +1,11 @@
 #!/usr/bin/env -S zsh -f
 # A script for renaming screenshots and adding certain metadata
 
+setopt ERR_EXIT
+setopt NO_UNSET
+setopt PIPE_FAIL
+setopt EXTENDED_GLOB
+
 readonly SCRIPT_NAME=${0:t2:r}
 
 show_usage () {

@@ -2,6 +2,9 @@
 # A script for preparing `add_metadata/main.sh`. It will be sourced by a
 # Folder Action
 
+setopt ERR_EXIT
+setopt NO_UNSET
+
 readonly SCREENSHOTS_DIR=${HOME}/MyFiles/Pictures/Screenshots
 readonly PIPE=${SCREENSHOTS_DIR}/add_metadata
 
