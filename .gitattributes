@@ -1,8 +1,8 @@
-*      text=auto
+*                text=auto
 
-*.png -text diff=lfs filter=lfs merge=lfs
-*.sh   text eol=lf
-*.md   text diff=markdown
+*.plist.template text eol=lf
+*.png           -text diff=lfs filter=lfs merge=lfs
+*.md             text diff=markdown
+*.zsh            text eol=lf
 
-.git*  text
-
+.git*            text

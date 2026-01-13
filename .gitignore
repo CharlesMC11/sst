@@ -1,3 +1,6 @@
+*.plist
+*.zwc
+
 .vscode/
 
 .DS_Store
