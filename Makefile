@@ -10,7 +10,7 @@ PLIST_NAME          := $(USER).$(PLIST_NAME_BASE)
 
 INSTALL             := install -vl h
 
-.PHONY: all enable install compile load unload clean
+.PHONY: all install compile start stop uninstall clean
 
 all: compile install start
 
