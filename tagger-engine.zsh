@@ -4,11 +4,23 @@
 setopt ERR_EXIT
 setopt NO_UNSET
 setopt PIPE_FAIL
+
 setopt EXTENDED_GLOB
+setopt NULL_GLOB
+setopt NUMERIC_GLOB_SORT
 
 readonly SCRIPT_NAME=${0:t}
-readonly FILENAME_FILTER_RE='*<19-21>#<-99>[^[:digit:]]#<-12>[^[:digit:]]#<-31>[^[:digit:]]#<-23>[^[:digit:]]#<-59>[^[:digit:]]#<-59>*.*(.N)'
-readonly NEW_FILENAME_EXTRACTOR_RE='^.*?([1-2][^2-8])?(\d{2})\D?([0-1]\d)\D?([0-3]\d)\D*?([0-2]\d)\D?([0-5]\d)\D?([0-5]\d)(.*?)?\..+?$'
+
+readonly DATE_FILTER_RE='<19-21><-9><-9>[^[:digit:]]#<-1><-9>[^[:digit:]]#<-3><-9>'
+readonly TIME_FILTER_RE='<-2><-9>[^[:digit:]]#<-5><-9>[^[:digit:]]#<-5><-9>'
+readonly FILENAME_FILTER_RE="[^[:digit:]]#${~DATE_FILTER_RE}[^[:digit:]]#${~TIME_FILTER_RE}"
+readonly FILENAME_SORTING_RE='*(.Om)'
+
+readonly DATE_EXTRACTOR_RE='([1-2][^2-8])?(\d{2})\D?([0-1]\d)\D?([0-3]\d)'
+readonly TIME_EXTRACTOR_RE='([0-2]\d)\D?([0-5]\d)\D?([0-5]\d)'
+readonly DATETIME_EXTRACTOR_RE="^.*?${DATE_EXTRACTOR_RE}\D*?${TIME_EXTRACTOR_RE}(\D*?\d*?\D*?)\..+$"
+readonly FILENAME_REPLACEMENT_RE='$2$3$4_$5$6$7$8.%e'
+readonly DATETIME_REPLACEMENT_RE='$1$2-$3-$4T$5:$6:$7'
 
 show_usage () {
     echo "usage: ${SCRIPT_NAME}\n\
@@ -74,17 +86,17 @@ while (($#)); do
     esac
 done
 
-declare -Ua pending_screenshots
-readonly pending_screenshots=(${~FILENAME_FILTER_RE})
-if ((${#pending_screenshots} == 0)); then
-    echo "No screenshots to process: ${PWD}" 1>&2
-    exit 2
+typeset -Ua pending_screenshots
+readonly pending_screenshots=(${~FILENAME_FILTER_RE}.${~FILENAME_SORTING_RE} ${~FILENAME_FILTER_RE}*.${~FILENAME_SORTING_RE})
+if ! (( ${#pending_screenshots} )); then
+    echo "No screenshots to process: ${input_dir:t2}" 1>&2
+    exit 3
 fi
 
 # PERL string replacement patterns that will be used by ExifTool
-readonly filename_replace_pattern="Filename;s/${NEW_FILENAME_EXTRACTOR_RE}"
-readonly new_filename_pattern="\${${filename_replace_pattern}/\$2\$3\$4_\$5\$6\$7\$8.%e/}"
-readonly new_datetime_pattern="\${${filename_replace_pattern}/\$1\$2-\$3-\$4T\$5:\$6:\$7${timezone}/}"
+readonly replacement_pattern="Filename;s/${DATETIME_EXTRACTOR_RE}"
+readonly new_filename_pattern="\${${replacement_pattern}/${FILENAME_REPLACEMENT_RE}/}"
+readonly new_datetime_pattern="\${${replacement_pattern}/${DATETIME_REPLACEMENT_RE}${timezone}/}"
 
 exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}"\
          "-AllDates<${new_datetime_pattern}" "-OffsetTime*=${timezone}"\
