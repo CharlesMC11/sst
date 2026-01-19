@@ -98,7 +98,7 @@ exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}"
          ${=arg_files}                       --\
          ${==pending_screenshots}            || exit 4
 
-readonly archive_name="Screenshots_$(date +%y%m%d_%H%M%S).tar.gz"
+readonly archive_name="Screenshots_$(strftime %y%m%d_%H%M%S).tar.gz"
 if tar -czf "${output_dir}/${archive_name}" --options gzip:compression-level=1\
     ${==pending_screenshots}; then
 
