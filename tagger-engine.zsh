@@ -47,7 +47,7 @@ error_on_invalid_option () {
 # $2: An input or output directory
 error_if_not_dir () {
     if [[ ! -d $2 ]]; then
-        echo "$1 is not a directory: $2" 1>&2
+        echo "$1 is not a directory: '$2'" 1>&2
         show_usage
         exit 2
     fi
@@ -63,7 +63,7 @@ timezone=$(strftime %z)
 software=$(sw_vers --productVersion)
 hardware=$(system_profiler SPHardwareDataType | sed -En 's/^.*Model Name: //p')
 declare -Ua arg_files
-while (($#)); do
+while (( $# )); do
     case $1 in
         -h  | --help    ) show_usage; exit
         ;;
@@ -91,7 +91,7 @@ done
 typeset -Ua pending_screenshots
 readonly pending_screenshots=(${~FILENAME_FILTER_RE}.${~FILENAME_SORTING_RE} ${~FILENAME_FILTER_RE}*.${~FILENAME_SORTING_RE})
 if ! (( ${#pending_screenshots} )); then
-    echo "No screenshots to process: ${input_dir:t2}" 1>&2
+    echo "No screenshots to process in '${PWD}/'" 1>&2
     exit 3
 fi
 
@@ -115,9 +115,9 @@ if tar -czf "${output_dir}/${archive_name}" --options gzip:compression-level=1\
 
     rm ${==pending_screenshots}
     if (( verbose_mode )); then
-        echo "Created archive in '${output_dir}'"
+        echo "Created archive: '${output_dir:t}/${archive_name}'"
     fi
 else
-    echo "Failed to create archive in '${output_dir}'" 1>&2
+    echo "Failed to create archive: '${output_dir:t}/${archive_name}'" 1>&2
     exit 5
 fi
