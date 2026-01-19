@@ -1,9 +1,11 @@
+include .env
+
 SHELL               := zsh
 SCRIPT_NAME         := screenshot-tagger
-BIN_DIR             := $(HOME)/.local/bin/$(SCRIPT_NAME)
+export BIN_DIR      := $(HOME)/.local/bin/$(SCRIPT_NAME)
 
 ENGINE_NAME         := tagger-engine
-WATCHER_NAME        := screenshot-watcher
+export WATCHER_NAME := screenshot-watcher
 
 PLIST_NAME_BASE     := screenshot_tagger.plist
 PLIST_NAME_TEMPLATE := $(PLIST_NAME_BASE).template
@@ -27,6 +29,8 @@ install: compile
 
 	@$(INSTALL) -m 755 $(WATCHER_NAME).zsh     $(BIN_DIR)/$(WATCHER_NAME)
 	@$(INSTALL) -m 644 $(WATCHER_NAME).zsh.zwc $(BIN_DIR)/$(WATCHER_NAME).zwc
+
+	@$(INSTALL) -m 644 .env                    $(BIN_DIR)/
 
 compile: $(ENGINE_NAME).zwc $(WATCHER_NAME).zwc
 

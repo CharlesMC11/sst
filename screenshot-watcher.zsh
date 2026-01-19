@@ -4,7 +4,6 @@
 setopt ERR_EXIT
 setopt NO_UNSET
 
-readonly SCREENSHOTS_DIR=${HOME}/MyFiles/Pictures/Screenshots
 readonly LOCK=${TMPDIR}${USER}.screenshot-tagger.lock
 
 readonly HOMEBREW_PREFIX=/opt/homebrew
@@ -36,13 +35,26 @@ trap 'rm -rf "$LOCK"' EXIT
 
 sleep $EXECUTION_DELAY # Give time for all screenshots to be written to disk
 
-if tagger-engine --verbose\
-    --input "${SCREENSHOTS_DIR}/.tmp"\
-    --output "$SCREENSHOTS_DIR"\
-    --tag "${ARG_FILES_DIR}/charlesmc.args"\
-    --tag "${ARG_FILES_DIR}/screenshot.args"; then
-    osascript -e 'display notification "Screenshots tagged successfully." with title "Screenshot Tagger" sound name "Glass"'
+if [[ -f ${EXECUTABLE_DIR}/.env ]]; then
+    source "${EXECUTABLE_DIR}/.env"
 else
-    osascript -e 'display notification "An error occurred while tagging screenshots." with title "Screenshot Tagger" sound name "Basso"'
+    echo 'Environment file not found; exiting...' >&2
     exit 2
 fi
+
+result=$(tagger-engine --verbose --input "${INPUT_DIR}" --output "${OUTPUT_DIR}"\
+    -@ "${ARG_FILES_DIR}/charlesmc.args" -@ "${ARG_FILES_DIR}/screenshot.args" 2>&1)
+integer -r exit_status=$?
+readonly msg=$(echo "$result" | tail -n 1)
+
+if (( exit_status == 0 )); then
+    subtitle=Success
+    sound=Glass
+else
+    subtitle="Failure ($exit_status)"
+    sound=Basso
+fi
+
+osascript <<EOF &!
+    display notification "${msg}" with title "Screenshot Tagger" subtitle "${subtitle}" sound name "${sound}"
+EOF

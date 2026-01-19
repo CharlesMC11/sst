@@ -4,15 +4,21 @@
 <dict>
     <key>Label</key>
     <string>${USER}.screenshot_tagger</string>
-
-    <key>ProgramArguments</key>
-    <array>
-        <string>${HOME}/.local/bin/screenshot-tagger/screenshot-watcher</string>
-    </array>
-
+    <key>Program</key>
+    <string>${BIN_DIR}/${WATCHER_NAME}</string>
     <key>WatchPaths</key>
     <array>
-        <string>${HOME}/MyFiles/Pictures/Screenshots/.tmp</string>
+        <string>${INPUT_DIR}</string>
     </array>
+    <key>StandardOutPath</key>
+    <string>${HOME}/Library/Logs/${WATCHER_NAME}.log</string>
+    <key>StandardErrorPath</key>
+    <string>${HOME}/Library/Logs/${WATCHER_NAME}.log</string>
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>LowPriorityIO</key>
+    <true/>
+    <key>LowPriorityBackgroundIO</key>
+    <true/>
 </dict>
 </plist>
