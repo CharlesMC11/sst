@@ -38,7 +38,7 @@ else
     exit 2
 fi
 
-local result=$(tagger-engine --verbose --input "${INPUT_DIR}" --output "${OUTPUT_DIR}"\
+result=$(tagger-engine --verbose --input "${INPUT_DIR}" --output "${OUTPUT_DIR}"\
     -@ "${ARG_FILES_DIR}/charlesmc.args" -@ "${ARG_FILES_DIR}/screenshot.args" 2>&1)
 integer -r exit_status=$?
 readonly msg=$(print -- "$result" | tail -n 1)
