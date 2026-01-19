@@ -23,29 +23,25 @@ path=(
 
 ################################################################################
 
-if ! mkdir "$LOCK" 2>/dev/null; then
-    echo 'Lock exists; script already in progress...' >&2
-    exit 1
-fi
 # Taking multiple screenshots in succession causes `launchd` to trigger the same
 # amount of times. Checking for this lock in the `if` statement above ensures
 # that only the first instance of the script executes the rest of the script
 # body.
-trap 'rm -rf "$LOCK"' EXIT
+{ trap 'rm -rf "$LOCK"' EXIT && mkdir "$LOCK" 2>/dev/null } || exit 1
 
 sleep $EXECUTION_DELAY # Give time for all screenshots to be written to disk
 
 if [[ -f ${EXECUTABLE_DIR}/.env ]]; then
     source "${EXECUTABLE_DIR}/.env"
 else
-    echo 'Environment file not found; exiting...' >&2
+    print -u 2 -- 'Environment file not found; exiting...'
     exit 2
 fi
 
 local result=$(tagger-engine --verbose --input "${INPUT_DIR}" --output "${OUTPUT_DIR}"\
     -@ "${ARG_FILES_DIR}/charlesmc.args" -@ "${ARG_FILES_DIR}/screenshot.args" 2>&1)
 integer -r exit_status=$?
-readonly msg=$(echo "$result" | tail -n 1)
+readonly msg=$(print -- "$result" | tail -n 1)
 
 if (( exit_status == 0 )); then
     subtitle=Success

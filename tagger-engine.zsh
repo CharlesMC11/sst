@@ -25,19 +25,19 @@ readonly FILENAME_REPLACEMENT_RE='$2$3$4_$5$6$7$8.%e'
 readonly DATETIME_REPLACEMENT_RE='$1$2-$3-$4T$5:$6:$7'
 
 show_usage () {
-    echo "usage: ${SCRIPT_NAME}\n\
-    -v  --verbose\n\
-    -h  --help\n\
-    -i  --input    (default = current directory)\n\
-    -o  --output   (default = current directory)\n\
-    -tz --timezone (default = system timezone)\n\
-    -sw --software (default = system software)\n\
-    -hw --hardware (default = system hardware)\n\
-    -@  --argfile  arg files"
+    print -l -- "usage: ${SCRIPT_NAME}"\
+    "\t-v  --verbose"\
+    "\t-h  --help"\
+    "\t-i  --input    (default = current directory)"\
+    "\t-o  --output   (default = current directory)"\
+    "\t-tz --timezone (default = system timezone)"\
+    "\t-sw --software (default = system software)"\
+    "\t-hw --hardware (default = system hardware)"\
+    "\t-@  --argfile  arg files"
 }
 
 error_on_invalid_option () {
-    echo "${SCRIPT_NAME}: invalid option -- $1" 1>&2
+    print -u 2 -- "${SCRIPT_NAME}: invalid option -- $1"
     show_usage
     exit 1
 }
@@ -47,7 +47,7 @@ error_on_invalid_option () {
 # $2: An input or output directory
 error_if_not_dir () {
     if [[ ! -d $2 ]]; then
-        echo "$1 is not a directory: '$2'" 1>&2
+        print -u 2 -- "$1 is not a directory: '$2'"
         show_usage
         exit 2
     fi
@@ -82,7 +82,7 @@ done
 local -Ua pending_screenshots
 readonly pending_screenshots=(${~FILENAME_FILTER_RE}.${~FILENAME_SORTING_RE} ${~FILENAME_FILTER_RE}*.${~FILENAME_SORTING_RE})
 if ! (( ${#pending_screenshots} )); then
-    echo "No screenshots to process in '${PWD}/'" 1>&2
+    print -u 2 -- "No screenshots to process in '${PWD}/'"
     exit 3
 fi
 
@@ -108,9 +108,9 @@ if tar -czf "${output_dir}/${archive_name}" --options gzip:compression-level=1\
 
     rm ${==pending_screenshots}
     if (( verbose_mode )); then
-        echo "Created archive: '${output_dir:t}/${archive_name}'"
+        print -- "Created archive: '${output_dir:t}/${archive_name}'"
     fi
 else
-    echo "Failed to create archive: '${output_dir:t}/${archive_name}'" 1>&2
+    print -u 2 -- "Failed to create archive: '${output_dir:t}/${archive_name}'"
     exit 5
 fi

@@ -18,7 +18,7 @@ INSTALL             := install -vl h
 all: compile install start
 
 install: compile
-	@echo "Installing to '$(BIN_DIR)'"
+	@print -- "Installing to '$(BIN_DIR)'"
 	@if [[ -e $(BIN_DIR) && ! -d $(BIN_DIR) ]]; then\
 		rm $(BIN_DIR);\
 	fi
@@ -46,7 +46,7 @@ stop: $(PLIST_NAME)
 	rm -f ~/Library/LaunchAgents/$(PLIST_NAME)
 
 uninstall: stop
-	@echo "Uninstalling '$(BIN_DIR)'..."
+	@print -- "Uninstalling '$(BIN_DIR)'..."
 	rm -rf $(BIN_DIR)
 
 clean:
