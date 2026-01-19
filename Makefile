@@ -1,3 +1,5 @@
+include .env
+
 SHELL               := zsh
 SCRIPT_NAME         := screenshot-tagger
 BIN_DIR             := $(HOME)/.local/bin/$(SCRIPT_NAME)
@@ -27,6 +29,8 @@ install: compile
 
 	@$(INSTALL) -m 755 $(WATCHER_NAME).zsh     $(BIN_DIR)/$(WATCHER_NAME)
 	@$(INSTALL) -m 644 $(WATCHER_NAME).zsh.zwc $(BIN_DIR)/$(WATCHER_NAME).zwc
+
+	@$(INSTALL) -m 644 .env                    $(BIN_DIR)/
 
 compile: $(ENGINE_NAME).zwc $(WATCHER_NAME).zwc
 
