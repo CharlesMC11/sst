@@ -50,7 +50,8 @@ uninstall: stop
 	rm -rf $(BIN_DIR)
 
 clean:
-	rm -f *.zwc *.plist
+	-rm -f *.zwc
+	-rm -f *.plist
 
 %.zwc: %.zsh
 	zcompile $<
