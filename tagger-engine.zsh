@@ -33,7 +33,7 @@ show_usage () {
     -tz --timezone (default = system timezone)\n\
     -sw --software (default = system software)\n\
     -hw --hardware (default = system hardware)\n\
-    -tg --tag      arg files"
+    -@  --argfile  arg files"
 }
 
 error_on_invalid_option () {
@@ -61,30 +61,19 @@ integer verbose_mode=0
 output_dir=$PWD
 timezone=$(strftime %z)
 software=$(sw_vers --productVersion)
-hardware=$(system_profiler SPHardwareDataType | sed -En 's/^.*Model Name: //p')
-declare -Ua arg_files
+model=$(sysctl -n hw.model)
+typeset -Ua arg_files
 while (( $# )); do
     case $1 in
-        -h  | --help    ) show_usage; exit
-        ;;
-        -v  | --verbose ) verbose_mode=1; shift
-        ;;
-        -i  | --input   ) error_if_not_dir Input $2; cd "$2"; shift 2
-        ;;
-        -o  | --output  ) error_if_not_dir Output $2; output_dir=$2; shift 2
-        ;;
-        -tz | --timezone) timezone=$2; shift 2
-        ;;
-        -sw | --software) software=$2; shift 2
-        ;;
-        -hw | --hardware) hardware=$2; shift 2
-        ;;
-        -tg | --tag     ) arg_files+="-@ $2"; shift 2
-        ;;
-        -*  | --*       ) error_on_invalid_option $1
-        ;;
-        *               ) error_on_invalid_option $1
-        ;;
+        -h  | --help    ) show_usage; exit;;
+        -v  | --verbose ) verbose_mode=1; shift;;
+        -i  | --input   ) error_if_not_dir Input $2; cd "$2"; shift 2;;
+        -o  | --output  ) error_if_not_dir Output $2; output_dir=$2; shift 2;;
+        -tz | --timezone) timezone=$2; shift 2;;
+        -sw | --software) software=$2; shift 2;;
+        -hw | --hardware) model=$2; shift 2;;
+        -@  | --argfile ) arg_files+="-@ $2"; shift 2;;
+        *               ) error_on_invalid_option $1;;
     esac
 done
 
@@ -103,7 +92,7 @@ readonly new_datetime_pattern="\${${replacement_pattern}/${DATETIME_REPLACEMENT_
 exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}"\
          "-AllDates<${new_datetime_pattern}" "-OffsetTime*=${timezone}"\
          '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth'\
-         "-Software=${software}"             "-Model=${hardware}"\
+         "-Software=${software}"             "-Model=${model}"\
          '-RawFileName<FileName'             '-PreservedFileName<FileName'\
          -struct          -preserve          ${verbose_mode:+'-verbose'}\
          ${=arg_files}                       --\
