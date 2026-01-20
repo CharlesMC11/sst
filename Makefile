@@ -1,4 +1,6 @@
-include .env
+CONFIG_FILE         := config.zsh
+
+-include $(CONFIG_FILE)
 
 SHELL               := zsh
 SCRIPT_NAME         := screenshot-tagger
@@ -23,19 +25,21 @@ install: compile
 		rm $(BIN_DIR);\
 	fi
 	@mkdir -p $(BIN_DIR)
+	@mkdir -p ~/Library/Logs
+
+	@$(INSTALL) -m 600 $(CONFIG_FILE)          $(BIN_DIR)/
+	@$(INSTALL) -m 400 $(CONFIG_FILE).zwc      $(BIN_DIR)/
 
 	@$(INSTALL) -m 755 $(ENGINE_NAME).zsh      $(BIN_DIR)/$(ENGINE_NAME)
-	@$(INSTALL) -m 644 $(ENGINE_NAME).zsh.zwc  $(BIN_DIR)/$(ENGINE_NAME).zwc
+	@$(INSTALL) -m 444 $(ENGINE_NAME).zsh.zwc  $(BIN_DIR)/$(ENGINE_NAME).zwc
 
 	@$(INSTALL) -m 755 $(WATCHER_NAME).zsh     $(BIN_DIR)/$(WATCHER_NAME)
-	@$(INSTALL) -m 644 $(WATCHER_NAME).zsh.zwc $(BIN_DIR)/$(WATCHER_NAME).zwc
+	@$(INSTALL) -m 444 $(WATCHER_NAME).zsh.zwc $(BIN_DIR)/$(WATCHER_NAME).zwc
 
-	@$(INSTALL) -m 644 .env                    $(BIN_DIR)/
-
-compile: $(ENGINE_NAME).zwc $(WATCHER_NAME).zwc
+compile: $(CONFIG_FILE).zwc $(ENGINE_NAME).zwc $(WATCHER_NAME).zwc
 
 start: $(PLIST_NAME)
-	@$(INSTALL) -m 644 $(PLIST_NAME) ~/Library/LaunchAgents/
+	@$(INSTALL) -m 444 $(PLIST_NAME) ~/Library/LaunchAgents/
 	launchctl bootstrap gui/$(shell id -u) $(PLIST_NAME)
 
 $(PLIST_NAME): $(PLIST_NAME_TEMPLATE)

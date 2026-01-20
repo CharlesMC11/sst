@@ -42,8 +42,8 @@ fi
 
 sleep $EXECUTION_DELAY # Give time for all screenshots to be written to disk
 
-if [[ -f ${EXECUTABLE_DIR}/.env ]]; then
-    source "${EXECUTABLE_DIR}/.env"
+if [[ -f ${EXECUTABLE_DIR}/config.zsh ]]; then
+    source "${EXECUTABLE_DIR}/config.zsh"
 else
     print -u 2 -- 'Environment file not found; exiting...'
     exit 2

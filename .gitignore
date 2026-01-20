@@ -1,8 +1,8 @@
 *.plist
 *.zwc
 
-.env
-
 .vscode/
 
 .DS_Store
+
+config.zsh
