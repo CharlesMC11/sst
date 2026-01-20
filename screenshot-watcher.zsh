@@ -10,7 +10,12 @@ setopt NO_BEEP
 
 zmodload zsh/files
 
-readonly LOCK=${TMPDIR}${USER}.${0:t:r}.lock
+readonly SCRIPT_NAME=${0:t:r}
+
+readonly MOUNT_POINT="/Volumes/${SCRIPT_NAME}"
+integer -r DISK_SIZE=65536
+
+readonly LOCK_PATH="${MOUNT_POINT}/${SCRIPT_NAME}.lock"
 
 readonly HOMEBREW_PREFIX=/opt/homebrew
 
@@ -27,6 +32,11 @@ path=(
 )
 
 ################################################################################
+
+if [[ ! -d $MOUNT_POINT ]]; then
+    diskutil apfs create $(hdiutil attach -nomount ram://$DISK_SIZE) "${MOUNT_POINT:t}"
+    print -- "Created RAM disk: '${MOUNT_POINT}'"
+fi
 
 # Taking multiple screenshots in succession causes `launchd` to trigger the same
 # amount of times. Checking for this lock in the `if` statement above ensures
