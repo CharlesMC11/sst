@@ -13,6 +13,8 @@ PLIST_NAME_BASE     := screenshot_tagger.plist
 PLIST_NAME_TEMPLATE := $(PLIST_NAME_BASE).template
 PLIST_NAME          := $(USER).$(PLIST_NAME_BASE)
 
+export LOGS_DIR     := $(HOME)/Library/Logs
+
 INSTALL             := install -v
 
 .PHONY: all install compile start stop uninstall clean

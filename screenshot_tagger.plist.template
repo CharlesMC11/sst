@@ -11,9 +11,9 @@
         <string>${INPUT_DIR}</string>
     </array>
     <key>StandardOutPath</key>
-    <string>${HOME}/Library/Logs/${WATCHER_NAME}.log</string>
+    <string>${LOGS_DIR}/${WATCHER_NAME}.log</string>
     <key>StandardErrorPath</key>
-    <string>${HOME}/Library/Logs/${WATCHER_NAME}.log</string>
+    <string>${LOGS_DIR}/${WATCHER_NAME}.log</string>
     <key>ProcessType</key>
     <string>Background</string>
     <key>LowPriorityIO</key>
