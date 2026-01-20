@@ -46,8 +46,8 @@ $(PLIST_NAME): $(PLIST_NAME_TEMPLATE)
 	envsubst < $< > $@
 
 stop: $(PLIST_NAME)
-	launchctl bootout gui/$(shell id -u) $(PLIST_NAME)
-	rm -f ~/Library/LaunchAgents/$(PLIST_NAME)
+	-launchctl bootout gui/$(shell id -u) $(PLIST_NAME)
+	-rm -f ~/Library/LaunchAgents/$(PLIST_NAME)
 
 uninstall: stop
 	@print -- "Uninstalling '$(BIN_DIR)'..."
