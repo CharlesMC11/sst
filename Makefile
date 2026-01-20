@@ -4,7 +4,7 @@ CONFIG_FILE         := config.zsh
 
 SHELL               := zsh
 SCRIPT_NAME         := screenshot-tagger
-export BIN_DIR      ?= ~/.local/bin/$(SCRIPT_NAME)
+export BIN_DIR      ?= $(HOME)/.local/bin/$(SCRIPT_NAME)
 
 ENGINE_NAME         := tagger-engine
 export WATCHER_NAME := screenshot-watcher
