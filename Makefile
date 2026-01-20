@@ -41,7 +41,7 @@ install: compile
 compile: $(CONFIG_FILE).zwc $(ENGINE_NAME).zwc $(WATCHER_NAME).zwc
 
 start: $(PLIST_NAME)
-	@$(INSTALL) -m 444 $(PLIST_NAME) ~/Library/LaunchAgents/
+	@$(INSTALL) -m 400 $(PLIST_NAME) ~/Library/LaunchAgents/
 	launchctl bootstrap gui/$(shell id -u) $(PLIST_NAME)
 
 $(PLIST_NAME): $(PLIST_NAME_TEMPLATE)
