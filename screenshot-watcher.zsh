@@ -39,13 +39,13 @@ if [[ ! -d $MOUNT_POINT ]]; then
 fi
 
 # Taking multiple screenshots in succession causes `launchd` to trigger the same
-# amount of times. Checking for this lock in the `if` statement above ensures
-# that only the first instance of the script executes the rest of the script
-# body.
-if mkdir -m 000 "$LOCK" 2>/dev/null; then
-    trap 'rmdir "$LOCK"' EXIT
+# amount of times. Checking for this lock ensures that only the first instance
+# of the script executes the rest of the script body.
+if mkdir -m 200 "$LOCK_PATH" 2>/dev/null; then
+    trap 'rmdir "$LOCK_PATH"' EXIT
+    print -- "Created lock in '${LOCK_PATH:h}/'"
 else
-    print -u 2 -- 'Lock exists; exiting...'
+    print -u 2 -- "Lock exists in '${LOCK_PATH:h}/'; exiting..."
     exit 1
 fi
 
