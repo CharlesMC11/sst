@@ -13,9 +13,9 @@
         <string>${INPUT_DIR}</string>
     </array>
     <key>StandardOutPath</key>
-    <string>${LOGS_DIR}/${WATCHER_NAME}.log</string>
+    <string>${LOG_FILE}</string>
     <key>StandardErrorPath</key>
-    <string>${LOGS_DIR}/${WATCHER_NAME}.log</string>
+    <string>${LOG_FILE}</string>
     <key>ProcessType</key>
     <string>Interactive</string>
 </dict>

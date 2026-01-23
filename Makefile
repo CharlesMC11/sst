@@ -13,7 +13,10 @@ PLIST_NAME_BASE     := screenshot_tagger.plist
 PLIST_NAME_TEMPLATE := $(PLIST_NAME_BASE).template
 PLIST_NAME          := me.$(USER).$(PLIST_NAME_BASE)
 
-export LOGS_DIR     := $(HOME)/Library/Logs
+export LOG_FILE     := $(HOME)/Library/Logs/me.$(USER).$(WATCHER_NAME).log
+export TMPDIR       := /Volumes/Workbench/
+export INPUT_DIR    := $(TMPDIR)$(SCRIPT_NAME)
+export OUTPUT_DIR   := $(HOME)/MyFiles/Pictures/Screenshots
 
 INSTALL             := install -v
 
@@ -45,7 +48,7 @@ start: $(PLIST_NAME)
 	launchctl bootstrap gui/$(shell id -u) $(PLIST_NAME)
 
 $(PLIST_NAME): $(PLIST_NAME_TEMPLATE)
-	envsubst < $< > $@
+	@zsh -fc 'content=$$(<$<); print -r -- "$${(e)content}"' > $@
 
 stop: $(PLIST_NAME)
 	-launchctl bootout gui/$(shell id -u) $(PLIST_NAME)
@@ -66,3 +69,9 @@ $(CONFIG_FILE).zwc: $(CONFIG_FILE)
 %.zwc: %.zsh
 	zsh -n $<
 	zcompile -U $<
+
+log:
+	open $(LOG_FILE)
+
+delete-log:
+	rm $(LOG_FILE)
