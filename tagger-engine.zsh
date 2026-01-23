@@ -1,4 +1,4 @@
-#!/usr/bin/env -S zsh -f
+#!/opt/homebrew/bin/zsh -f
 # A script for renaming and adding metadata to screenshots
 
 setopt ERR_EXIT

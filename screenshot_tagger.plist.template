@@ -5,8 +5,12 @@
     <key>Label</key>
     <string>me.${USER}.screenshot_tagger</string>
 
-    <key>Program</key>
-    <string>${BIN_DIR}/${WATCHER_NAME}</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${HOMEBREW_PREFIX}/bin/zsh</string>
+        <string>-f</string>
+        <string>${BIN_DIR}/${WATCHER_NAME}</string>
+    <array>
     <key>ThrottleInterval</key>
     <integer>$THROTTLE_INTERVAL</integer>
 
