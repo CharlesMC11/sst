@@ -88,16 +88,18 @@ tagger-engine::main() {
         return 65 #BSD: Data format error
     fi
 
-    local -Ua bg_pids
+    typeset -gUa bg_pids
 
     _cleanup () {
-        if (( ${#bg_pids} > 0 )); then
-            kill $bg_pids 2>/dev/null
-        fi
+        for pid in $bg_pids; do
+            if kill -0 "$pid" 2>/dev/null; then
+                kill "$pid" 2>/dev/null
+            fi
+        done
         rm -f *.log
     }
 
-    trap '_cleanup' EXIT INT
+    trap _cleanup EXIT TERM
 
     local datetime; strftime -s datetime %Y%m%d_%H%M%S
     readonly archive_name="Screenshots_${datetime}.aar"
@@ -134,7 +136,7 @@ tagger-engine::main() {
         return 70 # BSD: Internal software error
     fi
 
-    rm -f "${pending_screenshots[@]}" *.log
+    rm -f "${pending_screenshots[@]}"
     if (( ${+opts[--verbose]} )); then
         print -- "${SCRIPT_NAME}: Created archive: '${output_dir:t}/${archive_name}'"
     fi
