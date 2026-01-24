@@ -27,17 +27,18 @@ readonly DATETIME_RE="^Screenshot ${DATE_RE} at ${TIME_RE}(\D*?\d*?\D*?)\..+$"
 readonly FILENAME_REPLACEMENT_RE='$2$3$4_$5$6$7$8.%e'
 readonly DATETIME_REPLACEMENT_RE='$1$2-$3-$4T$5:$6:$7'
 
-readonly TAGGER_ENGINE_SCRIPT_NAME=${0:t:r}
+readonly TAGGER_ENGINE_NAME=tagger-engine
 
-_tagger-engine::show_usage () {
-    print -l -- "usage: ${TAGGER_ENGINE_SCRIPT_NAME}"\
-    "\t-v --verbose"\
-    "\t-h --help"\
-    "\t-i --input    (default = current directory)"\
-    "\t-o --output   (default = current directory)"\
-    "\t-z --timezone (default = system timezone)"\
-    "\t-s --software (default = system software)"\
-    "\t-m --model    (default = system hardware)"\
+# Show the options menu.
+_tagger-engine::help () {
+    print -l -- "usage: ${TAGGER_ENGINE_NAME}" \
+    "\t-v --verbose" \
+    "\t-h --help" \
+    "\t-i --input    (default = current directory)" \
+    "\t-o --output   (default = current directory)" \
+    "\t-z --timezone (default = system timezone)" \
+    "\t-s --software (default = system software)" \
+    "\t-m --model    (default = system hardware)" \
     "\t-@ --argfile  arg files"
 }
 
@@ -57,9 +58,9 @@ _tagger-engine::error_if_not_dir () {
 tagger-engine () {
     local -a arg_files
     local -AU opts
-    zparseopts -D -E -M -A opts h=-help -help v=-verbose -verbose\
-        i:=-input    -input:       o:=-output    -output:\
-        m:=-model    -model:       s:=-software  -software:\
+    zparseopts -D -E -M -A opts h=-help -help v=-verbose -verbose \
+        i:=-input    -input:       o:=-output    -output: \
+        m:=-model    -model:       s:=-software  -software: \
         z:=-timezone -timezone:    @+:=arg_files -argfile+:=arg_files
 
     if (( ${+opts[--help]} )); then
@@ -117,13 +118,13 @@ tagger-engine () {
     readonly new_filename_pattern="\${${replacement_pattern}/${FILENAME_REPLACEMENT_RE}/}"
     readonly new_datetime_pattern="\${${replacement_pattern}/${DATETIME_REPLACEMENT_RE}${timezone}/}"
 
-    exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}"\
-             "-AllDates<${new_datetime_pattern}" "-OffsetTime*=${timezone}"\
-             '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth'\
-             "-Software=${software}"             "-Model=${model}"\
-             '-RawFileName<FileName'             '-PreservedFileName<FileName'\
-             -struct          -preserve          ${opts[--verbose]:+-verbose}\
-             "${arg_files[@]}"                   --\
+    exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}" \
+             "-AllDates<${new_datetime_pattern}" "-OffsetTime*=${timezone}" \
+             '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth' \
+             "-Software=${software}"             "-Model=${model}" \
+             '-RawFileName<FileName'             '-PreservedFileName<FileName' \
+             -struct          -preserve          ${opts[--verbose]:+-verbose} \
+             "${arg_files[@]}"                   -- \
              "${pending_screenshots[@]}"         2>>exiftool.log 1>>exiftool.log &
     integer -r et_pid=$!
     bg_pids+=($et_pid)
