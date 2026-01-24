@@ -16,9 +16,9 @@ zmodload zsh/files
 zmodload zsh/mapfile
 zmodload zsh/zutil
 
-readonly DATE_FILTER_RE='<19-21><-9><-9>[^[:digit:]]#<-1><-9>[^[:digit:]]#<-3><-9>'
-readonly TIME_FILTER_RE='<-2><-9>[^[:digit:]]#<-5><-9>[^[:digit:]]#<-5><-9>'
-readonly FILENAME_FILTER_RE="[^[:digit:]]#${~DATE_FILTER_RE}[^[:digit:]]#${~TIME_FILTER_RE}"
+readonly DATE_FILTER_RE='<1900-2199>-<1-12>-<1-31>'
+readonly TIME_FILTER_RE='<-24>.<-59>.<-59>'
+readonly FILENAME_FILTER_RE="Screenshot ${~DATE_FILTER_RE} at ${~TIME_FILTER_RE}"
 readonly FILENAME_SORTING_RE='*(.Om)'
 
 readonly DATE_EXTRACTOR_RE='([1-2][^2-8])?(\d{2})\D?([0-1]\d)\D?([0-3]\d)'
