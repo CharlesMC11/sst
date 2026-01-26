@@ -9,17 +9,18 @@ setopt NO_NOTIFY
 setopt NO_BEEP
 
 zmodload zsh/files
-
-readonly SCRIPT_NAME=${0:t:r}
+zmodload zsh/system
 
 ################################################################################
+
+integer fd
+exec {fd}>|"${LOCK_PATH}"
 
 # Taking multiple screenshots in succession causes `launchd` to trigger the same
 # amount of times. Checking for this lock ensures that only the first instance
 # of the script executes the rest of the script body.
-if mkdir -m 200 "$LOCK_PATH" 2>/dev/null; then
-    trap 'rmdir "$LOCK_PATH"' EXIT INT TERM
-    print -- "Created lock in '${LOCK_PATH:h}/'"
+if zsystem flock -t 0 -f $fd "${LOCK_PATH}"; then
+  print -- "Created lock in '${LOCK_PATH:h}/'"
 else
   print -u 2 -- "${0:t:r}: Lock exists in '${LOCK_PATH:h}/'; exiting..."
   exit 75  # BSD EX_TEMPFAIL
@@ -43,3 +44,5 @@ fi
 osascript <<EOF
     display notification with title "Screenshot Tagger" subtitle "${subtitle}" sound name "${sound}"
 EOF
+
+exec {fd}>&-
