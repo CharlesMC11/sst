@@ -21,8 +21,8 @@ readonly TIME_GLOB='<00-23>.<00-59>.<00-59>'
 readonly FILENAME_GLOB="Screenshot ${~DATE_GLOB} at ${~TIME_GLOB}"
 readonly FILENAME_SORTING_GLOB='*(.Om)'
 
-readonly DATE_RE='([1-2][^2-8])(\d{2})-([0-1]\d)-([0-3]\d)'
-readonly TIME_RE='([0-2]\d)\.([0-5]\d)\.([0-5]\d)'
+readonly DATE_RE='(\d{2})(\d{2})-(\d{2})-(\d{2})'
+readonly TIME_RE='(\d{2})\.(\d{2})\.(\d{2})'
 readonly DATETIME_RE="^Screenshot ${DATE_RE} at ${TIME_RE}(\D*?\d*?\D*?)\..+$"
 readonly FILENAME_REPLACEMENT_RE='$2$3$4_$5$6$7$8.%e'
 readonly DATETIME_REPLACEMENT_RE='$1$2-$3-$4T$5:$6:$7'
