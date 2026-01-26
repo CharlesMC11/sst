@@ -46,15 +46,13 @@ _tagger-engine::help () {
 # $1: The error code to return.
 # $2: The error messages to print.
 _tagger-engine::err () {
-  integer status=$1
+  integer -r status_code=$1
   shift
 
-  local datetime; strftime -s datetime %Y-%m-%d %H:%M:%S
+  local datetime; strftime -s datetime '%Y-%m-%d %H:%M:%S'
   print -l -u 2 -- "${TAGGER_ENGINE_NAME}: [$datetime] $@"
 
-  _tagger-engine::help
-
-  return $status
+  return $status_code
 }
 
 # Return an error code if the given is not a directory.
@@ -91,7 +89,7 @@ tagger-engine () {
     ${~FILENAME_GLOB}.${~FILENAME_SORTING_GLOB} \
     ${~FILENAME_GLOB}*.${~FILENAME_SORTING_GLOB}
   )
-  if (( ${#pending_screenshots} == 0 )); then
+  if (( #pending_screenshots == 0 )); then
     # return 66: BSD EX_NOINPUT
     _tagger-engine::err 66 "No screenshots to process in '${input_dir}/'"
   fi
