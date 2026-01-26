@@ -31,123 +31,127 @@ readonly TAGGER_ENGINE_NAME=tagger-engine
 
 # Show the options menu.
 _tagger-engine::help () {
-    print -l -- "usage: ${TAGGER_ENGINE_NAME}" \
-    "\t-v --verbose" \
-    "\t-h --help" \
-    "\t-i --input    (default = current directory)" \
-    "\t-o --output   (default = current directory)" \
-    "\t-z --timezone (default = system timezone)" \
-    "\t-s --software (default = system software)" \
-    "\t-m --model    (default = system hardware)" \
-    "\t-@ --argfile  arg files"
+  print -l -- "usage: ${TAGGER_ENGINE_NAME}" \
+  "\t-v --verbose" \
+  "\t-h --help" \
+  "\t-i --input    (default = current directory)" \
+  "\t-o --output   (default = current directory)" \
+  "\t-z --timezone (default = system timezone)" \
+  "\t-s --software (default = system software)" \
+  "\t-m --model    (default = system hardware)" \
+  "\t-@ --argfile  arg files"
 }
 
+# Print an log message, then return a status code.
+# $1: The error code to return.
+# $2: The error messages to print.
+_tagger-engine::err () {
+  integer status=$1
+  shift
+
+  local datetime; strftime -s datetime %Y-%m-%d %H:%M:%S
+  print -l -u 2 -- "${TAGGER_ENGINE_NAME}: [$datetime] $@"
+
+  _tagger-engine::help
+
+  return $status
+}
+
+# Return an error code if the given is not a directory.
 # $1: "Input" or "Output"
 # $2: An input or output directory
-_tagger-engine::error_if_not_dir () {
-    if [[ ! -d $2 ]]; then
-        print -u 2 -- "${SCRIPT_NAME}: $1 is not a directory: '$2'"
-        _tagger-engine::show_usage
-        return 65  # BSD EX_DATAERR
-    fi
-    return 0
+_tagger-engine::is_directory () {
+  [[  -d $2 ]] && return 0
+  # return 65: BSD EX_DATAERR
+  _tagger-engine::err 65 "$1 is not a directory: '$2'"
 }
 
 ################################################################################
 
 tagger-engine () {
-    local -a arg_files
-    local -AU opts
-    zparseopts -D -E -M -A opts h=-help -help v=-verbose -verbose \
-        i:=-input    -input:       o:=-output    -output: \
-        m:=-model    -model:       s:=-software  -software: \
-        z:=-timezone -timezone:    @+:=arg_files -argfile+:=arg_files
+  local -a arg_files
+  local -AU opts
+  zparseopts -D -E -M -A opts h=-help -help v=-verbose -verbose \
+    i:=-input    -input:       o:=-output    -output: \
+    m:=-model    -model:       s:=-software  -software: \
+    z:=-timezone -timezone:    @+:=arg_files -argfile+:=arg_files
 
-    if (( ${+opts[--help]} )); then
-        _tagger-engine::show_usage
-        return 0
+  (( ${+opts[--help]} )) && { _tagger-engine::help; return 0 }
+
+  readonly input_dir=${opts[--input]:-$PWD}
+  readonly output_dir=${opts[--output]:-$PWD}
+
+  _tagger-engine::is_directory Input "$input_dir"
+  _tagger-engine::is_directory Output "$output_dir"
+
+  cd "$input_dir"
+
+  local -Ua pending_screenshots
+  readonly pending_screenshots=( \
+    ${~FILENAME_GLOB}.${~FILENAME_SORTING_GLOB} \
+    ${~FILENAME_GLOB}*.${~FILENAME_SORTING_GLOB}
+  )
+  if (( ${#pending_screenshots} == 0 )); then
+    # return 66: BSD EX_NOINPUT
+    _tagger-engine::err 66 "No screenshots to process in '${input_dir}/'"
+  fi
+
+  local -Ua bg_pids
+
+  local datetime; strftime -s datetime %Y%m%d_%H%M%S
+  readonly archive_name="Screenshots_${datetime}.aar"
+  aa archive ${opts[--verbose]:+-v} \
+    -a lz4 \
+    -d "$input_dir" \
+    -o "${output_dir}/${archive_name}"\
+    -include-path-list =(print -l -- "${pending_screenshots[@]}") \
+    &>|${TMPDIR%/}/aa.log &
+  integer -r aa_pid=$!
+  bg_pids+=($aa_pid)
+
+  readonly model=${opts[--model]:-$(sysctl -n hw.model)}
+  readonly software=${opts[--software]:-$(sw_vers --productVersion)}
+  local timezone; strftime -s timezone %z
+  readonly timezone=${opts[--timezone]:-$timezone}
+
+  # PERL string replacement patterns that will be used by ExifTool
+  readonly replacement_pattern="Filename;s/${DATETIME_RE}"
+  readonly new_filename_pattern="\${${replacement_pattern}/${FILENAME_REPLACEMENT_RE}/}"
+  readonly new_datetime_pattern="\${${replacement_pattern}/${DATETIME_REPLACEMENT_RE}${timezone}/}"
+
+  exiftool -o . -struct -preserve ${opts[--verbose]:+-verbose} \
+    "-Directory=${output_dir}" \
+    "-Software=${software}"             "-Model=${model}" \
+    "-Filename<${new_filename_pattern}" \
+    "-AllDates<${new_datetime_pattern}" \
+    "-OffsetTime*=${timezone}" \
+    '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth' \
+    '-RawFileName<FileName'             '-PreservedFileName<FileName' \
+    "${arg_files[@]}" \
+    -@ =(print -l -- "${pending_screenshots[@]}") \
+    -- &>|${TMPDIR%/}/et.log &
+  integer -r et_pid=$!
+  bg_pids+=($et_pid)
+
+  {
+    # return 73: BSD EX_CANTCREAT
+    wait $aa_pid || _tagger-engine::err 73 "Archiving failed" "$mapfile[${TMPDIR%/}/aa.log]"
+    # return 70: BSD EX_SOFTWARE
+    wait $et_pid || _tagger-engine::err 70 "ExifTool failed" "$mapfile[${TMPDIR%/}/et.log]"
+  } always {
+    integer status=$?
+    if (( $status > 0 )); then
+      kill $bg_pids &>/dev/null
+      return $status
     fi
+  }
 
-    readonly input_dir=${opts[--input]:-$PWD}
-    readonly output_dir=${opts[--output]:-$PWD}
+  rm -f -- "${pending_screenshots[@]}" ${TMPDIR%/}/*.log
+  (( ${+opts[--verbose]} )) && print -- "${TAGGER_ENGINE_NAME}: Created archive: '${output_dir:t}/${archive_name}'"
 
-    _tagger-engine::error_if_not_dir Input "$input_dir"
-    _tagger-engine::error_if_not_dir Output "$output_dir"
-
-    cd "$input_dir"
-
-    local -Ua pending_screenshots
-    readonly pending_screenshots=( \
-        ${~FILENAME_GLOB}.${~FILENAME_SORTING_GLOB} \
-        ${~FILENAME_GLOB}*.${~FILENAME_SORTING_GLOB}
-    )
-    if (( ${#pending_screenshots} == 0 )); then
-        print -u 2 -- "${SCRIPT_NAME}: No screenshots to process in '${input_dir}/'"
-        return 66  #BSD EX_NOINPUT
-    fi
-
-    typeset -gUa bg_pids
-
-    _cleanup () {
-        for pid in $bg_pids; do
-            if kill -0 "$pid" 2>/dev/null; then
-                kill "$pid" 2>/dev/null
-            fi
-        done
-        rm -f *.log
-    }
-
-    trap _cleanup EXIT INT TERM
-
-    local datetime; strftime -s datetime %Y%m%d_%H%M%S
-    readonly archive_name="Screenshots_${datetime}.aar"
-    aa archive ${opts[--verbose]:+-v} -a lz4 -d "$input_dir" \
-        -o "${output_dir}/${archive_name}"\
-        -include-path-list <(print -l -- "${pending_screenshots[@]}") \
-        2>>aa.log 1>>aa.log &
-    integer -r aa_pid=$!
-    bg_pids+=($aa_pid)
-
-    readonly model=${opts[--model]:-$(sysctl -n hw.model)}
-    readonly software=${opts[--software]:-$(sw_vers --productVersion)}
-    local timezone; strftime -s timezone %z
-    readonly timezone=${opts[--timezone]:-$timezone}
-
-    # PERL string replacement patterns that will be used by ExifTool
-    readonly replacement_pattern="Filename;s/${DATETIME_RE}"
-    readonly new_filename_pattern="\${${replacement_pattern}/${FILENAME_REPLACEMENT_RE}/}"
-    readonly new_datetime_pattern="\${${replacement_pattern}/${DATETIME_REPLACEMENT_RE}${timezone}/}"
-
-    exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}" \
-             "-AllDates<${new_datetime_pattern}" "-OffsetTime*=${timezone}" \
-             '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth' \
-             "-Software=${software}"             "-Model=${model}" \
-             '-RawFileName<FileName'             '-PreservedFileName<FileName' \
-             -struct          -preserve          ${opts[--verbose]:+-verbose} \
-             "${arg_files[@]}"                   -- \
-             "${pending_screenshots[@]}"         2>>exiftool.log 1>>exiftool.log &
-    integer -r et_pid=$!
-    bg_pids+=($et_pid)
-
-    if ! wait $aa_pid; then
-        print -l -u 2 -- "${SCRIPT_NAME}: Archiving failed" "$mapfile[aa.log]"
-        return 73  # BSD EX_CANTCREAT
-    fi
-
-    if ! wait $et_pid; then
-        print -l -u 2 -- "${SCRIPT_NAME}: ExifTool failed" "$mapfile[et.log]"
-        return 70  # BSD EX_SOFTWARE
-    fi
-
-    rm -f "${pending_screenshots[@]}"
-    if (( ${+opts[--verbose]} )); then
-        print -- "${SCRIPT_NAME}: Created archive: '${output_dir:t}/${archive_name}'"
-    fi
-
-    trap - EXIT INT TERM
-    return 0
+  return 0
 }
 
 if [[ $ZSH_EVAL_CONTEXT == toplevel ]]; then
-    tagger-engine $@
+  tagger-engine $@
 fi
