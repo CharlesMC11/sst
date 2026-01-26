@@ -30,6 +30,8 @@ INSTALL                 := install -pv
 
 all: install start
 
+restart: stop start
+
 install:
 	@{ [[ -e $(BIN_DIR) && ! -d $(BIN_DIR) ]] && rm $(BIN_DIR) } || true
 	@mkdir -p $(BIN_DIR)
