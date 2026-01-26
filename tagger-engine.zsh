@@ -42,6 +42,17 @@ _tagger-engine::help () {
   "\t-@ --argfile  arg files"
 }
 
+_tagger-engine::log () {
+  readonly level=${1:u}
+  shift
+  local datetime; strftime -s datetime '%Y-%m-%d %H:%M:%S'
+
+  integer fd=1
+  [[ $level == (WARN|ERROR) ]] && fd=2
+
+  print -l -u $fd -- "[$datetime] [$level] ${TAGGER_ENGINE_NAME}: $@"
+}
+
 # Print an log message, then return a status code.
 # $1: The error code to return.
 # $2: The error messages to print.
@@ -49,8 +60,7 @@ _tagger-engine::err () {
   integer -r status_code=$1
   shift
 
-  local datetime; strftime -s datetime '%Y-%m-%d %H:%M:%S'
-  print -l -u 2 -- "${TAGGER_ENGINE_NAME}: [$datetime] $@"
+  _tagger-engine::log ERROR $@
 
   return $status_code
 }
@@ -149,7 +159,7 @@ tagger-engine () {
     fi
   }
 
-  (( ${+opts[--verbose]} )) && print -- "${TAGGER_ENGINE_NAME}: Created archive: '${output_dir:t}/${archive_name}'"
+  (( ${+opts[--verbose]} )) && _tagger-engine::log INFO "Created archive: '${output_dir:t}/${archive_name}'"
 
   return 0
 }
