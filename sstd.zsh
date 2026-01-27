@@ -173,6 +173,11 @@ sst() {
 
 ################################################################################
 
+if [[ $ZSH_EVAL_CONTEXT == (toplevel|shfunc) ]]; then
+  sst "@"
+  return $?
+fi
+
 integer fd
 exec {fd}>|"${LOCK_PATH}" && trap 'exec {fd}>&-' EXIT
 
