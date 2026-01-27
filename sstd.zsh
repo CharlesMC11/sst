@@ -1,32 +1,175 @@
 #!/opt/homebrew/bin/zsh -f
-# A script for preparing `sst`. It will be called by `launchd`
+# A script for adding certain metadata to screenshots, then renaming them.
 
-setopt CHASE_LINKS
 setopt ERR_EXIT
 setopt NO_UNSET
+setopt PIPE_FAIL
+setopt CHASE_LINKS
 setopt WARN_CREATE_GLOBAL
+
 setopt NO_NOTIFY
 setopt NO_BEEP
+
+setopt EXTENDED_GLOB
+setopt NULL_GLOB
+setopt NUMERIC_GLOB_SORT
 
 zmodload zsh/datetime
 zmodload zsh/files
 zmodload zsh/parameter
+zmodload zsh/mapfile
 zmodload zsh/system
+zmodload zsh/zutil
 
-_sstd::err() {
-  print -u 2 -- "[$1] [FATAL] ${0:t:r}: $2"
-  exit 72  # BSD EX_OSFILE
+readonly SCRIPT_NAME=${0:t:r}
+
+readonly DATE_GLOB='<1900-2199>-<01-12>-<01-31>'
+readonly TIME_GLOB='<00-23>.<00-59>.<00-59>'
+readonly FILENAME_GLOB="Screenshot ${~DATE_GLOB} at ${~TIME_GLOB}"
+readonly FILENAME_SORTING_GLOB='*(.Om)'
+
+readonly DATE_RE='(\d{2})(\d{2})-(\d{2})-(\d{2})'
+readonly TIME_RE='(\d{2})\.(\d{2})\.(\d{2})'
+readonly DATETIME_RE="^Screenshot ${DATE_RE} at ${TIME_RE}(\D*?\d*?\D*?)\..+$"
+readonly FILENAME_REPLACEMENT_RE='$2$3$4_$5$6$7$8.%e'
+readonly DATETIME_REPLACEMENT_RE='$1$2-$3-$4T$5:$6:$7'
+
+# Show the options menu.
+_sst::help() {
+  print -l -- "usage: ${SCRIPT_NAME}" "\t-v --verbose" "\t-h --help" \
+  "\t-i --input    (default = current directory)" \
+  "\t-o --output   (default = current directory)" \
+  "\t-z --timezone (default = system timezone)" \
+  "\t-s --software (default = system software)" \
+  "\t-m --model    (default = system hardware)" \
+  "\t-@ --argfile  arg files"
 }
 
-if ! source "${BIN_DIR}/sst"; then
+# Print a log message
+# $1: The log level: DEBUG | INFO | WARN | ERROR | CRITICAL
+_sst::log() {
+  readonly level=${(U)1}
+  shift
   local datetime; strftime -s datetime '%Y-%m-%d %H:%M:%S'
-  _sstd::err $datetime "Could not source '${BIN_DIR}/sst'."
-fi
 
-if [[ -z $functions[_sst::log] ]]; then
-  strftime -s datetime '%Y-%m-%d %H:%M:%S'
-  _sstd::err $datetime "\`sst\` loaded, \`_sst:log\` is missing."
-fi
+  integer fd=1
+  [[ $level == (WARN|ERROR) ]] && fd=2
+
+  print -l -u $fd -- "[$datetime] [$level] ${SCRIPT_NAME}: $@"
+}
+
+# Print an error message, then return a status code.
+# $1: The error code to return.
+# $2: The error messages to print.
+_sst::err() {
+  integer -r status_code=$1
+  shift
+
+  _sst::log ERROR $@
+
+  return $status_code
+}
+
+# Return an error code if the given is not a directory.
+# $1: "Input" or "Output"
+# $2: An input or output directory
+_sst::is_directory() {
+  if [[ -d $2 ]]; then
+    return 0
+  fi
+  # return 65: BSD EX_DATAERR
+  _sst::err 65 "$1 is not a directory: '$2'"
+}
+
+sst() {
+  local -a arg_files
+  local -AU opts
+  zparseopts -D -E -M -A opts h=-help -help v=-verbose -verbose \
+    i:=-input    -input:       o:=-output    -output: \
+    m:=-model    -model:       s:=-software  -software: \
+    z:=-timezone -timezone:    @+:=arg_files -argfile+:=arg_files
+
+  if (( ${+opts[--help]} )); then
+    _sst::help
+    return 0
+  fi
+
+  readonly input_dir=${opts[--input]:-$PWD}
+  readonly output_dir=${opts[--output]:-$PWD}
+
+  _sst::is_directory Input "$input_dir"
+  _sst::is_directory Output "$output_dir"
+
+  cd "$input_dir"
+
+  local -Ua pending_screenshots
+  readonly pending_screenshots=( \
+    ${~FILENAME_GLOB}.${~FILENAME_SORTING_GLOB} \
+    ${~FILENAME_GLOB}*.${~FILENAME_SORTING_GLOB}
+  )
+  if (( #pending_screenshots == 0 )); then
+    # return 66: BSD EX_NOINPUT
+    _sst::err 66 "No screenshots to process in '${input_dir}/'"
+  fi
+
+  local -Ua bg_pids
+
+  local datetime; strftime -s datetime %Y%m%d_%H%M%S
+  readonly archive_name="Screenshots_${datetime}.aar"
+  aa archive ${opts[--verbose]:+-v} -a lz4 \
+    -d "$input_dir" -o "${output_dir}/${archive_name}"\
+    -include-path-list =(print -l -- "${(@)pending_screenshots}") \
+    &>|"${TMPDIR%/}/aa.log" &
+  integer -r aa_pid=$!; bg_pids+=($aa_pid)
+
+  readonly model=${opts[--model]:-$(sysctl -n hw.model)}
+  readonly software=${opts[--software]:-$(sw_vers --productVersion)}
+  local timezone; strftime -s timezone %z
+  readonly timezone=${opts[--timezone]:-$timezone}
+
+  # PERL string replacement patterns that will be used by ExifTool
+  readonly replacement_pattern="Filename;s/${DATETIME_RE}"
+  readonly new_filename_pattern="\${${replacement_pattern}/${FILENAME_REPLACEMENT_RE}/}"
+  readonly new_datetime_pattern="\${${replacement_pattern}/${DATETIME_REPLACEMENT_RE}${timezone}/}"
+
+  exiftool -o . -struct -preserve ${opts[--verbose]:+-verbose} \
+    "-Directory=${output_dir}" \
+    "-Software=${software}"             "-Model=${model}" \
+    "-Filename<${new_filename_pattern}" \
+    "-AllDates<${new_datetime_pattern}" \
+    "-OffsetTime*=${timezone}" \
+    '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth' \
+    '-RawFileName<FileName'             '-PreservedFileName<FileName' \
+    "${(@)arg_files}" \
+    -@ =(print -l -- "${(@)pending_screenshots}") \
+    -- &>|"${TMPDIR%/}/et.log" &
+  integer -r et_pid=$!; bg_pids+=($et_pid)
+
+  {
+    # return 73: BSD EX_CANTCREAT
+    wait $aa_pid || _sst::err 73 'Archiving failed' "$mapfile[${TMPDIR%/}/aa.log]"
+    # return 70: BSD EX_SOFTWARE
+    wait $et_pid || _sst::err 70 'ExifTool failed' "$mapfile[${TMPDIR%/}/et.log]"
+  } always {
+    integer -r status_code=$?
+
+    rm -f -- "${TMPPREFIX}"* 2>/dev/null
+
+    if (( status_code == 0 )); then
+      rm -f -- "${(@)pending_screenshots}" "${TMPDIR%/}"/*.log
+    elif (( status_code > 0 )); then
+      kill ${(@)bg_pids} 2>/dev/null
+      return $status_code
+    fi
+  }
+
+  if (( ${+opts[--verbose]} )); then
+    _sst::log INFO "Processed ${#pending_screenshots} screenshot(s)." \
+      "'${input_dir:t2}/' → '${output_dir:t2}/'"
+  fi
+
+  return 0
+}
 
 ################################################################################
 
@@ -57,7 +200,7 @@ fi
 print -- "${=msg}"
 osascript <<EOF
   display notification "${msg#*: }" \
-  with title "Screenshot Tagger" \
+  with title "${SCRIPT_NAME}" \
   subtitle "${subtitle}" \
   sound name "${sound}"
 EOF

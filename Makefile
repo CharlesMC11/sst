@@ -79,7 +79,7 @@ $(UNINSTALLER): $(CONFIGS) | $(BIN_DIR)/.dirstamp
 		'killall SystemUIServer' > "$@"
 	@chmod 755 "$@"
 
-install: check-ram-disk $(BIN_DIR)/$(MAIN_NAME) $(BIN_DIR)/$(AGENT_NAME) \
+install: check-ram-disk $(BIN_DIR)/$(AGENT_NAME) \
 	$(UNINSTALLER) | $(TMPDIR) $(INPUT_DIR) $(LOG_DIR)
 
 start: $(PLIST_PATH) install

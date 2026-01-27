@@ -25,8 +25,7 @@ This project was originally inspired by finding a way for image cataloging tools
 ## Project Structure
 
 - `Makefile`: For compiling the scripts and building the `.plist`, using Environment Variables as configurations.
-- `sst.zsh`: The core logic for tagging, renaming, and archiving.
-- `sstd.zsh`: A wrapper script called by `launchd` that manages execution locks and calls the engine.
+- `sstd.zsh`: The core logic for tagging, renaming, and archiving.
 - `sst.plist.template`: A launch agent template to automate the script via macOS `WatchPaths`.
 
 ## Installation
