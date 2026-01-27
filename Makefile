@@ -27,7 +27,7 @@ export LOG_FILE         := $(HOME)/Library/Logs/$(RDNN).log
 # Tool Configuration
 MAIN_NAME               := $(SERVICE_NAME)
 export AGENT_NAME       := $(MAIN_NAME)d
-PLIST_TEMPLATE          := template.plist
+PLIST_TEMPLATE          := $(SERVICE_NAME).plist.template
 export PLIST_NAME       := $(RDNN).plist
 PLIST_PATH              := $(HOME)/Library/LaunchAgents/$(PLIST_NAME)
 
