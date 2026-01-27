@@ -104,6 +104,9 @@ clean:
 status:
 	@launchctl list | grep "$(RDNN)" || print -- "'$(SERVICE_NAME)' is not running."
 
+log:
+	@tail -n 1 "$(LOG_FILE)"
+
 open-log:
 	@open "$(LOG_FILE)"
 
