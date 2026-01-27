@@ -1,42 +1,44 @@
 .DELETE_ON_ERROR:
 
+# System Environment
 export SHELL            := $(shell which zsh)
 .SHELLFLAGS             := -fc
-
+export HOMEBREW_PREFIX  := $(shell brew --prefix)
 CONFIGS                 := Makefile
 
-export HOMEBREW_PREFIX  := $(shell brew --prefix)
-export SCRIPT_NAME      := screenshot-tagger
+# Identity
+AUTHOR                  := charlesmc
+export SERVICE_NAME     := sst
+RDNN                    := me.$(AUTHOR).$(SERVICE_NAME)
 
+# Primary Paths
 ROOT_DIR                := /Volumes/Workbench
-WORK_DIR                := $(ROOT_DIR)/$(SCRIPT_NAME)
-
-export BIN_DIR          := $(WORK_DIR)
-export ARG_FILES_DIR    := $(HOME)/.local/share/exiftool
-LOG_DIR                 := $(HOME)/Library/Logs
-export LOG_FILE         := $(LOG_DIR)/me.$(USER).$(SCRIPT_NAME).log
-
-export TMPDIR           := $(WORK_DIR)/tmp
-export TMPPREFIX        := $(TMPDIR)/zsh-
+export BIN_DIR          := $(ROOT_DIR)/$(SERVICE_NAME)
 export INPUT_DIR        := $(ROOT_DIR)/Screenshots
 export OUTPUT_DIR       := $(HOME)/MyFiles/Pictures/Screenshots
+
+# Transient Paths
+export TMPDIR           := $(BIN_DIR)/tmp
+export TMPPREFIX        := $(TMPDIR)/zsh-
 export LOCK_PATH        := $(TMPDIR)/.lock
+export ARG_FILES_DIR    := $(HOME)/.local/share/exiftool
+export LOG_FILE         := $(HOME)/Library/Logs/$(RDNN).log
 
-ENGINE_NAME             := tagger-engine
-export WATCHER_NAME     := screenshot-watcher
-
-PLIST_BASE              := screenshot_tagger.plist
-PLIST_NAME              := me.$(USER).$(PLIST_BASE)
+# Tool Configuration
+MAIN_NAME               := $(SERVICE_NAME)
+export AGENT_NAME       := $(MAIN_NAME)d
+PLIST_TEMPLATE          := template.plist
+export PLIST_NAME       := $(RDNN).plist
 PLIST_PATH              := $(HOME)/Library/LaunchAgents/$(PLIST_NAME)
 
+# Preferences & System Info
 SCREENCAPTURE_PREF      := com.apple.screencapture location
-
 export HW_MODEL         := $(shell system_profiler SPHardwareDataType | \
 							sed -En 's/^.*Model Name: //p')
-
 export EXECUTION_DELAY  :=0.1
 export THROTTLE_INTERVAL:=1
 
+# Commands
 INSTALL                 := install -pv -m 755
 UNINSTALLER             := $(BIN_DIR)/uninstall
 
@@ -64,7 +66,7 @@ $(BIN_DIR)/%: %.zsh $(CONFIGS) | $(BIN_DIR)/.dirstamp
 	@$(INSTALL) "$<" "$@"
 	@zcompile -U "$@"
 
-$(PLIST_PATH): $(PLIST_BASE).template Makefile
+$(PLIST_PATH): $(PLIST_TEMPLATE) $(CONFIGS)
 	@content="$$(<$<)"; print -r -- "$${(e)content}" >| "$@"
 
 $(UNINSTALLER): $(CONFIGS) | $(BIN_DIR)/.dirstamp
@@ -77,7 +79,7 @@ $(UNINSTALLER): $(CONFIGS) | $(BIN_DIR)/.dirstamp
 		'killall SystemUIServer' > "$@"
 	@chmod 755 "$@"
 
-install: check-ram-disk $(BIN_DIR)/$(ENGINE_NAME) $(BIN_DIR)/$(WATCHER_NAME) \
+install: check-ram-disk $(BIN_DIR)/$(MAIN_NAME) $(BIN_DIR)/$(AGENT_NAME) \
 	$(UNINSTALLER) | $(TMPDIR) $(INPUT_DIR) $(LOG_DIR)
 
 start: $(PLIST_PATH) install
@@ -92,15 +94,15 @@ stop:
 	@killall SystemUIServer
 
 uninstall: stop
-	rm -f "$(PLIST_PATH)"
-	rm -rf "$(BIN_DIR)"
+	-rm -f "$(PLIST_PATH)"
+	-rm -rf "$(BIN_DIR)"
 
 clean:
-	rm -f "$(BIN_DIR)"/*.zwc
-	rm -f "$(TMPDIR)"/*
+	-rm -f "$(BIN_DIR)"/*.zwc
+	-rm -f "$(TMPDIR)"/*
 
 status:
-	@launchctl list | grep "$(USER)"
+	@launchctl list | grep "$(RDNN)" || print -- "'$(SERVICE_NAME)' is not running."
 
 open-log:
 	@open "$(LOG_FILE)"
