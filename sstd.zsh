@@ -178,8 +178,8 @@ sst() {
 
 ################################################################################
 
-if [[ $ZSH_EVAL_CONTEXT == (toplevel|shfunc) ]]; then
-  sst "@"
+if [[ $options[interactive] == on ]]; then
+  sst "$@"
   return $?
 fi
 
