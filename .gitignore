@@ -1,5 +1,9 @@
+*
+!*.*
+
 *.plist
 !template.plist
+
 *.zwc
 
 .vscode/
