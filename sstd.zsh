@@ -66,7 +66,7 @@ sst() {
   readonly input_dir=${opts[--input]:-$PWD}
   readonly output_dir=${opts[--output]:-$PWD}
 
-  _sst::log DEBUG 'Checking if directories are valid...'
+  _sst::log DEBUG 'Validating if directories are valid...'
   # return 65: BSD EX_DATAERR
   [[ -d $input_dir ]] || { _sst::err 65 "Input is not a directory: '${input_dir}'" }
   [[ -d $output_dir ]] || { _sst::err 65 "Output is not a directory: '${output_dir}'" }
@@ -74,6 +74,7 @@ sst() {
 
   cd "$input_dir"
 
+  _sst::log DEBUG 'Gathering filenames...'
   local -Ua pending_screenshots
   readonly pending_screenshots=( \
     ${~FILENAME_GLOB}.${~SORT_GLOB} \
@@ -84,6 +85,12 @@ sst() {
     # return 66: BSD EX_NOINPUT
     _sst::err 66 "No screenshots to process in '${input_dir}/'"
   fi
+  local unit=screenshot
+  if (( num_pending > 1 )); then
+    unit+=s
+  fi
+  _sst::log INFO "Processing ${num_pending} ${unit}..."
+  print -l -- "${(@)pending_screenshots}" >| "$SCREENSHOTS_LIST"
 
   local -Ua bg_pids
 
@@ -105,6 +112,7 @@ sst() {
   readonly new_filename_pattern="\${${replacement_pattern}/${FILENAME_REPLACEMENT_RE}/}"
   readonly new_datetime_pattern="\${${replacement_pattern}/${DATETIME_REPLACEMENT_RE}${timezone}/}"
 
+  _sst::log INFO 'Injecting metadata with `ExifTool`...'
   exiftool -o . -struct -preserve ${opts[--verbose]:+-verbose} \
     "-Directory=${output_dir}" \
     "-Software=${software}"             "-Model=${model}" \
@@ -119,6 +127,7 @@ sst() {
   integer -r et_pid=$!; bg_pids+=($et_pid)
 
   {
+    _sst::log DEBUG 'Waiting for archiving and metadata injection to finish...'
     # return 73: BSD EX_CANTCREAT
     wait $aa_pid || _sst::err 73 'Archiving failed' "$mapfile[${TMPDIR%/}/aa.log]"
     # return 70: BSD EX_SOFTWARE
@@ -137,11 +146,7 @@ sst() {
   }
 
   if (( ${+opts[--verbose]} )); then
-    local unit=screenshot
-    if (( num_screenshots > 1 )); then
-      unit+=s
-    fi
-    _sst::log INFO "Processed ${num_screenshots} ${unit}." \
+    _sst::log INFO "Processed ${num_pending} ${unit}." \
       "'${input_dir:t2}/' → '${output_dir:t2}/'"
   fi
 
@@ -159,10 +164,10 @@ integer fd
 exec {fd}>|"${LOCK_PATH}" && trap 'exec {fd}>&-' EXIT
 
 if zsystem flock -t 0 -f $fd "${LOCK_PATH}"; then
-  _sst::log INFO "Lock created in '${LOCK_PATH:h}/'; starting..."
+  _sst::log INFO "Lock acquired; start..."
 else
   # return 75: BSD EX_TEMPFAIL
-  _sst::err 75 "Lock exists in '${LOCK_PATH:h}/'; exiting..."
+  _sst::err 75 "Execution lock; exiting..."
 fi
 
 sleep $EXECUTION_DELAY  # Give time for all screenshots to be written to disk
