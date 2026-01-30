@@ -12,7 +12,7 @@ readonly SCRIPT_NAME=${0:t:r}
 readonly DATE_GLOB='<1900-2199>-<01-12>-<01-31>'
 readonly TIME_GLOB='<00-23>.<00-59>.<00-59>'
 readonly FILENAME_GLOB="Screenshot ${~DATE_GLOB} at ${~TIME_GLOB}"
-readonly FILENAME_SORTING_GLOB='*(.Om)'
+readonly SORT_GLOB='*(.Om)'
 
 readonly DATE_RE='(\d{2})(\d{2})-(\d{2})-(\d{2})'
 readonly TIME_RE='(\d{2})\.(\d{2})\.(\d{2})'
@@ -76,8 +76,8 @@ sst() {
 
   local -Ua pending_screenshots
   readonly pending_screenshots=( \
-    ${~FILENAME_GLOB}.${~FILENAME_SORTING_GLOB} \
-    ${~FILENAME_GLOB}*.${~FILENAME_SORTING_GLOB}
+    ${~FILENAME_GLOB}.${~SORT_GLOB} \
+    ${~FILENAME_GLOB}*.${~SORT_GLOB}
   )
   integer -r num_screenshots=${#pending_screenshots}
   if (( num_screenshots == 0 )); then
