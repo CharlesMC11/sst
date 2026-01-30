@@ -28,23 +28,17 @@ float -r EXECUTION_DELAY=0.2
 # Print a log message
 # $1: The log level: DEBUG | INFO | WARN | ERROR | CRITICAL
 _sst::log() {
-  readonly level=${(U)1}
-  shift
-  local datetime; strftime -s datetime '%F %T%z'
+  readonly level=${(U)1}; shift
+  integer fd=1; [[ $level == (WARN|ERROR) ]] && fd=2
 
-  integer fd=1
-  [[ $level == (WARN|ERROR) ]] && fd=2
-
-  print -u $fd -f "[%s]\t[%s]\t[%s]\t%s\n" -- "$datetime" "${SCRIPT_NAME}:$$" "$level" "$*"
+  print -P -u $fd -f "[%s]\t[%s]\t[%s]\t%s\n" -- "%D{%F %T}" "%x:$$" "$level" "$*"
 }
 
 # Print an error message, then return a status code.
 # $1: The error code to return.
 # $2: The error messages to print.
 _sst::err() {
-  integer -r status_code=$1
-  shift
-
+  integer -r status_code=$1; shift
   _sst::log ERROR $@
 
   return $status_code
