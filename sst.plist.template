@@ -15,7 +15,7 @@
         <key>PATH</key>
         <string>${HOMEBREW_PREFIX}/bin:/usr/bin:/bin</string>
         <key>FPATH</key>
-        <string>${BIN_DIR}:${FPATH}</string>
+        <string>${FUNC_DIR}</string>
 
         <key>INPUT_DIR</key>
         <string>$INPUT_DIR</string>

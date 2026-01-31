@@ -14,6 +14,7 @@ RDNN					:= me.$(AUTHOR).$(SERVICE_NAME)
 # Primary Paths
 ROOT_DIR				:= /Volumes/Workbench
 export BIN_DIR			:= $(ROOT_DIR)/$(SERVICE_NAME)
+export FUNC_DIR			:= $(BIN_DIR)/functions
 export INPUT_DIR		:= $(ROOT_DIR)/Screenshots
 export OUTPUT_DIR		:= $(HOME)/MyFiles/Pictures/Screenshots
 
@@ -40,6 +41,9 @@ export OS_VER			:= $(sw_vers --productVersion)
 export EXECUTION_DELAY	:=0.2
 export THROTTLE_INTERVAL:=3
 
+# Source Files
+FUNC_SRCS				:= $(wildcard src/functions/*.zsh)
+
 # Commands
 INSTALL					:= install -pv -m 755
 UNINSTALLER				:= $(BIN_DIR)/uninstall
@@ -58,15 +62,17 @@ check-ram-disk:
 $(TMPDIR) $(INPUT_DIR) $(LOG_DIR):
 	mkdir -p "$@"
 
-$(BIN_DIR)/.dirstamp:
-	@if [[ -e "$(BIN_DIR)" && ! -d "$(BIN_DIR)" ]]; then \
-		rm "$(BIN_DIR)"; \
-	fi
-	@mkdir -p "$(BIN_DIR)" && touch "$@"
-
 $(BIN_DIR)/%: src/%.zsh $(CONFIGS) | $(BIN_DIR)/.dirstamp
 	@$(INSTALL) "$<" "$@"
 	@zcompile -U "$@"
+
+$(FUNC_DIR).zwc: $(FUNC_SRCS) | $(FUNC_DIR)/.dirstamp
+	@for f in $^; do $(INSTALL) "$$f" "$(FUNC_DIR)/$${f:t:r}"; done
+	@zcompile -U "$@" $^
+
+%/.dirstamp:
+	@if [[ -e "$(@D)" && ! -d "$(@D)" ]]; then rm "$(@D)"; fi
+	@mkdir -p "$(@D)" && touch "$@"
 
 $(PLIST_PATH): $(PLIST_TEMPLATE) $(CONFIGS)
 	@content="$$(<$<)"; print -r -- "$${(e)content}" >| "$@"
@@ -81,7 +87,7 @@ $(UNINSTALLER): $(CONFIGS) | $(BIN_DIR)/.dirstamp
 		'killall SystemUIServer' > "$@"
 	@chmod 755 "$@"
 
-install: check-ram-disk $(BIN_DIR)/$(AGENT_NAME) \
+install: check-ram-disk $(BIN_DIR)/$(AGENT_NAME) $(FUNC_DIR).zwc \
 	$(UNINSTALLER) | $(TMPDIR) $(INPUT_DIR) $(LOG_DIR)
 
 start: $(PLIST_PATH) install
@@ -101,7 +107,8 @@ uninstall: stop
 
 clean:
 	-rm -f "$(BIN_DIR)"/*.zwc
-	-rm -f "$(TMPDIR)"/*
+	-rm -f "$(FUNC_DIR).zwc"
+	-rm -rf "$(TMPDIR)"/*
 
 status:
 	@launchctl list | grep "$(RDNN)" || print -- "'$(SERVICE_NAME)' is not running."
