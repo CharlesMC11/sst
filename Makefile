@@ -4,6 +4,9 @@
 SHELL					:= $(shell which zsh)
 .SHELLFLAGS				:= -fc
 export HOMEBREW_PREFIX	:= $(shell brew --prefix)
+AA						:= $(shell which aa)
+EXIFTOOL				:= $(shell which exiftool)
+OSASCRIPT				:= $(shell which osascript)
 CONFIGS					:= Makefile
 
 # Identity
@@ -48,7 +51,10 @@ FUNC_SRCS				:= $(wildcard src/functions/*.zsh)
 # Commands
 INSTALL					:= install -pv -m 755
 SED_DELETE_WHITESPACE	:= -e '/^[[:space:]]*\#[^!]/d' -e '/^[[:space:]]*$$/d'
-SED_REPLACE				:= -e 's|@@SERVICE_NAME@@|$(SERVICE_NAME)|g' \
+SED_REPLACE				:= -e 's|@@AA@@|$(AA)|g' \
+							-e 's|@@EXIFTOOL@@|$(EXIFTOOL)|g' \
+							-e 's|@@OSASCRIPT@@|$(OSASCRIPT)|g' \
+							-e 's|@@SERVICE_NAME@@|$(SERVICE_NAME)|g' \
 							-e 's|@@FUNC_DIR@@|$(FUNC_DIR)|g' \
 							-e 's|@@TMPDIR@@|$(TMPDIR)|g ' \
 							-e 's|@@INPUT_DIR@@|$(INPUT_DIR)|g' \

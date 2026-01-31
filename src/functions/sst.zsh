@@ -24,12 +24,12 @@ sst() {
   [[ -f $archive_name ]] && aa_cmd=append
 
   sst-log INFO 'Archiving original files in the background...'
-  aa $aa_cmd -v -a lz4 -d "$INPUT_DIR" -o "${OUTPUT_DIR}/${archive_name}"\
+  "$AA" $aa_cmd -v -a lz4 -d "$INPUT_DIR" -o "${OUTPUT_DIR}/${archive_name}"\
     -include-path-list "$PENDING_LIST" &>|"$AA_LOG" &
   integer -r aa_pid=$!; bg_pids+=($aa_pid)
 
   sst-log INFO 'Injecting metadata in the background...'
-  exiftool -o "${OUTPUT_DIR}/${current_month}/" -struct -preserve -verbose \
+  "$EXIFTOOL" -o "${OUTPUT_DIR}/${current_month}/" -struct -preserve -verbose \
     '-RawFileName<FileName'             '-PreservedFileName<FileName' \
     '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth' \
     "-Model=${HW_MODEL}"                "-Software=${OS_VER}" \

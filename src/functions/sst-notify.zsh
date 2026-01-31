@@ -9,5 +9,5 @@ sst-notify(){
   fi
 
   readonly msg="${${(f)mapfile[$LOG_FILE]}[-1]}"
-  osascript -e "display notification \"${msg##*\]?}\" with title \"${SERVICE_NAME}\" subtitle \"${subtitle}\" sound name \"${sound}\""
+  "$OSASCRIPT" -e "display notification \"${msg##*\]?}\" with title \"${SERVICE_NAME}\" subtitle \"${subtitle}\" sound name \"${sound}\""
 }

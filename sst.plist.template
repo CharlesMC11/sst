@@ -12,11 +12,6 @@
         <key>LC_ALL</key>
         <string>en_US.UTF-8</string>
 
-        <key>PATH</key>
-        <string>${HOMEBREW_PREFIX}/bin:/usr/bin:/bin</string>
-        <key>FPATH</key>
-        <string>${FUNC_DIR}</string>
-
         <key>ARG_FILES_DIR</key>
         <string>$ARG_FILES_DIR</string>
     </dict>

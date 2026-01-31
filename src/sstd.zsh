@@ -8,6 +8,9 @@ zmodload -F zsh/mapfile  +p:mapfile
 zmodload -F zsh/system   +b:zsystem
 
 readonly SERVICE_NAME='@@SERVICE_NAME@@'
+readonly AA='@@AA@@'
+readonly EXIFTOOL='@@EXIFTOOL@@'
+readonly OSASCRIPT='@@OSASCRIPT@@'
 
 readonly INPUT_DIR='@@INPUT_DIR@@'
 readonly OUTPUT_DIR='@@OUTPUT_DIR@@'
