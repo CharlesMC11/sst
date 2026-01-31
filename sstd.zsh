@@ -80,8 +80,8 @@ sst() {
     ${~FILENAME_GLOB}.${~SORT_GLOB} \
     ${~FILENAME_GLOB}*.${~SORT_GLOB}
   )
-  integer -r num_screenshots=${#pending_screenshots}
-  if (( num_screenshots == 0 )); then
+  integer -r num_pending=${#pending_screenshots}
+  if (( num_pending == 0 )); then
     # return 66: BSD EX_NOINPUT
     _sst::err 66 "No screenshots to process in '${input_dir}/'"
   fi

@@ -14,6 +14,8 @@
 
         <key>PATH</key>
         <string>${HOMEBREW_PREFIX}/bin:/usr/bin:/bin</string>
+        <key>FPATH</key>
+        <string>${BIN_DIR}:${FPATH}</string>
 
         <key>INPUT_DIR</key>
         <string>$INPUT_DIR</string>
@@ -31,6 +33,8 @@
 
         <key>HW_MODEL</key>
         <string>$HW_MODEL</string>
+        <key>OS_VER</key>
+        <string>$OS_VER</string>
         <key>EXECUTION_DELAY</key>
         <string>$EXECUTION_DELAY</string>
     </dict>
