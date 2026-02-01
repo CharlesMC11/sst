@@ -1,7 +1,8 @@
 .DELETE_ON_ERROR:
 
 # System Environment
-SHELL					:= $(shell which zsh)
+ZSH						:= $(shell which zsh)
+SHELL					:= $(ZSH)
 .SHELLFLAGS				:= -fc
 export HOMEBREW_PREFIX	:= $(shell brew --prefix)
 AA						:= $(shell which aa)
@@ -51,7 +52,8 @@ FUNC_SRCS				:= $(wildcard src/functions/*.zsh)
 # Commands
 INSTALL					:= install -pv -m 755
 SED_DELETE_WHITESPACE	:= -e '/^[[:space:]]*\#[^!]/d' -e '/^[[:space:]]*$$/d'
-SED_REPLACE				:= -e 's|@@AA@@|$(AA)|g' \
+SED_REPLACE				:= -e 's|@@ZSH@@|$(ZSH)|g' \
+							-e 's|@@AA@@|$(AA)|g' \
 							-e 's|@@EXIFTOOL@@|$(EXIFTOOL)|g' \
 							-e 's|@@OSASCRIPT@@|$(OSASCRIPT)|g' \
 							-e 's|@@SERVICE_NAME@@|$(SERVICE_NAME)|g' \

@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/zsh -f
+#!@@ZSH@@ -f
 # A script for adding certain metadata to screenshots, then renaming them.
 
 setopt ERR_EXIT NO_CLOBBER NO_UNSET EXTENDED_GLOB NULL_GLOB NUMERIC_GLOB_SORT
