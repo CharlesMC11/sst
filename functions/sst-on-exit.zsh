@@ -1,4 +1,4 @@
-sst-cleanup() {
+sst-on-exit() {
   sst-log DEBUG 'Moving temporary logs to system log'
 
   exec {log_fd}>&-

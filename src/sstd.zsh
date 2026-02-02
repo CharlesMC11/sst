@@ -30,9 +30,9 @@ float -r EXECUTION_DELAY=@@EXECUTION_DELAY@@
 ################################################################################
 
 fpath=('@@FUNC_DIR@@')
-autoload -Uz sst-cleanup sst-err sst-log sst-notify sst
+autoload -Uz sst-on-exit sst-err sst-log sst-notify sst
 
-trap 'sst-cleanup' EXIT INT TERM
+trap 'sst-on-exit' EXIT INT TERM
 
 [[ -d $TMPDIR ]] || mkdir -p "$TMPDIR"
 

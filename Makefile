@@ -47,7 +47,7 @@ EXECUTION_DELAY			:=0.2
 export THROTTLE_INTERVAL:=3
 
 # Source Files
-FUNC_SRCS				:= $(wildcard src/functions/*.zsh)
+FUNC_SRCS				:= $(wildcard functions/*.zsh)
 
 # Commands
 INSTALL					:= install -pv -m 755
