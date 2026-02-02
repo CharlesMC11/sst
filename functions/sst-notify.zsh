@@ -1,4 +1,4 @@
-sst-notify(){
+sst-notify() {
   integer -r status_code=$1
   if (( status_code == 0 )); then
     subtitle='📷 Success'

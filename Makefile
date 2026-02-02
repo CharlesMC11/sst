@@ -48,6 +48,7 @@ export THROTTLE_INTERVAL:=3
 
 # Source Files
 FUNC_SRCS				:= $(wildcard functions/*.zsh)
+LIB_SRCS				:= $(wildcard lib/*.zsh)
 
 # Commands
 INSTALL					:= install -pv -m 755
@@ -93,10 +94,10 @@ $(BIN_DIR)/%: src/%.zsh $(CONFIGS) | $(BIN_DIR)/.dirstamp
 	@chmod 755 "$@"
 	@zcompile -U "$@"
 
-$(FUNC_DIR).zwc: $(FUNC_SRCS) $(CONFIGS) | $(FUNC_DIR)/.dirstamp
+$(FUNC_DIR).zwc: $(FUNC_SRCS) $(LIB_SRCS) $(CONFIGS) | $(FUNC_DIR)/.dirstamp
 	@print -- "Installing functions in '$(<D)' to '$(@D)'"
-	@for f in $(FUNC_SRCS); do $(INSTALL) "$$f" "$(FUNC_DIR)/$${f:t:r}"; done
-	@zcompile -U "$@" $(FUNC_SRCS)
+	@for f in $(FUNC_SRCS) $(LIB_SRCS); do $(INSTALL) "$$f" "$(FUNC_DIR)/$${f:t:r}"; done
+	@zcompile -U "$@" $(FUNC_SRCS) $(LIB_SRCS)
 
 %/.dirstamp:
 	@if [[ -e "$(@D)" && ! -d "$(@D)" ]]; then rm "$(@D)"; fi

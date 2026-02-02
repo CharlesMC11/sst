@@ -30,7 +30,7 @@ float -r EXECUTION_DELAY=@@EXECUTION_DELAY@@
 ################################################################################
 
 fpath=('@@FUNC_DIR@@')
-autoload -Uz sst-on-exit sst-err sst-log sst-notify sst
+autoload -Uz _cmc_log _cmc_err sst-on-exit sst-notify sst
 
 trap 'sst-on-exit' EXIT INT TERM
 
@@ -40,7 +40,7 @@ exec {log_fd}>>!"$LOG_FILE"
 exec {fd}>|"$LOCK_PATH"
 
 if zsystem flock -t 0 -f $fd "$LOCK_PATH"; then
-  sst-log INFO "Lock acquired; starting..."
+  _cmc_log INFO "Lock acquired; starting..."
 
   sleep $EXECUTION_DELAY  # Give time for all screenshots to be written to disk
 
@@ -48,5 +48,5 @@ if zsystem flock -t 0 -f $fd "$LOCK_PATH"; then
   sst-notify $?
 else
   # return 75: BSD EX_TEMPFAIL
-  sst-err 75 "Execution lock; exiting..."
+  _cmc_err 75 "Execution lock; exiting..."
 fi
