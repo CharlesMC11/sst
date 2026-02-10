@@ -1,8 +1,8 @@
 _sst() {
   : >!"$PROCESSED_LIST" >!"$EXIFTOOL_LOG" >!"$AA_LOG"
 
-  readonly current_month="${(%):-%D{%Y-%m}"
-  readonly exiftool_args=(
+  local -r current_month="${(%):-%D{%Y-%m}"
+  local -r exiftool_args=(
     -stay_open True -@ "$PENDING_LIST" -common_args -struct -preserve -verbose
     -o "${OUTPUT_DIR}/${current_month}/"
     '-RawFileName<FileName'             '-PreservedFileName<FileName'
@@ -63,7 +63,7 @@ _sst() {
     _cmc_log INFO "Submitted ${count} ${unit} to ExifTool:${et_pid}"
     grep -q "$INPUT_DIR" "$PENDING_LIST" >! "${TMPDIR}/processed.txt"
 
-    readonly archive_name="Screenshots_${current_month}.aar"
+    local -r archive_name="Screenshots_${current_month}.aar"
     local aa_cmd=archive
     if [[ -f $archive_name ]]; then
       aa_cmd=update
