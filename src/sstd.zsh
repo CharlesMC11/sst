@@ -5,7 +5,7 @@ setopt ERR_EXIT NO_CLOBBER NO_UNSET EXTENDED_GLOB NULL_GLOB NUMERIC_GLOB_SORT
 zmodload -F zsh/datetime +b:strftime
 zmodload -F zsh/files    +b:rm
 zmodload -F zsh/mapfile  +p:mapfile
-zmodload -F zsh/system   +b:zsystem
+zmodload -F zsh/system   +b:sysread +b:zsystem
 
 readonly SERVICE_NAME='@@SERVICE_NAME@@'
 readonly AA='@@AA@@'
