@@ -12,7 +12,6 @@ _sst() {
   local unit='screenshot'
   if (( pending_count > 1 )); then unit+='s'; fi
 
-
   local -r current_month="${(%):-%D{%Y-%m}"
   local -r archive_name="Screenshots_${current_month}.aar"
   local -r exiftool_args=(
