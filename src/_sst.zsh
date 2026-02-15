@@ -14,14 +14,19 @@ _sst() {
 
   local -r current_month="${(%):-%D{%Y-%m}"
   local -r archive_name="Screenshots_${current_month}.aar"
+
+  local -r timezone="${(%):-%D{%z}"
+  local -r new_datetime_pattern="\${${REPLACEMENT_PATTERN}/${DATETIME_REPLACEMENT_RE}${timezone}/}"
+  local -r new_filename_pattern="\${${REPLACEMENT_PATTERN}/${FILENAME_REPLACEMENT_RE}/}"
+
   local -r exiftool_args=(
     -struct -preserve -verbose
     -o "${OUTPUT_DIR}/${current_month}/"
     '-RawFileName<FileName'             '-PreservedFileName<FileName'
     '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth'
     "-Model=${HW_MODEL}"                "-Software=${OS_VER}"
-    "-OffsetTime*=${(%):-%D{%z}"        '-AllDates<FileModifyDate'
-    -d '%y%m%d_%H%M%S'                  '-Filename<${FileModifyDate}%-c.%e'
+    "-OffsetTime*=${timezone}"          "-AllDates<${new_datetime_pattern}"
+    "-Filename<${new_filename_pattern}%-c.%e"
     -@ "${ARG_FILES_DIR}/charlesmc.args"
     -@ "${ARG_FILES_DIR}/screenshot.args"
   )

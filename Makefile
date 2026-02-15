@@ -41,6 +41,15 @@ PLIST_PATH				:= $(HOME)/Library/LaunchAgents/$(PLIST_NAME)
 
 # Preferences & System Info
 SCREENCAPTURE_PREF		:= com.apple.screencapture location
+
+PREFIX_RE				:= (?:Screenshot)
+DATE_RE					:= (\\d{2})(\\d{2})-(\\d{2})-(\\d{2})
+TIME_RE					:= (\\d{2})\\.(\\d{2})\\.(\\d{2})
+DATETIME_RE				:= ^$(PREFIX_RE) $(DATE_RE) at $(TIME_RE).+$$
+DATETIME_REPLACEMENT_RE	:= $$1$$2:$$3:$$4 $$5:$$6:$$7
+FILENAME_REPLACEMENT_RE	:= $$2$$3$$4_$$5$$6$$7
+REPLACEMENT_PATTERN		:= Filename;s/$(DATETIME_RE)
+
 HW_MODEL				:= $(shell system_profiler SPHardwareDataType | \
 							sed -En 's/^.*Model Name: //p')
 PERFORMANCE_CORE_COUNT	:= $(shell sysctl -n hw.perflevel0.physicalcpu)
@@ -71,6 +80,9 @@ SED_REPLACE				:= -e 's|@@ZSH@@|$(ZSH)|g' \
 							-e 's|@@AA_LOG@@|$(AA_LOG)|g' \
 							-e 's|@@EXIFTOOL_LOG@@|$(EXIFTOOL_LOG)|g' \
 							-e 's|@@SYSTEM_LOG@@|$(SYSTEM_LOG)|g' \
+							-e 's|@@REPLACEMENT_PATTERN@@|$(REPLACEMENT_PATTERN)|g' \
+							-e 's|@@DATETIME_REPLACEMENT_RE@@|$(DATETIME_REPLACEMENT_RE)|g' \
+							-e 's|@@FILENAME_REPLACEMENT_RE@@|$(FILENAME_REPLACEMENT_RE)|g' \
 							-e 's|@@HW_MODEL@@|$(HW_MODEL)|g' \
 							-e 's|@@PERFORMANCE_CORE_COUNT@@|$(PERFORMANCE_CORE_COUNT)|g' \
 							-e 's|@@OS_VER@@|$(OS_VER)|g' \
