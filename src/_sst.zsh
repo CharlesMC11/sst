@@ -41,24 +41,12 @@ _sst() {
     else
       _cmc_log INFO 'Processing in parallel'
 
-      integer shard_size=$(( (pending_count + PERFORMANCE_CORE_COUNT - 1) / \
-        PERFORMANCE_CORE_COUNT ))
+      # "$OSASCRIPT" -e "display notification \
+      #   \"Processing ${pending_count} ${unit} in parallel\" with title \
+      #   \"$SERVICE_NAME\" sound name \"Glass\""
 
-      integer offset
-      local -Ua shard_list
-      for (( i=0; i < PERFORMANCE_CORE_COUNT; i++ )); do
-        offset=$(( shard_size * i ))
-        shard_list=( "${(@)pending_screenshots:$offset:$shard_size}" )
-
-        _cmc_log INFO "Shard $(( i + 1 )): Processing ${#shard_list} ${unit}"
-
-        (
-          "$EXIFTOOL" "${(@)exiftool_args}" -- "${(@)shard_list}" \
-          &>>!"$EXIFTOOL_LOG"
-        ) &
-      done
-      _cmc_log INFO 'Waiting for all shards to finish'
-      wait
+      zargs -P $PERFORMANCE_CORE_COUNT -- "${(@)pending_screenshots}" -- \
+        "$EXIFTOOL" "${(@)exiftool_args}" --
     fi
 
     print -l -- "${(@)pending_screenshots:t}" >>! "$PROCESSED_LIST"

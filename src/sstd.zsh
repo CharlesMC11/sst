@@ -35,8 +35,8 @@ float -r EXECUTION_DELAY=@@EXECUTION_DELAY@@
 
 ################################################################################
 
-fpath=('@@FUNC_DIR@@')
-autoload -Uz _cmc_log _cmc_err cmc_ls_images _sst _sst_notify _sst_on_exit
+fpath=('@@FUNC_DIR@@' "${(@)fpath}")
+autoload -Uz _cmc_log _cmc_err _sst _sst_notify _sst_on_exit zargs
 
 trap '_sst_on_exit' EXIT INT TERM
 
