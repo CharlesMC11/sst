@@ -15,6 +15,10 @@ AUTHOR					:= charlesmc
 SERVICE_NAME			:= sst
 RDNN					:= me.$(AUTHOR).$(SERVICE_NAME)
 
+BUILD_DIR				:= ./build
+CC						:= clang
+CFLAGS					:= -std=c23 -Wall -Wextra -Wpedantic -O2 -Os
+
 # Primary Paths
 ROOT_DIR				:= /Volumes/Workbench
 export BIN_DIR			:= $(ROOT_DIR)/$(SERVICE_NAME)
@@ -102,6 +106,12 @@ check-ram-disk:
 		print -- '"$(ROOT_DIR)" is not loaded'; \
 		exit 78; \
 	fi
+
+$(BUILD_DIR)/cmc_ls_images: $(BUILD_DIR)/has_image_magic.o $(BUILD_DIR)/cmc_ls_images.o
+	$(CC) $^ -o $@
+
+$(BUILD_DIR)/%.o: ./ext/%.c | $(BUILD_DIR)/.dirstamp
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(TMPDIR) $(INPUT_DIR) $(LOG_DIR):
 	mkdir -p "$@"
