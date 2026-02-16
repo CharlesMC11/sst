@@ -10,6 +10,7 @@ _has_image_magic:
 
 	// Open
 	mov	x1, #0			// O_RDONLY
+	movk	x1, #0x100, lsl #16	// O_CLOEXEC
 	bl	_open
 	cmp	x0, #0
 	b.lt	.L_error
@@ -32,12 +33,12 @@ _has_image_magic:
 	cmp	x20, #8
 	b.ne	.L_error
 
-	// Load data
-	ldr	x0, [sp, #8]
-	adrp	x1, l_png_magic@PAGE
-	ldr	x1, [x1, l_png_magic@PAGEOFF]
+	// PNG Magic: 0x0A1A0A0D474E5089
+	movz	x1, #0x5089		// Load low 16 bits
+	movk	x1, #0x474E, lsl #16	// Shift and "keep"
+	movk	x1, #0x0A0D, lsl #32
+	movk	x1, #0x0A1A, lsl #48
 
-	// Compare
 	cmp	x0, x1
 	cset	w0, eq
 	b	.L_done
@@ -49,9 +50,3 @@ _has_image_magic:
 	ldp	x19, x20, [sp, #16]
 	ldp	x29, x30, [sp], #32
 	retaa
-
-.section __TEXT,__const
-.p2align 3
-
-l_png_magic:
-	.quad	0x0A1A0A0D474E5089
