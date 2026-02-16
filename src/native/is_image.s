@@ -16,34 +16,33 @@ _is_image:
 
 	// Check if regular file
 	mov	x19, x0				// const struct dirent* entry
-	ldrb	w0, [x19, #20]
+	ldrb	w0, [x19, #20]			// d_type
 	cmp	w0, #8				// DT_REG
 	b.ne	.L_false
 
+	// Construct absolute path
 	add	x20, x19, #21			// entry->d_name
 
-	// Construct absolute path
-	add	x0, sp, #32
+	add	x0, sp, #32			// target buffer
 	adrp	x1, _g_input_absolute_path@GOTPAGE
 	ldr	x1, [x1, _g_input_absolute_path@GOTPAGEOFF]
 
-.L_copy_base: // strcpy
+.L_copy_dirname:				// Manual strcpy
 	ldrb	w2, [x1], #1
-	cbz	w2, .L_add_slash
+	cbz	w2, .L_add_separator
 	strb	w2, [x0], #1
-	b	.L_copy_base
+	b	.L_copy_dirname
 
-.L_add_slash:
-	mov	w2, #47				// '/'
+.L_add_separator:
+	mov	w2, #47				// ASCII '/'
 	strb	w2, [x0], #1
 
-.L_copy_name:
-	// Copy filename
+.L_copy_filename:
 	ldrb	w2, [x20], #1
 	strb	w2, [x0], #1
-	cbnz	w2, .L_copy_name
+	cbnz	w2, .L_copy_filename
 
-	// Open
+	// Open file
 	add	x0, sp, #32
 	mov	x1, #0				// O_RDONLY
 	movk	x1, #0x100, lsl #16		// O_CLOEXEC
@@ -53,14 +52,13 @@ _is_image:
 	mov	w19, w0
 
 	// Read file
-	mov	w0, w19
 	add	x1, sp, #1088		// buffer
 	mov	x2, #12			// bytes count
 	bl	_read
 	mov	x20, x0
 
 	// Close file
-	mov	w0, w19			// grab the fd
+	mov	w0, w19
 	bl	_close
 
 	// Check if 12 bytes
