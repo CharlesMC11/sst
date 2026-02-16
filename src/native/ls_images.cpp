@@ -1,43 +1,49 @@
+#include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sysexits.h>
+#include <unistd.h>
 
+#include <algorithm>
 #include <iostream>
+#include <vector>
 
-#include "img_utils.h"
+#include "compare_filenames.hpp"
 
-char g_input_absolute_path[PATH_MAX];
-
-struct DirectoryList {
-  dirent** entries = nullptr;
-  int count = 0;
-
-  ~DirectoryList() {
-    for (int i = 0; i < count; ++i) free(entries[i]);
-    free(entries);
-  }
-};
+extern "C" int is_image(int fd);
 
 int main(const int argc, const char* argv[]) {
-  DirectoryList list;
+  char input_absolute_path[PATH_MAX];
 
-  if (realpath((argc >= 2) ? argv[1] : ".", g_input_absolute_path) == NULL)
+  if (realpath((argc >= 2) ? argv[1] : ".", input_absolute_path) == nullptr)
     return EX_NOINPUT;
 
-  list.count =
-      scandir(g_input_absolute_path, &list.entries, is_image, d_name_cmp);
-  if (list.count <= 0) {
-    std::cerr << "Error scanning directory\n";
+  int dfd{open(input_absolute_path, O_RDONLY | O_DIRECTORY)};
+  if (dfd < 0) return EX_NOINPUT;
 
-    if (list.count == 0 || errno == ENOENT) return EX_NOINPUT;
-    if (errno == EACCES) return EX_NOPERM;
-    return EX_OSERR;
+  std::vector<std::string> list;
+
+  DIR* dirp{fdopendir(dfd)};
+  dirent* entry;
+  while ((entry = readdir(dirp)) != nullptr) {
+    int fd{openat(dfd, entry->d_name, O_RDONLY | O_CLOEXEC)};
+    if (fd < 0) continue;
+
+    if (is_image(fd)) {
+      list.emplace_back(entry->d_name);
+    }
+    close(fd);
   }
+  closedir(dirp);
 
-  for (int i = 0; i < list.count; ++i)
-    std::cout << g_input_absolute_path << '/' << list.entries[i]->d_name
-              << '\n';
+  std::sort(list.begin(), list.end(), compare_filenames);
+
+  for (const auto& p : list) {
+    std::cout << input_absolute_path << '/' << p << '\n';
+  }
 
   return EX_OK;
 }

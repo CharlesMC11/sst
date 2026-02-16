@@ -22,11 +22,18 @@ CXX						:= xcrun clang++
 ARCH_FLAGS				:= -arch arm64 -march=native
 SEC_FLAGS				:= -mbranch-protection=standard \
 							-fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE
-OPT_FLAGS				:= -O2 -Oz -flto=thin -DNDEBUG
+OPT_FLAGS				:= -flto=thin
 WARN_FLAGS				:= -Wall -Wextra -Wpedantic
 DEP_FLAGS				:= -MMD -MP
 
 LDFLAGS					:= -Wl,-S -Wl,-dead_strip, -Wl,-no_warn_duplicate_libraries, -Wl,-pie
+
+DEBUG					?= 0
+ifeq ($(DEBUG), 1)
+	OPT_FLAGS += -g -O0 -DDEBUG_MODE
+else
+	OPT_FLAGS += -O2 -Oz -DNDEBUG
+endif
 
 COMMON_FLAGS			:= $(ARCH_FLAGS) $(OPT_FLAGS) $(SEC_FLAGS)
 CFLAGS					:= -std=c23 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS)
@@ -88,8 +95,8 @@ FUNC_SRCS				:= $(wildcard $(FUNC_SRC_DIR)/_*.zsh)
 C_SRCS					:= $(wildcard $(NATIVE_SRC_DIR)/*.c)
 CXX_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.cpp)
 ASM_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.s)
-OBJS					:= $(OBJ_DIR)/ls_images.o $(OBJ_DIR)/d_name_cmp.o \
-							$(OBJ_DIR)/is_image.o
+OBJS					:= $(OBJ_DIR)/ls_images.o $(OBJ_DIR)/is_image.o \
+							$(OBJ_DIR)/compare_filenames.o
 
 # Commands
 INSTALL					:= install -pv -m 755
