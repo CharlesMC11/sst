@@ -1,19 +1,16 @@
-#include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sysexits.h>
-#include <unistd.h>
 
 #include <algorithm>
 #include <iostream>
+#include <string>
 #include <vector>
 
-#include "compare_filenames.hpp"
+#include "Scanner.hpp"
+#include "Sorter.hpp"
 
-extern "C" bool is_image(int fd);
+uint32_t collect_images(const char* dirname, std::vector<std::string>& list);
 
 int main(const int argc, const char* argv[]) {
   char input_absolute_path[PATH_MAX];
@@ -21,31 +18,19 @@ int main(const int argc, const char* argv[]) {
   if (realpath((argc >= 2) ? argv[1] : ".", input_absolute_path) == nullptr)
     return EX_NOINPUT;
 
-  int dfd{open(input_absolute_path, O_RDONLY | O_DIRECTORY)};
-  if (dfd < 0) return EX_NOINPUT;
-
   std::vector<std::string> list;
+  try {
+    const auto result{sst::scanner::collect_images(input_absolute_path, list)};
+    if (result > 0) return result;
 
-  DIR* dirp{fdopendir(dfd)};
-  dirent* entry;
-  while ((entry = readdir(dirp)) != nullptr) {
-    if (entry->d_type != DT_REG) continue;
-
-    int fd{openat(dfd, entry->d_name, O_RDONLY | O_CLOEXEC)};
-    if (fd < 0) continue;
-
-    if (is_image(fd)) {
-      list.emplace_back(entry->d_name);
-    }
-    close(fd);
+    std::sort(list.begin(), list.end(), sst::sorter::natural_sort);
+  } catch (const std::bad_alloc& e) {
+    std::cerr << "Memory exhaustion: " << e.what() << '\n';
+    return EX_OSERR;
   }
-  closedir(dirp);
 
-  std::sort(list.begin(), list.end(), compare_filenames);
-
-  for (const auto& p : list) {
+  for (const auto& p : list)
     std::cout << input_absolute_path << '/' << p << '\n';
-  }
 
   return EX_OK;
 }

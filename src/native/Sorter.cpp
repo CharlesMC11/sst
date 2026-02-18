@@ -1,10 +1,12 @@
-#include "compare_filenames.hpp"
+#include "Sorter.hpp"
 
 #include <algorithm>
 #include <charconv>
 #include <string_view>
 
-bool compare_filenames(std::string_view s1, std::string_view s2) {
+namespace sst::sorter {
+
+bool natural_sort(std::string_view s1, std::string_view s2) {
   const auto [it1,
               it2]{std::mismatch(s1.begin(), s1.end(), s2.begin(), s2.end())};
   if (it1 == s1.end() && it2 == s2.end()) return false;
@@ -41,3 +43,5 @@ bool compare_filenames(std::string_view s1, std::string_view s2) {
   if (s1.empty() && s2.empty()) return false;
   return s1.empty();
 }
+
+}  // namespace sst::sorter

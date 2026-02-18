@@ -1,9 +1,9 @@
-.DELETE_ON_ERROR:
-
 # System Environment
 ZSH						:= $(shell which zsh)
 SHELL					:= $(ZSH)
 .SHELLFLAGS				:= -fc
+.DELETE_ON_ERROR:
+
 export HOMEBREW_PREFIX	:= $(shell brew --prefix)
 AA						:= $(shell which aa)
 EXIFTOOL				:= $(shell which exiftool)
@@ -11,8 +11,8 @@ OSASCRIPT				:= $(shell which osascript)
 CONFIGS					:= Makefile
 
 # Identity
-AUTHOR					:= charlesmc
 SERVICE_NAME			:= sst
+AUTHOR					:= charlesmc
 RDNN					:= me.$(AUTHOR).$(SERVICE_NAME)
 
 # Toolchain
@@ -37,14 +37,20 @@ endif
 
 COMMON_FLAGS			:= $(ARCH_FLAGS) $(OPT_FLAGS) $(SEC_FLAGS)
 CFLAGS					:= -std=c23 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS)
-CXXFLAGS				:= -std=c++26 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS) -fno-exceptions -fno-rtti
-ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS) -g
+CXXFLAGS				:= -std=c++26 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS) -fno-rtti
+ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS)
 
 # Primary Paths
-ROOT_DIR				:= /Volumes/Workbench
-export BIN_DIR			:= $(ROOT_DIR)/$(SERVICE_NAME)
+BUILD_DIR				:= ./build
+OBJ_DIR					:= ./obj
+SRC_DIR					:= ./src
+FUNC_SRC_DIR			:= $(SRC_DIR)/functions
+NATIVE_SRC_DIR			:= $(SRC_DIR)/native
+
+WORKBENCH				:= /Volumes/Workbench
+export BIN_DIR			:= $(WORKBENCH)/$(SERVICE_NAME)
 export FUNC_DIR			:= $(BIN_DIR)/functions
-export INPUT_DIR		:= $(ROOT_DIR)/Screenshots
+export INPUT_DIR		:= $(WORKBENCH)/Screenshots
 OUTPUT_DIR				:= $(HOME)/MyFiles/Pictures/Screenshots
 
 # Transient Paths
@@ -85,18 +91,13 @@ EXECUTION_DELAY			:=0.2
 export THROTTLE_INTERVAL:=3
 
 # Source Files
-BUILD_DIR				:= ./build
-OBJ_DIR					:= ./obj
-SRC_DIR					:= ./src
-FUNC_SRC_DIR			:= $(SRC_DIR)/functions
-NATIVE_SRC_DIR			:= $(SRC_DIR)/native
 
 FUNC_SRCS				:= $(wildcard $(FUNC_SRC_DIR)/_*.zsh)
 C_SRCS					:= $(wildcard $(NATIVE_SRC_DIR)/*.c)
 CXX_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.cpp)
 ASM_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.s)
-OBJS					:= $(OBJ_DIR)/ls_images.o $(OBJ_DIR)/is_image.o \
-							$(OBJ_DIR)/compare_filenames.o
+OBJS					:= $(OBJ_DIR)/ls_images.o $(OBJ_DIR)/Signatures.o \
+							$(OBJ_DIR)/Sorter.o
 
 # Commands
 INSTALL					:= install -pv -m 755
@@ -116,8 +117,8 @@ all: start
 
 check-ram-disk:
 # return 78: BSD EX_CONFIG
-	@if [[ ! -d "$(ROOT_DIR)" ]]; then \
-		print -- '"$(ROOT_DIR)" is not loaded'; \
+	@if [[ ! -d "$(WORKBENCH)" ]]; then \
+		print -- '"$(WORKBENCH)" is not loaded'; \
 		exit 78; \
 	fi
 
