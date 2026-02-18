@@ -13,7 +13,7 @@
 
 #include "compare_filenames.hpp"
 
-extern "C" int is_image(int fd);
+extern "C" bool is_image(int fd);
 
 int main(const int argc, const char* argv[]) {
   char input_absolute_path[PATH_MAX];
@@ -29,6 +29,8 @@ int main(const int argc, const char* argv[]) {
   DIR* dirp{fdopendir(dfd)};
   dirent* entry;
   while ((entry = readdir(dirp)) != nullptr) {
+    if (entry->d_type != DT_REG) continue;
+
     int fd{openat(dfd, entry->d_name, O_RDONLY | O_CLOEXEC)};
     if (fd < 0) continue;
 
