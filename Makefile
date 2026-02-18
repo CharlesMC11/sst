@@ -64,7 +64,9 @@ PLIST_TEMPLATE			:= $(SERVICE_NAME).plist.template
 export PLIST_NAME		:= $(RDNN).plist
 PLIST_PATH				:= $(HOME)/Library/LaunchAgents/$(PLIST_NAME)
 
-# Metadata
+# Preferences & System Info
+SCREENCAPTURE_PREF		:= com.apple.screencapture location
+
 PREFIX_RE				:= (?:Screenshot)
 DATE_RE					:= (\\d{2})(\\d{2})-(\\d{2})-(\\d{2})
 TIME_RE					:= (\\d{2})\\.(\\d{2})\\.(\\d{2})
@@ -73,14 +75,10 @@ DATETIME_REPLACEMENT_RE	:= $$1$$2:$$3:$$4 $$5:$$6:$$7
 FILENAME_REPLACEMENT_RE	:= $$2$$3$$4_$$5$$6$$7
 REPLACEMENT_PATTERN		:= Filename;s/$(DATETIME_RE)
 
-# System Info
-SCREENCAPTURE_PREF		:= com.apple.screencapture location
 HW_MODEL				:= $(shell system_profiler SPHardwareDataType | \
 							sed -En 's/^.*Model Name: //p')
 PERFORMANCE_CORE_COUNT	:= $(shell sysctl -n hw.perflevel0.physicalcpu)
 OS_VER					:= $(shell sw_vers --productVersion)
-
-# Preferences
 EXECUTION_DELAY			:=0.2
 export THROTTLE_INTERVAL:=3
 
