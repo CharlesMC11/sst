@@ -1,35 +1,42 @@
 # sst (Screenshot Tagger)
 
-A Zsh-based automation suite optimized for Apple Silicon. It leverages a RAM-disk–to–SSD pipeline, injects professional photography metadata to screenshots, and archives the originals using Apple Archive.
+A high-performance automation suite optimized for Apple Silicon. It leverages a RAM-disk–to–SSD pipeline, injects professional photography metadata to screenshots, and archives the originals using Apple Archive.
 
 ## Motivation
 
-This project was originally inspired by finding a way for image cataloging tools such as **Lightroom Classic** and **Capture One** to treat screenshots of video calls with my girlfriend as legitimate photos taken with a camera.
+This project was originally born from a desire for image cataloging tools such as **Lightroom Classic** and **Capture One** to treat screenshots of video calls with my girlfriend as legitimate photos taken with a camera.
 
-Eventually, this also evolved into a project for me to explore macOS-native performance: utilizing RAM disks for transient files, `Zsh Word Code` for execution speed, and `launchd` for automation.
+Eventually, this also evolved into deep-dive study into Unix systems programming, AArch64 assembly, and modern C++.
 
 ## Architecture & Performance
 
 Designed specifically for my M2 Max MacBook Pro with 96 GB RAM, the suite utilizes:
 
-- **RAM Disk Pipeline**: Uses a 16 GiB RAM disk (`/Volumes/Workbench`) for high-frequency transient data (locking, temporary logging, and process files) to reduce SSD wear.
-- **Native Efficiency**: Compiles scripts to `Zsh Word Code` (`.zwc`) during installation.
+- **Kernel Interfacing**: Implements `openat(2)`, `fdopendir(3)`, and `fcntl(2)` with `F_NOCACHE` to bypass macOS page cache and interact directly with my 16 GiB RAM disk.
+- **AArch64**: A handwritten assembly core (`Signatures.s`) that performs magic-byte validation directly in CPU registers.
+- **C++ 26**: Uses the latest C++ standards (`std::expected` and `std::string_view`) and strict memory alignment (`alignas(16)`) to ensure atomic data transfers between the system and hardware.
+
+- **Transient Layer**: A 16 GiB RAM disk (`/Volumes/Workbench`) handling all I/O to eliminate SSD wear.
+- **Logic Layer**: A hybrid C++/Assembly scanner that identifies images.
+- **Automation Layer**: A `launchd` agent monitoring `$INPUT_DIR`, dispatching `exiftool` and `aa` (Apple Archive) as background parallel processes.
+
+- **Strict Execution**: Zsh code compiled to `.zwc` (Zsh Word Code) and executed with `ERR_EXIT` and `NO_UNSET` for industrial reliability.
 - **Atomic Execution**: Uses `zsystem flock` to prevent race conditions when mutiple screenshots are taken in succession.
 - **Apple Archive (`.aar`)**: Utilizes native Apple Silicon compression (`lz4`) to archive original files after processing.
-- **Strict Execution**: Uses `setopt NO_UNSET` and `ERR_EXIT` to ensure daemon fails safely and loudly if the environment is misconfigured.
 
 ## Features
 
 - **Photography Metadata**: Injects `Model`, `Software`, `DateTime`, and `OffsetTime` tags via `ExifTool`.
 - **Professional Naming**: Standardizes filenames to `YYMMDD_HHMMSS` based on internal capture timestamp.
-- **Background Parallelism**: Dispatches `aa` and `exiftool` as background processes to minimize blocking time of the main daemon loop.
+- **Background Parallelism**: Dispatches `exiftool` and `aa` as background processes to minimize blocking time of the main daemon loop.
 - **Native Notifications**: Real-time status updates via macOS Notifications Center.
 
 ## Project Structure
 
 - `Makefile`: The build system. "Bakes" configuration constants directly into scripts to satisfy strict shell parameters.
 - `sstd.zsh`: The core daemon. Handles the lifecycle of the screenshot processing.
-- `functions/`: Autoloaded Zsh functions for modular logging, error-handling, and cleanup.
+- `src/functions/`: Autoloaded Zsh functions for modular logging, error-handling, and cleanup.
+- `src/native/`: C++/Assembly scanner that identifies images.
 - `sst.plist.template`: Generates the launch agent that monitors `$INPUT_DIR`.
 
 ## Installation
