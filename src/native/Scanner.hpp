@@ -1,11 +1,14 @@
 #pragma once
 
 #include <cstdint>
+#include <expected>
 #include <string>
 #include <vector>
 
 namespace sst::scanner {
 
-uint32_t collect_images(const char* dirname, std::vector<std::string>& list);
+using ScanResult = std::expected<std::vector<std::string>, uint32_t>;
+
+ScanResult collect_images(const char dirname[]);
 
 }  // namespace sst::scanner

@@ -6,22 +6,25 @@
 #include <unistd.h>
 
 #include <cstdint>
+#include <exception>
+#include <expected>
 
 #include "Signatures.h"
 
 namespace sst::scanner {
 
-uint32_t collect_images(const char* dirname, std::vector<std::string>& list) {
+ScanResult collect_images(const char dirname[]) {
   int dfd{open(dirname, O_RDONLY | O_DIRECTORY)};
-  if (dfd < 0) return EX_NOINPUT;
+  if (dfd < 0) return std::unexpected{EX_NOINPUT};
 
   DIR* dirp{fdopendir(dfd)};
   if (dirp == nullptr) {
     close(dfd);
-    return EX_NOINPUT;
+    return std::unexpected{EX_NOINPUT};
   }
 
   dirent* entry;
+  std::vector<std::string> list;
   while ((entry = readdir(dirp)) != nullptr) {
     if (entry->d_type != DT_REG) continue;
 
@@ -36,14 +39,20 @@ uint32_t collect_images(const char* dirname, std::vector<std::string>& list) {
       continue;
     }
 
-    if (sst::signatures::is_image(buffer)) {
-      list.emplace_back(entry->d_name);
+    if (signatures::is_image(buffer)) {
+      try {
+        list.emplace_back(entry->d_name);
+      } catch (const std::bad_alloc& e) {
+        close(fd);
+        closedir(dirp);
+        return std::unexpected{EX_OSERR};
+      }
     }
     close(fd);
   }
   closedir(dirp);
 
-  return EX_OK;
+  return list;
 }
 
 }  // namespace sst::scanner

@@ -16,16 +16,11 @@ int main(const int argc, const char* argv[]) {
   if (realpath((argc >= 2) ? argv[1] : ".", input_absolute_path) == nullptr)
     return EX_NOINPUT;
 
-  std::vector<std::string> list;
-  try {
-    const auto result{sst::scanner::collect_images(input_absolute_path, list)};
-    if (result > 0) return result;
+  auto result{sst::scanner::collect_images(input_absolute_path)};
+  if (!result) return result.error();
 
-    std::sort(list.begin(), list.end(), sst::sorter::natural_sort);
-  } catch (const std::bad_alloc& e) {
-    std::cerr << "Memory exhaustion: " << e.what() << '\n';
-    return EX_OSERR;
-  }
+  auto& list{result.value()};
+  std::sort(list.begin(), list.end(), sst::sorter::natural_sort);
 
   for (const auto& p : list)
     std::cout << input_absolute_path << '/' << p << '\n';
