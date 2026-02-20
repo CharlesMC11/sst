@@ -14,26 +14,22 @@ _is_image:
     movk    x11, #0x0A0D, lsl #32
     movk    x11, #0x0A1A, lsl #48
     cmp     x9, x11
-    b.eq    .L_true
 
     // JPEG: FF D8 FF
     ubfx    w11, w9, #0, #24
     movz    w12, #0xD8FF
     movk    w12, #0x00FF, lsl #16
-    cmp     w11, w12
-    b.eq    .L_true
+    ccmp    w11, w12, #4, ne
 
     // TIFF: 'II' (49 49 2A 00) or 'MM'(4D 4D 00 2A)
     ubfx    w11, w9, #0, #32
     movz    w12, #0x4949                // 'II'
     movk    w12, #0x002A, lsl #16
-    cmp     w11, w12
-    b.eq    .L_true
+    ccmp    w11, w12, #4, ne
 
     movz    w12, #0x4D4D                // 'MM'
     movk    w12, #0x2A00, lsl #16
-    cmp     w11, w12
-    b.eq    .L_true
+    ccmp    w11, w12, #4, ne
 
     // HEIF: 'ftypmif1' or 'ftypheic' at offset 4
     extr    x11, x10, x9, #32
@@ -41,22 +37,19 @@ _is_image:
     movk    x12, #0x7079, lsl #16       // 'yp'
     movk    x12, #0x696D, lsl #32       // 'mi'
     movk    x12, #0x3166, lsl #48       // 'f1'
-    cmp     x11, x12
-    b.eq    .L_true
+    ccmp    x11, x12, #4, ne
 
     movk    x12, #0x6568, lsl #32       // 'he'
     movk    x12, #0x6369, lsl #48       // 'ic'
-    cmp     x11, x12
+    ccmp    x11, x12, #4, ne
+
     b.eq    .L_true
 
-.L_false:
-    mov     w0, #0
-    b       .L_done
+    mov     w0, wzr
+    retaa
 
 .L_true:
     mov     w0, #1
-
-.L_done:
     retaa
 
     .cfi_endproc
