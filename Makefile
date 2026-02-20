@@ -19,26 +19,30 @@ RDNN					:= me.$(AUTHOR).$(SERVICE_NAME)
 CC						:= xcrun clang
 CXX						:= xcrun clang++
 
-ARCH_FLAGS				:= -arch arm64 -march=native
-SEC_FLAGS				:= -mbranch-protection=standard \
-							-fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE
-OPT_FLAGS				:= -flto=thin
+CPP_FLAGS				:= -D_FORTIFY_SOURCE=2
+ARCH_FLAGS				:= -arch arm64 -march=native -falign-functions=16
+SEC_FLAGS				:= -fPIE -mbranch-protection=standard
+OPT_FLAGS				:= -fcolor-diagnostics -flto=thin -fomit-frame-pointer \
+							-fstrict-aliasing
 WARN_FLAGS				:= -Wall -Wextra -Wpedantic
 DEP_FLAGS				:= -MMD -MP
 
-LDFLAGS					:= -Wl,-S -Wl,-dead_strip, -Wl,-no_warn_duplicate_libraries, -Wl,-pie
+ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS) -Rpass=asm-processor -x assembler-with-cpp
+LDFLAGS					:= -Wl,-dead_strip -Wl,-no_warn_duplicate_libraries \
+							-Wl,-pie
 
 DEBUG					?= 0
 ifeq ($(DEBUG), 1)
 	OPT_FLAGS += -g -O0 -DDEBUG_MODE
+	ASFLAGS += -g
 else
 	OPT_FLAGS += -O2 -Oz -DNDEBUG
+	LDFLAGS += -Wl,-S
 endif
 
-COMMON_FLAGS			:= $(ARCH_FLAGS) $(OPT_FLAGS) $(SEC_FLAGS)
+COMMON_FLAGS			:= $(CPP_FLAGS) $(ARCH_FLAGS) $(OPT_FLAGS) $(SEC_FLAGS)
 CFLAGS					:= -std=c23 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS)
 CXXFLAGS				:= -std=c++26 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS) -fno-rtti
-ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS)
 
 # Primary Paths
 BUILD_DIR				:= ./build
