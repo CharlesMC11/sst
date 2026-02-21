@@ -1,8 +1,8 @@
     .section __TEXT,__text,regular,pure_instructions
-    .globl _is_image
+    .globl _has_image_signature
     .p2align 2
 
-_is_image:
+_has_image_signature:
     .cfi_startproc
     pacia   x30, sp
 

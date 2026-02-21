@@ -17,7 +17,7 @@ extern "C" {
  * @returns
  * `true` if `buffer` contains magic bytes from common image formats
  */
-bool is_image(uint8_t buffer[]);
+bool has_image_signature(uint8_t buffer[]);
 
 #ifdef __cplusplus
 }  // extern "C"
