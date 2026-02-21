@@ -1,15 +1,25 @@
 #include "Scanner.hpp"
 
+#include <CoreServices/CoreServices.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <sysexits.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <exception>
 #include <expected>
+#include <iostream>
+#include <string>
+#include <vector>
 
 #include "Signatures.h"
+#include "Sorter.hpp"
+
+#define O_FLAGS O_RDONLY | O_NOFOLLOW
+
+static constexpr size_t ALIGNMENT{16};
 
 namespace sst::scanner {
 
