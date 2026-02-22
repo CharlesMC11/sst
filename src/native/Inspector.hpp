@@ -7,7 +7,7 @@
 
 namespace sst::inspector {
 
-void scanDirectory(const char dirname[], CFMutableArrayRef buffer);
+void scanDirectory(CFMutableArrayRef buffer, const char dirname[]);
 
 void scanDirectory(ConstFSEventStreamRef streamRef, void *clientCallbackInfo,
                    size_t numEvents, void *eventPaths,

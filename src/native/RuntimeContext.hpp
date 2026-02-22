@@ -5,9 +5,9 @@
 namespace sst::rt {
 
 struct RuntimeContext {
-  const fs::FileMonitor &watcher;
-  const CFMutableArrayRef buffer;
   const dispatch_queue_t queue;
+  const CFMutableArrayRef buffer;
+  const fs::FileMonitor &watcher;
 };
 
 } // namespace sst::rt

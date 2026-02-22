@@ -36,7 +36,7 @@ bool isImage(int fd) {
   return signatures::hasImageSignature(buffer);
 }
 
-void scanDirectory(const char dirname[], CFMutableArrayRef buffer) {
+void scanDirectory(CFMutableArrayRef buffer, const char dirname[]) {
 
   sst::mem::cf_ptr<CFURLRef> dir_url{CFURLCreateFromFileSystemRepresentation(
       nullptr, reinterpret_cast<const UInt8 *>(dirname), strlen(dirname),

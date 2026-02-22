@@ -26,20 +26,19 @@ int main(const int argc, const char *argv[]) {
 
   std::cout << "[sstd] Running initial scan at '" << input_dir << "'."
             << std::endl;
-  sst::inspector::scanDirectory(input_dir, buffer.get());
+  sst::inspector::scanDirectory(buffer.get(), input_dir);
   sst::sorter::printSorted(buffer.get());
 
   dispatch_queue_t queue{dispatch_get_main_queue()};
 
   std::cout << "[sstd] Initializing watcher..." << std::endl;
-  sst::fs::FileMonitor watcher{input_dir, queue, sst::inspector::scanDirectory,
-                               buffer.get()};
+  sst::fs::FileMonitor watcher{queue, buffer.get(), input_dir,
+                               sst::inspector::scanDirectory};
   watcher.start();
   std::cout << "[sstd] Initialized to watch '" << input_dir << "'."
             << std::endl;
 
-  sst::rt::RuntimeContext runtime{watcher, buffer.get(), queue};
-
+  sst::rt::RuntimeContext runtime{queue, buffer.get(), watcher};
   sst::rt::registerSignalHandler(SIGTERM, runtime);
   sst::rt::registerSignalHandler(SIGINT, runtime);
 

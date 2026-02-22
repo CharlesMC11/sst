@@ -8,12 +8,11 @@
 
 namespace sst::fs {
 
-FileMonitor::FileMonitor(const char dirname[], dispatch_queue_t queue,
-                         FSEventStreamCallback callback,
-                         CFMutableArrayRef buffer)
-    : directory_{CFStringCreateWithCString(nullptr, dirname,
-                                           kCFStringEncodingUTF8)},
-      queue_{queue}, buffer_{buffer} {
+FileMonitor::FileMonitor(dispatch_queue_t queue, CFMutableArrayRef buffer,
+                         const char dirname[], FSEventStreamCallback callback)
+    : queue_{queue}, buffer_{buffer},
+      directory_{
+          CFStringCreateWithCString(nullptr, dirname, kCFStringEncodingUTF8)} {
   FSEventStreamContext context = {0, static_cast<void *>(this), nullptr,
                                   nullptr, nullptr};
 

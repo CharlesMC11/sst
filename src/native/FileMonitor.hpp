@@ -10,9 +10,8 @@ namespace sst::fs {
 
 class FileMonitor {
 public:
-  explicit FileMonitor(const char dirname[], dispatch_queue_t queue,
-                       FSEventStreamCallback callback,
-                       CFMutableArrayRef buffer);
+  explicit FileMonitor(dispatch_queue_t queue, CFMutableArrayRef buffer,
+                       const char dirname[], FSEventStreamCallback callback);
 
   void start() const;
 
@@ -21,10 +20,10 @@ public:
   CFMutableArrayRef buffer() noexcept { return buffer_; }
 
 private:
-  sst::mem::cf_ptr<CFStringRef> directory_;
   dispatch_queue_t queue_;
-  sst::mem::cf_ptr<FSEventStreamRef> stream_{nullptr};
   CFMutableArrayRef buffer_;
+  sst::mem::cf_ptr<CFStringRef> directory_;
+  sst::mem::cf_ptr<FSEventStreamRef> stream_{nullptr};
 };
 
 } // namespace sst::fs
