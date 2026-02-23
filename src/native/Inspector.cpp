@@ -85,8 +85,9 @@ void scanDirectory(ConstFSEventStreamRef streamRef, void *clientCallbackInfo,
     if (slash == nullptr || slash[1] == '\0' || slash[1] == '.')
       continue;
 
-    if (eventFlags[i] & (kFSEventStreamEventFlagItemCreated |
-                         kFSEventStreamEventFlagItemRenamed)) {
+    if (eventFlags[i] & kFSEventStreamEventFlagItemIsFile &
+        (kFSEventStreamEventFlagItemCreated |
+         kFSEventStreamEventFlagItemRenamed)) {
       int fd{open(path, kFlags | O_CLOEXEC)};
 
       if (fd >= 0 && isImage(fd)) {
