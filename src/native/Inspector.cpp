@@ -38,29 +38,29 @@ bool isImage(int fd) {
 
 void scanDirectory(CFMutableArrayRef buffer, const char dirname[]) {
 
-  sst::mem::cf_ptr<CFURLRef> dir_url{CFURLCreateFromFileSystemRepresentation(
+  sst::memory::CFPtr<CFURLRef> dirUrl{CFURLCreateFromFileSystemRepresentation(
       nullptr, reinterpret_cast<const UInt8 *>(dirname), strlen(dirname),
       true)};
-  if (!dir_url)
+  if (!dirUrl)
     return;
 
-  sst::mem::cf_ptr<CFURLEnumeratorRef> enumerator{
+  sst::memory::CFPtr<CFURLEnumeratorRef> enumerator{
       CFURLEnumeratorCreateForDirectoryURL(
-          nullptr, dir_url.get(), kCFURLEnumeratorDefaultBehavior, nullptr)};
+          nullptr, dirUrl.get(), kCFURLEnumeratorDefaultBehavior, nullptr)};
 
-  CFURLRef child_url;
-  while (CFURLEnumeratorGetNextURL(enumerator.get(), &child_url, nullptr) ==
+  CFURLRef childUrl;
+  while (CFURLEnumeratorGetNextURL(enumerator.get(), &childUrl, nullptr) ==
          kCFURLEnumeratorSuccess) {
     char path[PATH_MAX];
 
     if (!CFURLGetFileSystemRepresentation(
-            child_url, true, reinterpret_cast<UInt8 *>(path), PATH_MAX))
+            childUrl, true, reinterpret_cast<UInt8 *>(path), PATH_MAX))
       continue;
 
     int fd{open(path, kFlags | O_CLOEXEC)};
 
     if (fd >= 0 && isImage(fd)) {
-      CFArrayAppendValue(buffer, child_url);
+      CFArrayAppendValue(buffer, childUrl);
     }
 
     close(fd);
@@ -71,7 +71,7 @@ void scanDirectory(ConstFSEventStreamRef streamRef, void *clientCallbackInfo,
                    size_t numEvents, void *eventPaths,
                    const FSEventStreamEventFlags eventFlags[],
                    const FSEventStreamEventId eventIds[]) {
-  const auto monitor{static_cast<fs::FileMonitor *>(clientCallbackInfo)};
+  const auto monitor{static_cast<filesystem::Monitor *>(clientCallbackInfo)};
   auto buffer{monitor->buffer()};
   CFArrayRemoveAllValues(buffer);
 
@@ -90,9 +90,10 @@ void scanDirectory(ConstFSEventStreamRef streamRef, void *clientCallbackInfo,
       int fd{open(path, kFlags | O_CLOEXEC)};
 
       if (fd >= 0 && isImage(fd)) {
-        sst::mem::cf_ptr<CFURLRef> url{CFURLCreateFromFileSystemRepresentation(
-            nullptr, reinterpret_cast<const UInt8 *>(path), strlen(path),
-            false)};
+        sst::memory::CFPtr<CFURLRef> url{
+            CFURLCreateFromFileSystemRepresentation(
+                nullptr, reinterpret_cast<const UInt8 *>(path), strlen(path),
+                false)};
         CFArrayAppendValue(buffer, url.get());
         ++count;
       }

@@ -6,12 +6,12 @@
 
 #include "Memory.hpp"
 
-namespace sst::fs {
+namespace sst::filesystem {
 
-class FileMonitor {
+class Monitor {
 public:
-  explicit FileMonitor(dispatch_queue_t queue, CFMutableArrayRef buffer,
-                       const char dirname[], FSEventStreamCallback callback);
+  explicit Monitor(dispatch_queue_t queue, CFMutableArrayRef buffer,
+                   const char dirname[], FSEventStreamCallback callback);
 
   void start() const;
 
@@ -22,8 +22,8 @@ public:
 private:
   dispatch_queue_t queue_;
   CFMutableArrayRef buffer_;
-  sst::mem::cf_ptr<CFStringRef> directory_;
-  sst::mem::cf_ptr<FSEventStreamRef> stream_{nullptr};
+  sst::memory::CFPtr<CFStringRef> directory_;
+  sst::memory::CFPtr<FSEventStreamRef> stream_{nullptr};
 };
 
-} // namespace sst::fs
+} // namespace sst::filesystem

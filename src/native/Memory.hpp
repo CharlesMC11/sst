@@ -5,7 +5,7 @@
 
 #include <memory>
 
-namespace sst::mem {
+namespace sst::memory {
 
 template <typename T> struct CFReleaser {
   void operator()(T ptr) const {
@@ -25,6 +25,6 @@ template <> struct CFReleaser<FSEventStreamRef> {
 };
 
 template <typename T>
-using cf_ptr = std::unique_ptr<std::remove_pointer_t<T>, CFReleaser<T>>;
+using CFPtr = std::unique_ptr<std::remove_pointer_t<T>, CFReleaser<T>>;
 
-} // namespace sst::mem
+} // namespace sst::memory

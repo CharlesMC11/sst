@@ -6,17 +6,17 @@
 #include "Inspector.hpp"
 #include "Memory.hpp"
 
-namespace sst::fs {
+namespace sst::filesystem {
 
-FileMonitor::FileMonitor(dispatch_queue_t queue, CFMutableArrayRef buffer,
-                         const char dirname[], FSEventStreamCallback callback)
+Monitor::Monitor(dispatch_queue_t queue, CFMutableArrayRef buffer,
+                 const char dirname[], FSEventStreamCallback callback)
     : queue_{queue}, buffer_{buffer},
       directory_{
           CFStringCreateWithCString(nullptr, dirname, kCFStringEncodingUTF8)} {
   FSEventStreamContext context = {0, static_cast<void *>(this), nullptr,
                                   nullptr, nullptr};
 
-  sst::mem::cf_ptr<CFArrayRef> paths{
+  sst::memory::CFPtr<CFArrayRef> paths{
       CFArrayCreate(nullptr, reinterpret_cast<const void **>(&directory_), 1,
                     &kCFTypeArrayCallBacks)};
 
@@ -26,11 +26,11 @@ FileMonitor::FileMonitor(dispatch_queue_t queue, CFMutableArrayRef buffer,
                                         kFSEventStreamCreateFlagNoDefer));
 }
 
-void FileMonitor::start() const {
+void Monitor::start() const {
   if (stream_) {
     FSEventStreamSetDispatchQueue(stream_.get(), queue_);
     FSEventStreamStart(stream_.get());
   }
 }
 
-} // namespace sst::fs
+} // namespace sst::filesystem

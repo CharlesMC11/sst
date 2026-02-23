@@ -2,12 +2,12 @@
 
 #include "FileMonitor.hpp"
 
-namespace sst::rt {
+namespace sst::runtime {
 
-struct RuntimeContext {
+struct Context {
   const dispatch_queue_t queue;
   const CFMutableArrayRef buffer;
-  const fs::FileMonitor &watcher;
+  const filesystem::Monitor &monitor;
 };
 
-} // namespace sst::rt
+} // namespace sst::runtime

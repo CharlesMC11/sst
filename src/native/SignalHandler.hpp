@@ -2,8 +2,8 @@
 
 #include "RuntimeContext.hpp"
 
-namespace sst::rt {
+namespace sst::runtime {
 
-void registerSignalHandler(int signal, RuntimeContext state);
+void registerSignalHandler(int signal, Context context);
 
 }
