@@ -20,13 +20,10 @@ _sst() {
   local -r new_filename_pattern="\${${REPLACEMENT_PATTERN}/${FILENAME_REPLACEMENT_RE}/}"
 
   local -r exiftool_args=(
-    -struct -preserve -verbose
-    -o "${OUTPUT_DIR}/${current_month}/"
-    '-RawFileName<FileName'             '-PreservedFileName<FileName'
-    '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth'
+    -struct -preserve -verbose       -o "${OUTPUT_DIR}/${current_month}/"
     "-Model=${HW_MODEL}"                "-Software=${OS_VER}"
     "-OffsetTime*=${timezone}"          "-AllDates<${new_datetime_pattern}"
-    "-Filename<${new_filename_pattern}%-c.%e"
+    "-Filename<${new_filename_pattern}%-c%lE"
     -@ "${ARG_FILES_DIR}/charlesmc.args"
     -@ "${ARG_FILES_DIR}/screenshot.args"
   )

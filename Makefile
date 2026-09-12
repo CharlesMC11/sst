@@ -42,12 +42,11 @@ PLIST_PATH				:= $(HOME)/Library/LaunchAgents/$(PLIST_NAME)
 # Preferences & System Info
 SCREENCAPTURE_PREF		:= com.apple.screencapture location
 
-PREFIX_RE				:= (?:Screenshot)
-DATE_RE					:= (\\d{2})(\\d{2})-(\\d{2})-(\\d{2})
-TIME_RE					:= (\\d{2})\\.(\\d{2})\\.(\\d{2})
-DATETIME_RE				:= ^$(PREFIX_RE) $(DATE_RE) at $(TIME_RE).+$$
-DATETIME_REPLACEMENT_RE	:= $$1$$2:$$3:$$4 $$5:$$6:$$7
-FILENAME_REPLACEMENT_RE	:= $$2$$3$$4_$$5$$6$$7
+DATE_RE					:= (\\d{4})\\D(\\d{2})\\D(\\d{2})
+TIME_RE					:= (\\d{2})\\D(\\d{2})\\D(\\d{2})
+DATETIME_RE				:= ^.+?$(DATE_RE)\\D+?$(TIME_RE).+$$
+DATETIME_REPLACEMENT_RE	:= $$1:$$2:$$3 $$4:$$5:$$6
+FILENAME_REPLACEMENT_RE	:= $$1$$2$$3-$$4$$5$$6
 REPLACEMENT_PATTERN		:= Filename;s/$(DATETIME_RE)
 
 HW_MODEL				:= $(shell system_profiler SPHardwareDataType | \
@@ -72,10 +71,12 @@ SED_REPLACE_KEYS		:= ZSH AA EXIFTOOL OSASCRIPT SERVICE_NAME FUNC_DIR \
 							AA_LOG EXIFTOOL_LOG SYSTEM_LOG REPLACEMENT_PATTERN \
 							DATETIME_REPLACEMENT_RE FILENAME_REPLACEMENT_RE \
 							HW_MODEL PERFORMANCE_CORE_COUNT OS_VER EXECUTION_DELAY
-SED_REPLACE				:= $(foreach k,$(SED_REPLACE_KEYS),-e 's|@@$(k)@@|$($(k))|g')
+SED_REPLACE				:= $(foreach k,$(SED_REPLACE_KEYS),\
+							-e 's|@@$(k)@@|$($(k))|g')
 UNINSTALLER				:= $(BIN_DIR)/uninstall
 
-.PHONY: all install build start stop uninstall clean status open-log clean-log check-ram-disk
+.PHONY: all install build start stop uninstall clean status open-log clean-log \
+		check-ram-disk
 
 all: start
 
