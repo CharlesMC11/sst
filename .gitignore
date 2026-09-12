@@ -1,6 +1,8 @@
 build/
 obj/
 
+.idea/
 .vscode/
 
+*.link
 .DS_Store
