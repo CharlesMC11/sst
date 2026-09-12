@@ -99,11 +99,11 @@ export THROTTLE_INTERVAL:=3
 
 FUNC_SRCS				:= $(wildcard $(FUNC_SRC_DIR)/_*.zsh)
 C_SRCS					:= $(wildcard $(NATIVE_SRC_DIR)/*.c)
-CXX_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.cpp)
+CXX_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.cc)
 ASM_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.s)
-OBJS					:= $(OBJ_DIR)/photo_ls.o $(OBJ_DIR)/Signatures.o \
-							$(OBJ_DIR)/Sorter.o $(OBJ_DIR)/Inspector.o $(OBJ_DIR)/FileMonitor.o \
-							$(OBJ_DIR)/SignalHandler.o
+OBJS					:= $(OBJ_DIR)/photo_ls.o $(OBJ_DIR)/signatures.o \
+							$(OBJ_DIR)/sorter.o $(OBJ_DIR)/inspector.o $(OBJ_DIR)/file_monitor.o \
+							$(OBJ_DIR)/signal_handler.o
 
 # Commands
 INSTALL					:= install -pv -m 755
@@ -149,7 +149,7 @@ $(BUILD_DIR)/functions.zwc: $(FUNC_SRCS)
 $(BUILD_DIR)/photo_ls: $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
-$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.cc | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.s | $(OBJ_DIR)

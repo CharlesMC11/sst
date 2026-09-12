@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SST__SIGNATURES
+#define SST__SIGNATURES
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -17,9 +18,11 @@ extern "C" {
  * @returns
  * `true` if `buffer` contains magic bytes from common image formats
  */
-bool hasImageSignature(uint8_t buffer[]);
+bool has_image_signature(uint8_t buffer[]);
 
 #ifdef __cplusplus
-} // extern "C"
-} // namespace sst::signatures
+}  // extern "C"
+}  // namespace sst::signatures
 #endif
+
+#endif  // SST__SIGNATURES

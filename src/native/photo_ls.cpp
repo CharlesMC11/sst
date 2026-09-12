@@ -10,37 +10,37 @@
 #include <string>
 #include <vector>
 
-#include "FileMonitor.hpp"
-#include "Inspector.hpp"
-#include "Memory.hpp"
-#include "RuntimeContext.hpp"
-#include "SignalHandler.hpp"
-#include "Sorter.hpp"
+#include "file_monitor.hh"
+#include "inspector.hh"
+#include "memory.hh"
+#include "runtime_context.hh"
+#include "signal_handler.hh"
+#include "sorter.hh"
 
-int main(const int argc, const char *argv[]) {
-  std::cout << "[sstd] Starting daemon..." << std::endl;
-  const char *input_dir{(argc >= 2) ? argv[1] : "."};
+int main(const int argc, const char* argv[]) {
+  std::cout << "[sstd] Starting daemon…" << std::endl;
+  const char* input_dir{(argc >= 2) ? argv[1] : "."};
 
   sst::memory::CFPtr<CFMutableArrayRef> buffer{
       CFArrayCreateMutable(nullptr, 0, &kCFTypeArrayCallBacks)};
 
-  std::cout << "[sstd] Running initial scan at '" << input_dir << "'."
+  std::cout << "[sstd] Running initial scan at '" << input_dir << ".'"
             << std::endl;
-  sst::inspector::scanDirectory(buffer.get(), input_dir);
-  sst::sorter::printSorted(buffer.get());
+  sst::inspector::scan_directory(buffer.get(), input_dir);
+  sst::sorter::print_sorted(buffer.get());
 
   dispatch_queue_t queue{dispatch_get_main_queue()};
 
-  std::cout << "[sstd] Initializing watcher..." << std::endl;
-  sst::filesystem::Monitor monitor{queue, buffer.get(), input_dir,
-                                   sst::inspector::scanDirectory};
+  std::cout << "[sstd] Initializing watcher…" << std::endl;
+  sst::filesystem::monitor monitor{queue, buffer.get(), input_dir,
+                                   sst::inspector::scan_directory};
   monitor.start();
-  std::cout << "[sstd] Initialized to watch '" << input_dir << "'."
+  std::cout << "[sstd] Initialized to watch '" << input_dir << ".'"
             << std::endl;
 
-  sst::runtime::Context context{queue, buffer.get(), monitor};
-  sst::runtime::registerSignalHandler(SIGTERM, context);
-  sst::runtime::registerSignalHandler(SIGINT, context);
+  sst::runtime::context context{queue, buffer.get(), monitor};
+  sst::runtime::register_signal_handler(SIGTERM, context);
+  sst::runtime::register_signal_handler(SIGINT, context);
 
   std::cout << "[sstd] Dispatching. Press CTRL-C to stop." << std::endl;
   dispatch_main();

@@ -7,14 +7,15 @@
 
 namespace sst::memory {
 
-template <typename T> struct CFReleaser {
+template <typename T>
+struct CFReleaser final {
   void operator()(T ptr) const {
-    if (ptr)
-      CFRelease(ptr);
+    if (ptr) CFRelease(ptr);
   }
 };
 
-template <> struct CFReleaser<FSEventStreamRef> {
+template <>
+struct CFReleaser<FSEventStreamRef> {
   void operator()(FSEventStreamRef stream) const {
     if (stream) {
       FSEventStreamStop(stream);
@@ -27,4 +28,4 @@ template <> struct CFReleaser<FSEventStreamRef> {
 template <typename T>
 using CFPtr = std::unique_ptr<std::remove_pointer_t<T>, CFReleaser<T>>;
 
-} // namespace sst::memory
+}  // namespace sst::memory
