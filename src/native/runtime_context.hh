@@ -5,12 +5,12 @@
 
 namespace sst::runtime {
 
-struct context final {
-  const dispatch_queue_t queue;
-  const CFMutableArrayRef buffer;
-  const filesystem::monitor& monitor;
-};
+    struct context final {
+        const dispatch_queue_t queue;
+        const CFMutableArrayRef buffer;
+        const filesystem::monitor& monitor;
+    };
 
-}  // namespace sst::runtime
+} // namespace sst::runtime
 
-#endif  // SST__CONTEXT
+#endif // SST__CONTEXT

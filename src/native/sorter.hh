@@ -5,10 +5,10 @@
 
 namespace sst::sorter {
 
-void natural_sort(CFMutableArrayRef list);
+    void natural_sort(CFMutableArrayRef list);
 
-void print_sorted(CFMutableArrayRef list);
+    void print_sorted(CFMutableArrayRef list);
 
-}  // namespace sst::sorter
+} // namespace sst::sorter
 
-#endif  // SST__SORTER
+#endif // SST__SORTER

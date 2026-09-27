@@ -6,23 +6,23 @@
 
 #ifdef __cplusplus
 namespace sst::signatures {
-extern "C" {
-#endif
+    extern "C" {
+#endif // __cplusplus
 
-/*!
- * Check if a given array of bytes matches an image's magic pattern
- *
- * @param buffer
- * The bytes to check
- *
- * @returns
- * `true` if `buffer` contains magic bytes from common image formats
- */
-bool has_image_signature(uint8_t buffer[]);
+    /**
+     * Check if a given array of bytes matches an image's magic pattern
+     *
+     * @param buffer
+     * The bytes to check
+     *
+     * @returns
+     * `true` if `buffer` contains magic bytes from common image formats
+     */
+    bool has_image_signature(uint8_t buffer[]);
 
 #ifdef __cplusplus
-}  // extern "C"
-}  // namespace sst::signatures
-#endif
+    } // extern "C"
+} // namespace sst::signatures
+#endif // __cplusplus
 
-#endif  // SST__SIGNATURES
+#endif // SST__SIGNATURES
