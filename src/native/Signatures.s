@@ -20,14 +20,13 @@ _has_image_signature:
     ccmp    w11, w12, #4, ne
 
     // TIFF: 'II' (49 49 2A 00) or 'MM'(4D 4D 00 2A)
-    ubfx    w11, w9, #0, #32
-    movz    w12, #0x4949                // 'II'
-    movk    w12, #0x002A, lsl #16
-    ccmp    w11, w12, #4, ne
+    movz    w11, #0x4949                // 'II'
+    movk    w11, #0x002A, lsl #16
+    ccmp    w9, w11, #4, ne
 
-    movz    w12, #0x4D4D                // 'MM'
-    movk    w12, #0x2A00, lsl #16
-    ccmp    w11, w12, #4, ne
+    movz    w11, #0x4D4D                // 'MM'
+    movk    w11, #0x2A00, lsl #16
+    ccmp    w9, w11, #4, ne
 
     // HEIF: 'ftypmif1' or 'ftypheic' at offset 4
     extr    x11, x10, x9, #32
