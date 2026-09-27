@@ -2,19 +2,13 @@
 
 #include <CoreFoundation/CFArray.h>
 #include <CoreServices/CoreServices.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
 
-#include <algorithm>
 #include <cstdint>
-#include <exception>
-#include <expected>
 #include <iostream>
-#include <string>
-#include <vector>
 
 #include "file_monitor.hh"
 #include "memory.hh"
@@ -30,18 +24,18 @@ bool is_image(int fd) {
   fcntl(fd, F_NOCACHE, 1);
 
   alignas(kAlignment) std::uint8_t buffer[kAlignment];
-  if (read(fd, buffer, sizeof(buffer)) < 12Z) return false;
+  if (read(fd, buffer, sizeof(buffer)) < sizeof(buffer)) return false;
 
   return signatures::has_image_signature(buffer);
 }
 
 void scan_directory(CFMutableArrayRef buf, const char dir_name[]) {
-  sst::memory::CFPtr<CFURLRef> dir_url{CFURLCreateFromFileSystemRepresentation(
+  memory::CFPtr<CFURLRef> dir_url{CFURLCreateFromFileSystemRepresentation(
       nullptr, reinterpret_cast<const UInt8*>(dir_name), strlen(dir_name),
       true)};
   if (!dir_url) return;
 
-  sst::memory::CFPtr<CFURLEnumeratorRef> enumerator{
+  memory::CFPtr<CFURLEnumeratorRef> enumerator{
       CFURLEnumeratorCreateForDirectoryURL(
           nullptr, dir_url.get(), kCFURLEnumeratorDefaultBehavior, nullptr)};
 
@@ -93,7 +87,7 @@ void scan_directory(ConstFSEventStreamRef stream_ref,
       int fd{open(path, kFlags | O_CLOEXEC)};
 
       if (fd >= 0 && is_image(fd)) {
-        sst::memory::CFPtr<CFURLRef> url{
+        memory::CFPtr<CFURLRef> url{
             CFURLCreateFromFileSystemRepresentation(
                 nullptr, reinterpret_cast<const UInt8*>(path), strlen(path),
                 false)};
@@ -105,7 +99,7 @@ void scan_directory(ConstFSEventStreamRef stream_ref,
     }
   }
 
-  if (count > 0UZ) sst::sorter::print_sorted(buffer);
+  if (count > 0UZ) sorter::print_sorted(buffer);
 }
 
 }  // namespace sst::inspector

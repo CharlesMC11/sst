@@ -7,6 +7,6 @@ namespace sst::runtime {
 
 void register_signal_handler(int signal, context context);
 
-}
+} // namespace sst::runtime
 
 #endif  // SST__SIGNAL_HANDLER

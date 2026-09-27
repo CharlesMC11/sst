@@ -3,7 +3,6 @@
 #include <CoreServices/CoreServices.h>
 #include <dispatch/queue.h>
 
-#include "inspector.hh"
 #include "memory.hh"
 
 namespace sst::filesystem {
@@ -15,11 +14,11 @@ monitor::monitor(dispatch_queue_t queue, CFMutableArrayRef buffer,
       CFStringCreateWithCString(nullptr, directory, kCFStringEncodingUTF8)};
   directory_.reset(dir_cfstr);
 
-  sst::memory::CFPtr<CFArrayRef> paths{
+  memory::CFPtr<CFArrayRef> paths{
       CFArrayCreate(nullptr, reinterpret_cast<const void**>(&dir_cfstr), 1,
                     &kCFTypeArrayCallBacks)};
 
-  FSEventStreamContext context{0, static_cast<void*>(this), nullptr, nullptr,
+  FSEventStreamContext context{0, this, nullptr, nullptr,
                                nullptr};
   stream_.reset(FSEventStreamCreate(
       nullptr, callback, &context, paths.get(), kFSEventStreamEventIdSinceNow,
