@@ -4,8 +4,6 @@
 
 _has_image_signature:
     .cfi_startproc
-    pacia   x30, sp
-
     ldp     x9, x10, [x0]
 
     // PNG: 89 50 4E 47 0D 0A 1A 0A
@@ -43,14 +41,8 @@ _has_image_signature:
     movk    x12, #0x6369, lsl #48       // 'ic'
     ccmp    x11, x12, #4, ne
 
-    b.eq    L_true
-
-    mov     w0, wzr
-    retaa
-
-L_true:
-    mov     w0, #1
-    retaa
+    cset    w0, eq
+    ret
 
     .cfi_endproc
     .subsections_via_symbols
