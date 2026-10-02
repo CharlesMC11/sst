@@ -29,8 +29,8 @@ DEP_FLAGS				:= -MMD -MP
 
 ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS) -Rpass=asm-processor -x assembler-with-cpp
 LDFLAGS					:= -framework CoreFoundation -framework CoreServices \
-							-Wl,-dead_strip -Wl,-no_warn_duplicate_libraries \
-							-Wl,-pie
+							-framework Foundation -Wl,-dead_strip \
+							-Wl,-no_warn_duplicate_libraries -Wl,-pie
 
 DEBUG					?= 0
 ifeq ($(DEBUG), 1)
@@ -97,13 +97,10 @@ export THROTTLE_INTERVAL:=3
 
 # Source Files
 
-FUNC_SRCS				:= $(wildcard $(FUNC_SRC_DIR)/_*.zsh)
-C_SRCS					:= $(wildcard $(NATIVE_SRC_DIR)/*.c)
-CXX_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.cc)
-ASM_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.s)
-OBJS					:= $(OBJ_DIR)/photo_ls.o $(OBJ_DIR)/signatures.o \
-							$(OBJ_DIR)/sorter.o $(OBJ_DIR)/inspector.o $(OBJ_DIR)/file_monitor.o \
-							$(OBJ_DIR)/signal_handler.o
+OBJS					:= $(OBJ_DIR)/file_monitor.o $(OBJ_DIR)/inspector.o \
+							$(OBJ_DIR)/photo_ls.o $(OBJ_DIR)/processor.o \
+							$(OBJ_DIR)/signal_handler.o $(OBJ_DIR)/signatures.o \
+							$(OBJ_DIR)/sorter.o
 
 # Commands
 INSTALL					:= install -pv -m 755
@@ -148,6 +145,9 @@ $(BUILD_DIR)/functions.zwc: $(FUNC_SRCS)
 
 $(BUILD_DIR)/photo_ls: $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
+
+$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.mm | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -x objective-c++ -c $< -o $@
 
 $(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.cc | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
