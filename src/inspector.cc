@@ -27,8 +27,9 @@ namespace sst::inspector {
         fcntl(fd, F_NOCACHE, 1);
 
         alignas(kAlignment) std::uint8_t buffer[kAlignment];
-        if (read(fd, buffer, sizeof(buffer)) < kAlignment)
+        if (read(fd, buffer, sizeof(buffer)) < kAlignment) [[unlikely]] {
             return false;
+        }
 
         return signatures::has_image_signature(buffer);
     }
@@ -39,8 +40,9 @@ namespace sst::inspector {
                 CFURLCreateFromFileSystemRepresentation(nullptr,
                         reinterpret_cast<const UInt8*>(dir_name),
                         strlen(dir_name), true)};
-        if (!dir_url)
+        if (!dir_url) [[unlikely]] {
             return;
+        }
 
         sst::memory::CFPtr<CFURLEnumeratorRef> enumerator{
                 CFURLEnumeratorCreateForDirectoryURL(nullptr, dir_url.get(),
@@ -53,11 +55,13 @@ namespace sst::inspector {
 
             if (!CFURLGetFileSystemRepresentation(child_url, true,
                         reinterpret_cast<UInt8*>(path), PATH_MAX))
+                    [[unlikely]] {
                 continue;
+            }
 
             int fd{open(path, kFlags | O_CLOEXEC)};
 
-            if (fd >= 0 && is_image(fd)) {
+            if (fd >= 0 && is_image(fd)) [[likely]] {
                 CFArrayAppendValue(buf, child_url);
             }
 
@@ -83,7 +87,9 @@ namespace sst::inspector {
             const char* path{paths[i]};
             const char* slash{strrchr(path, '/')};
             if (slash == nullptr || slash[1] == '\0' || slash[1] == '.')
+                    [[unlikely]] {
                 continue;
+            }
 
             const FSEventStreamEventFlags curr_flags{event_flags[i]};
 
@@ -94,10 +100,10 @@ namespace sst::inspector {
                             (kFSEventStreamEventFlagItemCreated |
                                     kFSEventStreamEventFlagItemRenamed)) != 0};
 
-            if (is_file && is_relevant) {
+            if (is_file && is_relevant) [[likely]] {
                 int fd{open(path, kFlags | O_CLOEXEC)};
 
-                if (fd >= 0 && is_image(fd)) {
+                if (fd >= 0 && is_image(fd)) [[likely]] {
                     sst::memory::CFPtr<CFURLRef> url{
                             CFURLCreateFromFileSystemRepresentation(nullptr,
                                     reinterpret_cast<const UInt8*>(path),
@@ -110,8 +116,9 @@ namespace sst::inspector {
             }
         }
 
-        if (count > 0UZ)
+        if (count > 0UZ) [[likely]] {
             sst::sorter::print_sorted(buffer);
+        }
     }
 
 } // namespace sst::inspector

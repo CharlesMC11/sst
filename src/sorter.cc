@@ -26,9 +26,14 @@ namespace sst::sorter {
 
     void print_sorted(CFMutableArrayRef list)
     {
-        const CFIndex count{CFArrayGetCount(list)};
-        if (!list || count == 0Z)
+        if (!list) [[unlikely]] {
             return;
+        }
+
+        const CFIndex count{CFArrayGetCount(list)};
+        if (count == 0Z) [[unlikely]] {
+            return;
+        }
 
         natural_sort(list);
 
@@ -40,7 +45,9 @@ namespace sst::sorter {
             char path[PATH_MAX];
             if (CFURLGetFileSystemRepresentation(url, true,
                         reinterpret_cast<UInt8*>(path), sizeof(path)))
+                    [[likely]] {
                 std::cout << path << '\n';
+            }
         }
         std::cout << std::flush;
     }

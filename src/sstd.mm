@@ -20,7 +20,7 @@
 
 int main(const int argc, const char* argv[])
 {
-    if (argc < 5) {
+    if (argc < 5) [[unlikely]] {
         std::cerr << "Usage: " << argv[0]
                   << " <input_dir> <output_dir> <hardware> <arg_files_dir>\n";
         return EX_USAGE;
@@ -29,7 +29,7 @@ int main(const int argc, const char* argv[])
 
     std::cout << "[sstd] Starting daemon…" << std::endl;
 
-    const NSOperatingSystemVersion os_version {
+    const NSOperatingSystemVersion os_version{
             [NSProcessInfo processInfo].operatingSystemVersion};
 
     const sst::image::metadata metadata{.output_dir{argv[2]},
@@ -55,8 +55,8 @@ int main(const int argc, const char* argv[])
     const dispatch_queue_t queue{dispatch_get_main_queue()};
 
     std::cout << "[sstd] Initializing watcher…" << std::endl;
-    const sst::filesystem::monitor monitor{
-            queue, buffer.get(), input_dir, processor, sst::inspector::scan_directory};
+    const sst::filesystem::monitor monitor{queue, buffer.get(), input_dir,
+            processor, sst::inspector::scan_directory};
     monitor.start();
     std::cout << "[sstd] Initialized to watch '" << input_dir << ".'"
               << std::endl;
@@ -64,7 +64,6 @@ int main(const int argc, const char* argv[])
     const sst::runtime::context context{queue, buffer.get(), monitor};
     sst::runtime::register_signal_handler(SIGTERM, context);
     sst::runtime::register_signal_handler(SIGINT, context);
-
 
     std::cout << "[sstd] Dispatching. Press CTRL-C to stop." << std::endl;
     dispatch_main();
