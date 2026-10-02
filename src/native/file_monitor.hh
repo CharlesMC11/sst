@@ -6,13 +6,15 @@
 #include <dispatch/queue.h>
 
 #include "memory.hh"
+#include "processor.hh"
 
 namespace sst::filesystem {
 
     class monitor final {
     public:
         explicit monitor(dispatch_queue_t queue, CFMutableArrayRef buffer,
-                const char directory[], FSEventStreamCallback callback);
+                const char directory[], const sst::processor& processor,
+                FSEventStreamCallback callback);
 
         void start() const;
 
@@ -26,6 +28,7 @@ namespace sst::filesystem {
     private:
         dispatch_queue_t queue_;
         CFMutableArrayRef buffer_;
+        const sst::processor& processor_;
         memory::CFPtr<CFStringRef> directory_;
         memory::CFPtr<FSEventStreamRef> stream_{nullptr};
     };
