@@ -4,7 +4,7 @@
 #include <CoreFoundation/CFArray.h>
 #include <CoreServices/CoreServices.h>
 
-#include <cstdlib>
+#include <cstddef>
 
 namespace sst::inspector {
 
