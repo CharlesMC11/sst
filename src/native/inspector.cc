@@ -7,6 +7,7 @@
 #include <sysexits.h>
 #include <unistd.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
 
@@ -34,13 +35,14 @@ namespace sst::inspector {
 
     void scan_directory(CFMutableArrayRef buf, const char dir_name[])
     {
-        memory::CFPtr<CFURLRef> dir_url{CFURLCreateFromFileSystemRepresentation(
-                nullptr, reinterpret_cast<const UInt8*>(dir_name),
-                strlen(dir_name), true)};
+        sst::memory::CFPtr<CFURLRef> dir_url{
+                CFURLCreateFromFileSystemRepresentation(nullptr,
+                        reinterpret_cast<const UInt8*>(dir_name),
+                        strlen(dir_name), true)};
         if (!dir_url)
             return;
 
-        memory::CFPtr<CFURLEnumeratorRef> enumerator{
+        sst::memory::CFPtr<CFURLEnumeratorRef> enumerator{
                 CFURLEnumeratorCreateForDirectoryURL(nullptr, dir_url.get(),
                         kCFURLEnumeratorDefaultBehavior, nullptr)};
 
@@ -63,13 +65,13 @@ namespace sst::inspector {
         }
     }
 
-    void scan_directory(ConstFSEventStreamRef stream_ref,
+    void scan_directory([[maybe_unused]] ConstFSEventStreamRef stream_ref,
             void* client_callback_info, std::size_t num_events,
             void* event_paths, const FSEventStreamEventFlags event_flags[],
-            const FSEventStreamEventId event_ids[])
+            [[maybe_unused]] const FSEventStreamEventId event_ids[])
     {
         const auto monitor{
-                static_cast<filesystem::monitor*>(client_callback_info)};
+                static_cast<sst::filesystem::monitor*>(client_callback_info)};
         CFMutableArrayRef buffer{monitor->buffer()};
         CFArrayRemoveAllValues(buffer);
 
@@ -96,7 +98,7 @@ namespace sst::inspector {
                 int fd{open(path, kFlags | O_CLOEXEC)};
 
                 if (fd >= 0 && is_image(fd)) {
-                    memory::CFPtr<CFURLRef> url{
+                    sst::memory::CFPtr<CFURLRef> url{
                             CFURLCreateFromFileSystemRepresentation(nullptr,
                                     reinterpret_cast<const UInt8*>(path),
                                     strlen(path), false)};
@@ -109,7 +111,7 @@ namespace sst::inspector {
         }
 
         if (count > 0UZ)
-            sorter::print_sorted(buffer);
+            sst::sorter::print_sorted(buffer);
     }
 
 } // namespace sst::inspector
