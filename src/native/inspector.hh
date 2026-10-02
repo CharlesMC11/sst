@@ -1,5 +1,5 @@
-#ifndef SST__INSPECTOR
-#define SST__INSPECTOR
+#ifndef SST__INSPECTOR__HH
+#define SST__INSPECTOR__HH
 
 #include <CoreFoundation/CFArray.h>
 #include <CoreServices/CoreServices.h>
@@ -17,4 +17,4 @@ namespace sst::inspector {
 
 } // namespace sst::inspector
 
-#endif // SST__INSPECTOR
+#endif // SST__INSPECTOR__HH

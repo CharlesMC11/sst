@@ -1,5 +1,5 @@
-#ifndef SST__FILE_MONITOR
-#define SST__FILE_MONITOR
+#ifndef SST__FILE_MONITOR__HH
+#define SST__FILE_MONITOR__HH
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreServices/CoreServices.h>
@@ -26,10 +26,10 @@ namespace sst::filesystem {
     private:
         dispatch_queue_t queue_;
         CFMutableArrayRef buffer_;
-        sst::memory::CFPtr<CFStringRef> directory_;
-        sst::memory::CFPtr<FSEventStreamRef> stream_{nullptr};
+        memory::CFPtr<CFStringRef> directory_;
+        memory::CFPtr<FSEventStreamRef> stream_{nullptr};
     };
 
 } // namespace sst::filesystem
 
-#endif // SST__FILE_MONITOR
+#endif // SST__FILE_MONITOR__HH

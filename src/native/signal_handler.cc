@@ -14,7 +14,7 @@ namespace sst::runtime {
     {
         std::signal(signal, SIG_IGN);
 
-        dispatch_source_t signal_source{dispatch_source_create(
+        auto signal_source{dispatch_source_create(
                 DISPATCH_SOURCE_TYPE_SIGNAL, signal, 0, context.queue)};
 
         dispatch_source_set_event_handler(signal_source, ^{

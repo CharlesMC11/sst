@@ -1,5 +1,5 @@
-#ifndef SST__SORTER
-#define SST__SORTER
+#ifndef SST__SORTER__HH
+#define SST__SORTER__HH
 
 #include <CoreFoundation/CFArray.h>
 
@@ -11,4 +11,4 @@ namespace sst::sorter {
 
 } // namespace sst::sorter
 
-#endif // SST__SORTER
+#endif // SST__SORTER__HH

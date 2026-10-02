@@ -1,5 +1,5 @@
-#ifndef SST__CONTEXT
-#define SST__CONTEXT
+#ifndef SST__RUNTIME_CONTEXT__HH
+#define SST__RUNTIME_CONTEXT__HH
 
 #include "file_monitor.hh"
 
@@ -13,4 +13,4 @@ namespace sst::runtime {
 
 } // namespace sst::runtime
 
-#endif // SST__CONTEXT
+#endif // SST__RUNTIME_CONTEXT__HH

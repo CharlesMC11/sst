@@ -1,5 +1,5 @@
-#ifndef SST__MEMORY
-#define SST__MEMORY
+#ifndef SST__MEMORY__HH
+#define SST__MEMORY__HH
 
 #include <CoreFoundation/CFBase.h>
 #include <CoreServices/CoreServices.h>
@@ -34,4 +34,4 @@ namespace sst::memory {
 
 } // namespace sst::memory
 
-#endif // SST__MEMORY
+#endif // SST__MEMORY__HH

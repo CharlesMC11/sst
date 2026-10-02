@@ -1,5 +1,5 @@
-#ifndef SST__SIGNATURES
-#define SST__SIGNATURES
+#ifndef SST__SIGNATURES__H
+#define SST__SIGNATURES__H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -25,4 +25,4 @@ namespace sst::signatures {
 } // namespace sst::signatures
 #endif // __cplusplus
 
-#endif // SST__SIGNATURES
+#endif // SST__SIGNATURES__H
