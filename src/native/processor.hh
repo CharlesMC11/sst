@@ -6,6 +6,7 @@
 
 #include <array>
 #include <exception>
+#include <format>
 #include <iostream>
 #include <limits>
 #include <regex>
@@ -14,42 +15,45 @@
 
 namespace sst {
 
-namespace image {
+    namespace image {
 
-struct metadata final {
-  std::string output_dir;
-  std::string hardware;
-  std::string software;
-  std::string timezone;
-  std::string arg_files_dir;
-};
+        struct metadata final {
+            std::string output_dir;
+            std::string hardware;
+            std::string software;
+            std::string timezone;
+            std::string arg_files_dir;
+        };
 
-}  // namespace image
+    } // namespace image
 
-class processor final {
- public:
-  explicit processor(image::metadata metadata);
+    class processor final {
+    public:
+        explicit processor(const image::metadata& metadata);
 
-  ~processor() {
-    send("-stay_open\nFalse\n-execute\n");
-    close(fds_[1]);
-    waitpid(pid_, nullptr, 0);
-  }
+        ~processor()
+        {
+            send("-stay_open\nFalse\n-execute\n");
+            close(fds_[1]);
+            waitpid(pid_, nullptr, 0);
+        }
 
-  void send(std::string_view args) const noexcept {
-    std::cout << "[sstd:processor] Received args: '" << args << "'..."
-              << std::endl;
+        void send(std::string_view args) const noexcept
+        {
+            std::cout << "[sstd:processor] Received args: " << args
+                      << std::endl;
 
-    write(fds_[1], args.data(), args.size());
-  }
+            const auto formatted_arg{std::format("{}\n-execute\n", args)};
+            write(fds_[1], formatted_arg.data(), formatted_arg.size());
+        }
 
- private:
-  image::metadata metadata_;
-  int fds_[2];
-  pid_t pid_{-1};
-  std::array<std::string, 7> formatted_args_;
-};
+    private:
+        image::metadata metadata_;
+        int fds_[2];
+        pid_t pid_{-1};
+        std::array<std::string, 7> formatted_args_;
+    };
 
-}  // namespace sst
+} // namespace sst
 
-#endif  // SST__PROCESSOR
+#endif // SST__PROCESSOR__HH
