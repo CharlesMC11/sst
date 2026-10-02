@@ -7,6 +7,13 @@
 
     <key>Program</key>
     <string>${BIN_DIR}/${AGENT_NAME}</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${INPUT_DIR}</string>
+        <string>${OUTPUT_DIR}</string>
+        <string>${HW_MODEL}</string>
+        <string>${ARG_FILES_DIR}</string>
+    </array>
     <key>EnvironmentVariables</key>
     <dict>
         <key>LC_ALL</key>
