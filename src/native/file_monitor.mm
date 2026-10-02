@@ -54,7 +54,7 @@ namespace sst::filesystem {
         }
 
         const CFIndex count{CFArrayGetCount(buffer_)};
-        if (!buffer_ || count == 0Z) {
+        if (count == 0Z) {
             return;
         }
 
