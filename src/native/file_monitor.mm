@@ -35,9 +35,9 @@ namespace sst::filesystem {
 
     void monitor::start() const
     {
-        if (stream_) {
-            FSEventStreamSetDispatchQueue(stream_.get(), queue_);
-            FSEventStreamStart(stream_.get());
+        if (!directory_ || !stream_) [[unlikely]] {
+            // FIXME: Print error messages
+            return;
         }
 
         char input_dir[PATH_MAX];
@@ -48,21 +48,33 @@ namespace sst::filesystem {
                   << ".'" << std::endl;
 
         sst::inspector::scan_directory(buffer_, input_dir);
+        if (!buffer_) [[unlikely]] {
+            // FIXME: Print error messages
+            return;
+        }
 
         const CFIndex count{CFArrayGetCount(buffer_)};
-        if (!buffer_ || count == 0Z)
+        if (!buffer_ || count == 0Z) {
             return;
+        }
 
         sst::sorter::natural_sort(buffer_);
 
+        char path[PATH_MAX];
         for (CFIndex i{0}; i < count; ++i) {
             const CFURLRef url{reinterpret_cast<CFURLRef>(
                     CFArrayGetValueAtIndex(buffer_, i))};
 
-            char path[PATH_MAX];
             if (CFURLGetFileSystemRepresentation(url, true,
                         reinterpret_cast<UInt8*>(path), sizeof(path)))
+                    [[likely]] {
                 processor_.send(path);
+            }
+        }
+
+        if (stream_) [[likely]] {
+            FSEventStreamSetDispatchQueue(stream_.get(), queue_);
+            FSEventStreamStart(stream_.get());
         }
     }
 
