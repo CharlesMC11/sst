@@ -12,8 +12,9 @@ namespace sst::memory {
     struct CFReleaser final {
         void operator()(T ptr) const
         {
-            if (ptr)
+            if (ptr) [[likely]] {
                 CFRelease(ptr);
+            }
         }
     };
 
@@ -21,7 +22,7 @@ namespace sst::memory {
     struct CFReleaser<FSEventStreamRef> {
         void operator()(FSEventStreamRef stream) const
         {
-            if (stream) {
+            if (stream) [[likely]] {
                 FSEventStreamStop(stream);
                 FSEventStreamInvalidate(stream);
                 FSEventStreamRelease(stream);
