@@ -31,19 +31,15 @@ namespace sst {
     public:
         explicit processor(const image::metadata& metadata);
 
-        ~processor()
-        {
-            send("-stay_open\nFalse\n-execute\n");
-            close(fds_[1]);
-            waitpid(pid_, nullptr, 0);
-        }
+        ~processor();
 
         void send(std::string_view args) const noexcept
         {
             std::cout << "[sstd:processor] Received args: " << args
                       << std::endl;
 
-            const auto formatted_arg{std::format("{}\n-execute\n", args)};
+            const std::string formatted_arg{
+                    std::format("{}\n-execute\n", args)};
             write(fds_[1], formatted_arg.data(), formatted_arg.size());
         }
 

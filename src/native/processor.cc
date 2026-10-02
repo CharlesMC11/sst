@@ -3,6 +3,7 @@
 #include <spawn.h>
 
 #include <format>
+#include <iostream>
 
 extern char** environ;
 
@@ -10,7 +11,7 @@ namespace sst {
 
     processor::processor(const image::metadata& metadata) : metadata_{metadata}
     {
-        if (pipe(fds_) != 0) {
+        if (pipe(fds_) != 0) [[unlikely]] {
             std::cerr << "Couldn’t open a pipe!\n";
             return;
         }
@@ -48,16 +49,36 @@ namespace sst {
                 nullptr};
 
         if (posix_spawn(&pid_, "/opt/homebrew/bin/exiftool", &actions, nullptr,
-                    const_cast<char**>(args), environ) != 0) {
-            std::cerr << "[sstd:processor] Couln’t spawn ExifTool!\n";
+                    const_cast<char**>(args), environ) != 0) [[unlikely]] {
+            std::cerr << "[sstd:processor] Couldn’t spawn ExifTool!\n";
+
+            close(fds_[0]);
+            close(fds_[1]);
+            fds_[0] = fds_[1] = pid_ = -1;
+            posix_spawn_file_actions_destroy(&actions);
+
             return;
         }
 
+        close(fds_[0]);
         posix_spawn_file_actions_destroy(&actions);
 
-        close(fds_[0]);
-
         std::cout << "[sstd:processor] ExifTool is now running…" << std::endl;
+    }
+
+    processor::~processor()
+    {
+        if (pid_ == -1) [[unlikely]] {
+            return;
+        }
+
+        send("-stay_open\nFalse\n-execute\n");
+
+        if (fds_[1] >= 0) [[likely]] {
+            close(fds_[1]);
+        }
+
+        waitpid(pid_, nullptr, 0);
     }
 
 } // namespace sst
