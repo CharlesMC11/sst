@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SST__MEMORY__HH
+#define SST__MEMORY__HH
 
 #include <CoreFoundation/CFBase.h>
 #include <CoreServices/CoreServices.h>
@@ -7,25 +8,30 @@
 
 namespace sst::memory {
 
-template <typename T>
-struct CFReleaser final {
-  void operator()(T ptr) const {
-    if (ptr) CFRelease(ptr);
-  }
-};
+    template<typename T>
+    struct CFReleaser final {
+        void operator()(T ptr) const
+        {
+            if (ptr)
+                CFRelease(ptr);
+        }
+    };
 
-template <>
-struct CFReleaser<FSEventStreamRef> {
-  void operator()(FSEventStreamRef stream) const {
-    if (stream) {
-      FSEventStreamStop(stream);
-      FSEventStreamInvalidate(stream);
-      FSEventStreamRelease(stream);
-    }
-  }
-};
+    template<>
+    struct CFReleaser<FSEventStreamRef> {
+        void operator()(FSEventStreamRef stream) const
+        {
+            if (stream) {
+                FSEventStreamStop(stream);
+                FSEventStreamInvalidate(stream);
+                FSEventStreamRelease(stream);
+            }
+        }
+    };
 
-template <typename T>
-using CFPtr = std::unique_ptr<std::remove_pointer_t<T>, CFReleaser<T>>;
+    template<typename T>
+    using CFPtr = std::unique_ptr<std::remove_pointer_t<T>, CFReleaser<T>>;
 
-}  // namespace sst::memory
+} // namespace sst::memory
+
+#endif // SST__MEMORY__HH

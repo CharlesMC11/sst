@@ -1,5 +1,5 @@
-#ifndef SST__FILE_MONITOR
-#define SST__FILE_MONITOR
+#ifndef SST__FILE_MONITOR__HH
+#define SST__FILE_MONITOR__HH
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreServices/CoreServices.h>
@@ -9,26 +9,27 @@
 
 namespace sst::filesystem {
 
-class monitor final {
- public:
-  explicit monitor(dispatch_queue_t queue, CFMutableArrayRef buffer,
-                   const char directory[], FSEventStreamCallback callback);
+    class monitor final {
+    public:
+        explicit monitor(dispatch_queue_t queue, CFMutableArrayRef buffer,
+                const char directory[], FSEventStreamCallback callback);
 
-  void start() const;
+        void start() const;
 
-  [[nodiscard]] CFStringRef directory() const noexcept {
-    return directory_.get();
-  }
+        [[nodiscard]] CFStringRef directory() const noexcept
+        {
+            return directory_.get();
+        }
 
-  [[nodiscard]] CFMutableArrayRef buffer() noexcept { return buffer_; }
+        [[nodiscard]] CFMutableArrayRef buffer() noexcept { return buffer_; }
 
- private:
-  dispatch_queue_t queue_;
-  CFMutableArrayRef buffer_;
-  sst::memory::CFPtr<CFStringRef> directory_;
-  sst::memory::CFPtr<FSEventStreamRef> stream_{nullptr};
-};
+    private:
+        dispatch_queue_t queue_;
+        CFMutableArrayRef buffer_;
+        memory::CFPtr<CFStringRef> directory_;
+        memory::CFPtr<FSEventStreamRef> stream_{nullptr};
+    };
 
-}  // namespace sst::filesystem
+} // namespace sst::filesystem
 
-#endif  // SST__FILE_MONITOR
+#endif // SST__FILE_MONITOR__HH

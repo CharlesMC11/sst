@@ -1,12 +1,12 @@
-#ifndef SST__SIGNAL_HANDLER
-#define SST__SIGNAL_HANDLER
+#ifndef SST__SIGNAL_HANDLER__HH
+#define SST__SIGNAL_HANDLER__HH
 
 #include "runtime_context.hh"
 
 namespace sst::runtime {
 
-void register_signal_handler(int signal, context context);
+    void register_signal_handler(int signal, context context);
 
-}
+} // namespace sst::runtime
 
-#endif  // SST__SIGNAL_HANDLER
+#endif // SST__SIGNAL_HANDLER__HH
