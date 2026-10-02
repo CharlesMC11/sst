@@ -12,8 +12,6 @@
 #include <string>
 #include <string_view>
 
-extern char** environ;
-
 namespace sst {
 
 namespace image {
