@@ -202,11 +202,7 @@ uninstall: stop
 	-rm -rf "$(BIN_DIR)"
 
 clean:
-	-rm -fr "$(BUILD_DIR)"/*
-	-rm -fr "$(OBJ_DIR)"/*
-	-rm -f "$(BIN_DIR)"/*.zwc
-	-rm -f "$(FUNC_DIR).zwc"
-	-rm -rf "$(TEMP_DIR)"/*
+	-rm -fr "$(BUILD_DIR)" "$(OBJ_DIR)" "$(TEMP_DIR)"
 
 status:
 	@launchctl list | grep "$(RDNN)" || print -- "'$(SERVICE_NAME)' is not running."
