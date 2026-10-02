@@ -38,8 +38,8 @@ namespace sst::sorter {
                     static_cast<CFURLRef>(CFArrayGetValueAtIndex(list, i))};
 
             char path[PATH_MAX];
-            if (CFURLGetFileSystemRepresentation(
-                        url, true, reinterpret_cast<UInt8*>(path), PATH_MAX))
+            if (CFURLGetFileSystemRepresentation(url, true,
+                        reinterpret_cast<UInt8*>(path), sizeof(path)))
                 std::cout << path << '\n';
         }
         std::cout << std::flush;
