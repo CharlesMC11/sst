@@ -1,5 +1,5 @@
-#ifndef SST__PROCESSOR
-#define SST__PROCESSOR
+#ifndef SST__PROCESSOR__HH
+#define SST__PROCESSOR__HH
 
 #include <sys/wait.h>
 #include <unistd.h>
