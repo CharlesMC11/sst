@@ -24,25 +24,6 @@ namespace sst::image {
         }
     };
 
-    /**
-     * Check if a given array of bytes matches an image's magic pattern
-     *
-     * @param buffer
-     * The bytes to check
-     *
-     * @returns
-     * `true` if `buffer` contains magic bytes from common image formats
-     */
-    extern "C" bool has_image_signature(std::uint8_t buffer[]);
-
-    inline bool is_image(int fd)
-    {
-        alignas(kAlignment) std::uint8_t buffer[kAlignment];
-
-        // TODO: Handle failed reads
-        return read(fd, buffer, sizeof(buffer)) >= kAlignment &&
-                has_image_signature(buffer);
-    }
 } // namespace sst::image
 
 #endif // SST__METADATA__HH

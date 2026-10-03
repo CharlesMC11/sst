@@ -6,9 +6,9 @@
 
 #include <cstdint>
 
-static constexpr std::int64_t kAlignment{16L};
-
 namespace sst::inspector {
+
+    inline constexpr std::int64_t kAlignment{16L};
 
     /**
      * Check if a given array of bytes matches an image's magic pattern
@@ -21,7 +21,7 @@ namespace sst::inspector {
      */
     extern "C" bool has_image_signature(std::uint8_t buffer[]);
 
-    inline bool is_image(int fd)
+    [[nodiscard]] inline bool is_image(int fd)
     {
         alignas(kAlignment) std::uint8_t buffer[kAlignment];
 

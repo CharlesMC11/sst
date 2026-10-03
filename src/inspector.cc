@@ -15,6 +15,7 @@
 
 #include "fs_monitor.hh"
 #include "memory.hh"
+#include "processor.hh"
 #include "signatures.hh"
 #include "sorter.hh"
 
