@@ -18,7 +18,7 @@
 #include "signatures.hh"
 #include "sorter.hh"
 
-extern "C" const int kIOFlags;
+extern "C" const int kIOFlags; // Declared in `fs_monitor.mm`
 
 void sst::inspector::scan_directory(
         [[maybe_unused]] ::ConstFSEventStreamRef stream_ref,
