@@ -1,124 +1,85 @@
 #include "inspector.hh"
 
-#include <CoreFoundation/CFArray.h>
 #include <CoreServices/CoreServices.h>
+#include <dirent.h>
 #include <fcntl.h>
-#include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <format>
 #include <iostream>
+#include <string>
+#include <vector>
 
-#include "signatures.h"
-
-#include "file_monitor.hh"
+#include "fs_monitor.hh"
 #include "memory.hh"
+#include "signatures.hh"
 #include "sorter.hh"
 
-static constexpr std::int64_t kAlignment{16};
-static constexpr auto kFlags{O_RDONLY | O_NOFOLLOW};
+extern "C" const int kIOFlags;
 
-namespace sst::inspector {
+void sst::inspector::scan_directory(
+        [[maybe_unused]] ::ConstFSEventStreamRef stream_ref,
+        void* client_callback_info, std::size_t num_events, void* event_paths,
+        const ::FSEventStreamEventFlags event_flags[],
+        [[maybe_unused]] const ::FSEventStreamEventId event_ids[])
+{
+    const auto monitor{static_cast<sst::fs::monitor*>(client_callback_info)};
+    const sst::processor& processor{monitor->processor()};
+    const int dir_fd{monitor->dir_fd()};
 
-    bool is_image(int fd)
-    {
-        fcntl(fd, F_NOCACHE, 1);
+    std::vector<std::string>& buffer{monitor->buffer()};
+    buffer.clear();
 
-        alignas(kAlignment) std::uint8_t buffer[kAlignment];
-        if (read(fd, buffer, sizeof(buffer)) < kAlignment) [[unlikely]] {
-            return false;
+    std::size_t count{0UZ};
+    auto paths{static_cast<const char* const*>(event_paths)};
+    for (std::size_t i{0UZ}; i < num_events; ++i) {
+
+        const char* path{paths[i]};
+        const std::size_t path_len{std::strlen(path)};
+        if (path_len == 0UZ) [[unlikely]] {
+            continue;
         }
 
-        return signatures::has_image_signature(buffer);
-    }
-
-    void scan_directory(CFMutableArrayRef buf, const char dir_name[])
-    {
-        sst::memory::CFPtr<CFURLRef> dir_url{
-                CFURLCreateFromFileSystemRepresentation(nullptr,
-                        reinterpret_cast<const UInt8*>(dir_name),
-                        strlen(dir_name), true)};
-        if (!dir_url) [[unlikely]] {
-            return;
+        // The watched directory is guaranteed to have no subdirectories
+        const char* slash{std::strrchr(path, '/')};
+        if (slash == nullptr || slash[1] == '\0' || slash[1] == '.')
+                [[unlikely]] {
+            continue;
         }
 
-        sst::memory::CFPtr<CFURLEnumeratorRef> enumerator{
-                CFURLEnumeratorCreateForDirectoryURL(nullptr, dir_url.get(),
-                        kCFURLEnumeratorDefaultBehavior, nullptr)};
+        const ::FSEventStreamEventFlags curr_flags{event_flags[i]};
 
-        CFURLRef child_url;
-        while (CFURLEnumeratorGetNextURL(enumerator.get(), &child_url,
-                       nullptr) == kCFURLEnumeratorSuccess) {
-            char path[PATH_MAX];
+        const bool is_file{
+                (curr_flags & ::kFSEventStreamEventFlagItemIsFile) != 0};
+        const bool is_relevant{
+                (curr_flags &
+                        (::kFSEventStreamEventFlagItemCreated |
+                                ::kFSEventStreamEventFlagItemRenamed)) != 0};
 
-            if (!CFURLGetFileSystemRepresentation(child_url, true,
-                        reinterpret_cast<UInt8*>(path), PATH_MAX))
-                    [[unlikely]] {
+        if (is_relevant && is_file) [[likely]] {
+            const int fd{::openat(dir_fd, slash + 1, kIOFlags)};
+            if (fd < 0) [[unlikely]] {
                 continue;
             }
 
-            int fd{open(path, kFlags | O_CLOEXEC)};
-
-            if (fd >= 0 && is_image(fd)) [[likely]] {
-                CFArrayAppendValue(buf, child_url);
+            if (sst::inspector::is_image(fd)) [[likely]] {
+                buffer.emplace_back(path);
+                ++count;
             }
 
-            close(fd);
+            if (::close(fd) != 0) {
+                // TODO: Some error message
+            }
         }
     }
 
-    void scan_directory([[maybe_unused]] ConstFSEventStreamRef stream_ref,
-            void* client_callback_info, std::size_t num_events,
-            void* event_paths, const FSEventStreamEventFlags event_flags[],
-            [[maybe_unused]] const FSEventStreamEventId event_ids[])
-    {
-        const auto monitor{
-                static_cast<sst::filesystem::monitor*>(client_callback_info)};
-        CFMutableArrayRef buffer{monitor->buffer()};
-        CFArrayRemoveAllValues(buffer);
-
-        std::size_t count{0UZ};
-        auto paths{static_cast<const char**>(event_paths)};
-        for (std::size_t i{0UZ}; i < num_events; ++i) {
-            // Filter out APFS temporary files
-
-            const char* path{paths[i]};
-            const char* slash{strrchr(path, '/')};
-            if (slash == nullptr || slash[1] == '\0' || slash[1] == '.')
-                    [[unlikely]] {
-                continue;
-            }
-
-            const FSEventStreamEventFlags curr_flags{event_flags[i]};
-
-            const bool is_file{
-                    (curr_flags & kFSEventStreamEventFlagItemIsFile) != 0};
-            const bool is_relevant{
-                    (curr_flags &
-                            (kFSEventStreamEventFlagItemCreated |
-                                    kFSEventStreamEventFlagItemRenamed)) != 0};
-
-            if (is_file && is_relevant) [[likely]] {
-                int fd{open(path, kFlags | O_CLOEXEC)};
-
-                if (fd >= 0 && is_image(fd)) [[likely]] {
-                    sst::memory::CFPtr<CFURLRef> url{
-                            CFURLCreateFromFileSystemRepresentation(nullptr,
-                                    reinterpret_cast<const UInt8*>(path),
-                                    strlen(path), false)};
-                    CFArrayAppendValue(buffer, url.get());
-                    ++count;
-                }
-
-                close(fd);
-            }
-        }
-
-        if (count > 0UZ) [[likely]] {
-            sst::sorter::print_sorted(buffer);
+    if (count > 0UZ) [[likely]] {
+        sst::sorter::natural_sort(buffer);
+        for (const auto& file_path: buffer) {
+            processor.send(file_path);
         }
     }
-
-} // namespace sst::inspector
+}

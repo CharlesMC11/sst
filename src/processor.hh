@@ -1,53 +1,56 @@
 #ifndef SST__PROCESSOR__HH
 #define SST__PROCESSOR__HH
 
-#include <sys/wait.h>
-#include <unistd.h>
+#include <sys/types.h>
 
 #include <array>
-#include <exception>
-#include <format>
-#include <iostream>
-#include <limits>
-#include <regex>
 #include <string>
 #include <string_view>
 
+#include "metadata.hh"
+
 namespace sst {
-
-    namespace image {
-
-        struct metadata final {
-            std::string output_dir;
-            std::string hardware;
-            std::string software;
-            std::string timezone;
-            std::string arg_files_dir;
-        };
-
-    } // namespace image
 
     class processor final {
     public:
-        explicit processor(const image::metadata& metadata);
+        [[nodiscard]] explicit processor(const char* exiftool_path,
+                const sst::image::metadata& metadata);
 
         ~processor();
 
-        void send(std::string_view args) const noexcept
-        {
-            std::cout << "[sstd:processor] Received args: " << args
-                      << std::endl;
+        processor(const processor&) = delete;
+        processor(processor&&) = delete;
 
-            const std::string formatted_arg{
-                    std::format("{}\n-execute\n", args)};
-            write(fds_[1], formatted_arg.data(), formatted_arg.size());
-        }
+        auto operator=(const processor&) -> processor& = delete;
+        auto operator=(processor&&) -> processor& = delete;
+
+        void send(std::string_view args) const noexcept;
 
     private:
-        image::metadata metadata_;
-        int fds_[2];
-        pid_t pid_{-1};
-        std::array<std::string, 7> formatted_args_;
+        struct pipe final {
+            int fds[2UZ]{-1, -1};
+
+            [[nodiscard]] pipe() noexcept;
+            ~pipe() noexcept;
+
+            pipe(const pipe&) = delete;
+            pipe(pipe&&) = delete;
+
+            auto operator=(const pipe&) -> pipe& = delete;
+            auto operator=(pipe&&) -> pipe& = delete;
+
+            void close(std::size_t idx) noexcept;
+
+            [[nodiscard]] bool is_valid() const noexcept
+            {
+                return fds[0UZ] != -1 && fds[1UZ] != -1;
+            }
+        };
+
+        const sst::image::metadata& metadata_;
+        sst::processor::pipe pipe_;
+        ::pid_t pid_{-1};
+        std::array<std::string, 7UZ> formatted_args_;
     };
 
 } // namespace sst

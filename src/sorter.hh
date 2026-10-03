@@ -1,13 +1,14 @@
 #ifndef SST__SORTER__HH
 #define SST__SORTER__HH
 
-#include <CoreFoundation/CFArray.h>
+#include <string>
+#include <vector>
 
 namespace sst::sorter {
 
-    void natural_sort(CFMutableArrayRef list);
+    void natural_sort(std::vector<std::string>& list);
 
-    void print_sorted(CFMutableArrayRef list);
+    void print_sorted(std::vector<std::string>& list);
 
 } // namespace sst::sorter
 

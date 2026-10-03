@@ -6,7 +6,7 @@ SHELL					:= $(ZSH)
 
 export HOMEBREW_PREFIX	:= $(shell brew --prefix)
 AA						:= $(shell which aa)
-EXIFTOOL				:= $(shell which exiftool)
+export EXIFTOOL			:= $(shell which exiftool)
 CONFIGS					:= Makefile
 
 # Identity
@@ -49,7 +49,6 @@ CXXFLAGS				:= -std=c++26 $(WARN_FLAGS) $(COMMON_FLAGS) \
 BUILD_DIR				:= ./build
 OBJ_DIR					:= ./obj
 SRC_DIR					:= ./src
-NATIVE_SRC_DIR			:= $(SRC_DIR)/native
 
 WORKBENCH				:= /Volumes/Workbench
 export BIN_DIR			:= $(WORKBENCH)/$(SERVICE_NAME)
@@ -93,7 +92,7 @@ export THROTTLE_INTERVAL:=3
 
 # Source Files
 
-OBJS					:= $(OBJ_DIR)/$(AGENT_NAME).o $(OBJ_DIR)/file_monitor.o \
+OBJS					:= $(OBJ_DIR)/$(AGENT_NAME).o $(OBJ_DIR)/fs_monitor.o \
 							$(OBJ_DIR)/inspector.o $(OBJ_DIR)/processor.o \
 							$(OBJ_DIR)/signal_handler.o $(OBJ_DIR)/signatures.o \
 							$(OBJ_DIR)/sorter.o
@@ -122,13 +121,13 @@ build: $(BUILD_DIR)/$(AGENT_NAME) $(BUILD_DIR)/$(PLIST_NAME) $(BUILD_DIR)/uninst
 $(BUILD_DIR)/$(AGENT_NAME): $(OBJS) | $(BUILD_DIR)/.dirstamp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
-$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.mm | $(OBJ_DIR)/.dirstamp
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm | $(OBJ_DIR)/.dirstamp
 	$(CXX) $(CXXFLAGS) -x objective-c++ -c $< -o $@
 
-$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.cc | $(OBJ_DIR)/.dirstamp
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc | $(OBJ_DIR)/.dirstamp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.s | $(OBJ_DIR)/.dirstamp
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.s | $(OBJ_DIR)/.dirstamp
 	$(CC) $(ASFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/$(PLIST_NAME): $(PLIST_TEMPLATE) $(CONFIGS) | $(BUILD_DIR)/.dirstamp

@@ -3,53 +3,38 @@
 #include <CoreFoundation/CoreFoundation.h>
 
 #include <iostream>
+#include <string>
+#include <vector>
 
-namespace sst::sorter {
+// FIXME: Reimplement in C++; maybe use Arm Neon?
+void sst::sorter::natural_sort(std::vector<std::string>& list)
+{
+    // CFArraySortValues(
+    //         list, CFRangeMake(0, CFArrayGetCount(list)),
+    //         [](const void* a, const void* b, void*) {
+    //             const auto url_a{static_cast<CFURLRef>(a)};
+    //             const auto url_b{static_cast<CFURLRef>(b)};
 
-    void natural_sort(CFMutableArrayRef list)
-    {
-        CFArraySortValues(
-                list, CFRangeMake(0, CFArrayGetCount(list)),
-                [](const void* a, const void* b, void*) {
-                    const auto url_a{static_cast<CFURLRef>(a)};
-                    const auto url_b{static_cast<CFURLRef>(b)};
+    //             return CFStringCompare(CFURLGetString(url_a),
+    //                     CFURLGetString(url_b),
+    //                     kCFCompareCaseInsensitive |
+    //                             kCFCompareDiacriticInsensitive |
+    //                             kCFCompareLocalized | kCFCompareNumerically);
+    //         },
+    //         nullptr);
+}
 
-                    return CFStringCompare(CFURLGetString(url_a),
-                            CFURLGetString(url_b),
-                            kCFCompareCaseInsensitive |
-                                    kCFCompareDiacriticInsensitive |
-                                    kCFCompareLocalized |
-                                    kCFCompareNumerically);
-                },
-                nullptr);
+void sst::sorter::print_sorted(std::vector<std::string>& list)
+{
+    if (list.empty()) [[unlikely]] {
+        return;
     }
 
-    void print_sorted(CFMutableArrayRef list)
-    {
-        if (!list) [[unlikely]] {
-            return;
-        }
+    sst::sorter::natural_sort(list);
 
-        const CFIndex count{CFArrayGetCount(list)};
-        if (count == 0Z) [[unlikely]] {
-            return;
-        }
-
-        natural_sort(list);
-
-        std::cout << "[sstd] Printing buffer contents:\n";
-        for (CFIndex i{0Z}; i < count; ++i) {
-            const auto url{
-                    static_cast<CFURLRef>(CFArrayGetValueAtIndex(list, i))};
-
-            char path[PATH_MAX];
-            if (CFURLGetFileSystemRepresentation(url, true,
-                        reinterpret_cast<UInt8*>(path), sizeof(path)))
-                    [[likely]] {
-                std::cout << path << '\n';
-            }
-        }
-        std::cout << std::flush;
+    std::cout << "[sstd::sorter] Printing buffer contents:\n";
+    for (const auto& path: list) {
+        std::cout << path << '\n';
     }
-
-} // namespace sst::sorter
+    std::cout << std::flush;
+}

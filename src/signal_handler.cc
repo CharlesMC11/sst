@@ -6,23 +6,19 @@
 #include <csignal>
 #include <iostream>
 
-#include "runtime_context.hh"
+void sst::runtime::register_signal_handler(int signal, context context)
+{
+    std::signal(signal, SIG_IGN);
 
-namespace sst::runtime {
+    auto signal_source{::dispatch_source_create(
+            DISPATCH_SOURCE_TYPE_SIGNAL, signal, 0, context.queue)};
 
-    void register_signal_handler(int signal, context context)
-    {
-        std::signal(signal, SIG_IGN);
+    ::dispatch_source_set_event_handler(signal_source, ^{
+      std::cerr << "\n[sstd] Shutdown signal received. Cleaning up…\n";
 
-        auto signal_source{dispatch_source_create(
-                DISPATCH_SOURCE_TYPE_SIGNAL, signal, 0, context.queue)};
+      // FIXME: This prevents the destructors from being called.
+      std::exit(EX_OK);
+    });
 
-        dispatch_source_set_event_handler(signal_source, ^{
-          std::cerr << "\n[sstd] Shutdown signal received. Cleaning up…\n";
-          std::exit(EX_OK);
-        });
-
-        dispatch_resume(signal_source);
-    }
-
-} // namespace sst::runtime
+    dispatch_resume(signal_source);
+}

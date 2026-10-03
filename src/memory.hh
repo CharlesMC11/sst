@@ -13,19 +13,17 @@ namespace sst::memory {
         void operator()(T ptr) const
         {
             if (ptr) [[likely]] {
-                CFRelease(ptr);
+                ::CFRelease(ptr);
             }
         }
     };
 
     template<>
-    struct CFReleaser<FSEventStreamRef> {
-        void operator()(FSEventStreamRef stream) const
+    struct CFReleaser<::FSEventStreamRef> {
+        void operator()(::FSEventStreamRef stream) const
         {
             if (stream) [[likely]] {
-                FSEventStreamStop(stream);
-                FSEventStreamInvalidate(stream);
-                FSEventStreamRelease(stream);
+                ::FSEventStreamRelease(stream);
             }
         }
     };

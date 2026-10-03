@@ -1,12 +1,31 @@
 #ifndef SST__SIGNAL_HANDLER__HH
 #define SST__SIGNAL_HANDLER__HH
 
-#include "runtime_context.hh"
+#include <dispatch/dispatch.h>
 
-namespace sst::runtime {
+#include <string>
+#include <vector>
 
-    void register_signal_handler(int signal, context context);
+namespace sst {
 
-} // namespace sst::runtime
+    namespace fs {
+
+        class monitor;
+
+    } // namespace fs
+
+    namespace runtime {
+
+        struct context final {
+            const ::dispatch_queue_t queue;
+            const std::vector<std::string>& buffer;
+            const sst::fs::monitor& monitor;
+        };
+
+        void register_signal_handler(int signal, sst::runtime::context context);
+
+    } // namespace runtime
+
+} // namespace sst
 
 #endif // SST__SIGNAL_HANDLER__HH
