@@ -1,0 +1,24 @@
+#include "signal_handler.hh"
+
+#include <dispatch/dispatch.h>
+#include <sysexits.h>
+
+#include <csignal>
+#include <iostream>
+
+void sst::runtime::register_signal_handler(int signal, context context)
+{
+    std::signal(signal, SIG_IGN);
+
+    auto signal_source{::dispatch_source_create(
+            DISPATCH_SOURCE_TYPE_SIGNAL, signal, 0, context.queue)};
+
+    ::dispatch_source_set_event_handler(signal_source, ^{
+      std::cerr << "\n[sstd] Shutdown signal received. Cleaning up…\n";
+
+      // FIXME: This prevents the destructors from being called.
+      std::exit(EX_OK);
+    });
+
+    dispatch_resume(signal_source);
+}

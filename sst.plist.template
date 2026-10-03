@@ -5,13 +5,29 @@
     <key>Label</key>
     <string>${PLIST_NAME%.*}</string>
 
-    <key>Program</key>
-    <string>${BIN_DIR}/${AGENT_NAME}</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${BIN_DIR}/${AGENT_NAME}</string>
+        <string>${EXIFTOOL}</string>
+
+        <string>${INPUT_DIR}</string>
+        <string>${OUTPUT_DIR}</string>
+
+        <string>${TMPDIR}</string>
+        <string>${ARG_FILES_DIR}</string>
+
+        <string>${HW_MODEL}</string>
+    </array>
     <key>EnvironmentVariables</key>
     <dict>
         <key>LC_ALL</key>
         <string>en_US.UTF-8</string>
     </dict>
+
+    <key>StandardErrorPath</key>
+    <string>${SYSTEM_LOG}</string>
+    <key>StandardOutputPath</key>
+    <string>${SYSTEM_LOG}</string>
 
     <key>KeepAlive</key>
     <true/>
