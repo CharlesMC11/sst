@@ -1,4 +1,6 @@
 ---
+Language: Cpp
+Standard: Latest
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
 AlignAfterOpenBracket: DontAlign

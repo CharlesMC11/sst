@@ -4,7 +4,7 @@
 *.md             text diff=markdown
 .git*            text
 
-*.hh             text
-*.cc             text
-*.mm             text
+*.hh             text diff=cpp
+*.cc             text diff=cpp
+*.mm             text diff=objc
 *.s              text
