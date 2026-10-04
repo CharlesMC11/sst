@@ -17,8 +17,8 @@
 2. `FSEvents` lists the paths of new files added to `$INPUT_DIR`
 3. Filter regular files that do not start with '_' (files still being written) nor '.'
 4. Check files for magic bytes
-5. Add the absolute paths of valid files into a list
-6. Sort the absolute paths using natural sort
+5. Add the paths of valid files into a list
+6. Sort the paths using natural sort
 7. Send sorted paths to `ExifTool` for metadata injection and renaming
 8. `ExifTool` sends the processed files to `$OUTPUT_DIR`
 9. Archive the originals of successfully processed files; store in a monthly archive
@@ -40,41 +40,70 @@
 5. Archiver (add to monthly archive)
 6. Orchestrator callback function
 7. `dispatch_queue` (enqueuing, dequeuing)
-8. `UNUserNotificationCenter` handler (banner)
+8. Signal handler (capturing interrupts)
+9. `UNUserNotificationCenter` handler (banner)
 
 ## Attributes
 
-1. `ExifTool` handler
-    * executable path
-    * running status
-    * arguments list (e.g.: `$OUTPUT_DIR`)
-    * IPC file descriptors
-    * log file path
 
-2. `FSEventStream` handler
-    * `$INPUT_DIR`
-    * stream handle
-    * queue status
-    * queue handle
+1.  Photo metadata
+    * Artist : string
+    * Copyright : string
+    * Datetime : string
+    * hardware name : string
+    * macOS version : string
+    * timezone : string
+    * `$OUTPUT_DIR` : string
+    * filename regex : string
 
-3. Filter function
-    * n/a
+2. `ExifTool` handler
+    * executable path : string
+    * running status : bool
+    * arguments list (e.g.: `$OUTPUT_DIR`) : list of strings
+    * IPC file descriptors : pair of integers
+    * log file path : string
+    * max retries : integer
 
-4. Sorter function
-    * n/a
+3. `FSEventStream` handler
+    * `$INPUT_DIR` : string
+    * stream handle : stream ptr
+    * queue handle : queue ptr
+    * callback function : Orchestrator callback
 
-5. Archiver function
-    * n/a
+4. Filter function
+    * file paths : list of strings
+    * event flags : integer
+    * prefixes to ignore : list of strings | hardcoded checks
+    * magic bytes : raw bytes
+    * max retries : integer
 
-6. Orchestrator (`FSEventStream` callback) function
-    * n/a
+5. Sorter function
+    * file paths : list of strings
+    * locale : string
 
-7. `dispatch_queue`
-    * n/a
+6. Archiver function
+    * file paths : list of strings
+    * the archiver : executable / header
+    * current year and month : pair of integers
+    * `$OUTPUT_DIR` : string
+    * max retries : integer
 
-8. `UNUserNotificationCenter` handler (function/s?)
+7. Orchestrator (`FSEventStream` callback) function
+    * `$INPUT_DIR` : string
+    * `$INPUT_DIR` fd : int
+    * file paths : list of strings
+    * `$OUTPUT_DIR` : string
 
-* n/a
+8. `dispatch_queue`
+    * queue handle : queue ptr
+
+9.  Signal handler
+    * signals : list of integers
+    * queue handle : queue ptr
+    * runtime context :
+
+10. `UNUserNotificationCenter` handler (function/s?)
+    * number of processed originals : integer
 
 ## State Diagram
 
@@ -85,7 +114,8 @@ stateDiagram-v2
   state Startup {
     Uninitialized --> Configured : process image metadata and `ExifTool` args
     Configured --> Spawned : spawn persistent `ExifTool`
-    Spawned --> Sweeping: clean up leftover files
+    Spawned --> Opened : open file descriptor for $INPUT_DIR
+    Opened --> Sweeping: clean up leftover files
   }
 
   Sweeping --> Idle : attach `FSEventStream` to `dispatch_queue` & start
@@ -104,7 +134,7 @@ stateDiagram-v2
 
     Processing --> AsyncDispatch : files tagged & moved
     Processing --> Processing : retry (max N attempts)
-    Processing --> Idle : max retries attempted / pipe error
+    Processing --> Idle : max retries attempted
     }
 
     AsyncDispatch --> Idle : dispatch to background
@@ -112,7 +142,8 @@ stateDiagram-v2
 
   state "Background Queue" as BGQueue {
     [*] --> Archiving : received paths
-    Archiving --> Notifying : originals archived
+    Archiving --> Notifying : originals archived or max retries attempted
+    Archiving --> Archiving : retry (max N attempts)
     Notifying --> Complete : banner posted
     Complete --> [*]
   }
