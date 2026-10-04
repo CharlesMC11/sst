@@ -1,8 +1,10 @@
 *                text=auto
 
 *.plist.template text eol=lf
-*.png           -text diff=lfs filter=lfs merge=lfs
 *.md             text diff=markdown
-*.zsh            text eol=lf
-
 .git*            text
+
+*.hh             text
+*.cc             text
+*.mm             text
+*.s              text

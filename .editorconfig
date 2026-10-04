@@ -5,14 +5,13 @@ charset = utf-8
 end_of_line = lf
 indent_size = 4
 indent_style = space
+max_line_length = 79
 insert_final_newline = true
-max_line_length = 80
 trim_trailing_whitespace = true
 
-[*.zsh]
+[*.{md,plist,plist.template}]
 indent_size = 2
 
-[{*.s,Makefile}]
+[*{.s,Makefile}]
 indent_style = tab
-indent_size = 4
 tab_width = 4
