@@ -19,7 +19,7 @@ namespace sst::inspector {
      * @returns
      * `true` if `buffer` contains magic bytes from common image formats
      */
-    extern "C" bool has_image_signature(std::uint8_t buffer[]);
+    extern "C" bool has_image_signature(const std::uint8_t buffer[]) noexcept;
 
     [[nodiscard]] inline bool is_image(int fd)
     {

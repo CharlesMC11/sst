@@ -5,8 +5,8 @@ SHELL					:= $(ZSH)
 .DELETE_ON_ERROR:
 
 export HOMEBREW_PREFIX	:= $(shell brew --prefix)
-AA						:= $(shell which aa)
-export EXIFTOOL			:= $(shell which exiftool)
+AA						:= $(shell command -v aa)
+export EXIFTOOL			:= $(shell command -v exiftool)
 CONFIGS					:= Makefile
 
 # Identity
@@ -19,14 +19,14 @@ CC						:= xcrun clang
 CXX						:= xcrun clang++
 
 CPP_FLAGS				:= -D_FORTIFY_SOURCE=2
-ARCH_FLAGS				:= -arch arm64 -march=native -falign-functions=16
+ARCH_FLAGS				:= -arch arm64 -falign-functions=16
 SEC_FLAGS				:= -fPIE -mbranch-protection=standard
 OPT_FLAGS				:= -fcolor-diagnostics -flto=thin -fomit-frame-pointer \
 							-fstrict-aliasing
 WARN_FLAGS				:= -Wall -Wextra -Wpedantic
 DEP_FLAGS				:= -MMD -MP
 
-ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS) -Rpass=asm-processor -x assembler-with-cpp
+ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS) -Rpass=loop-vectorize -x assembler-with-cpp
 LDFLAGS					:= -framework CoreFoundation -framework CoreServices \
 							-framework Foundation -Wl,-dead_strip \
 							-Wl,-no_warn_duplicate_libraries -Wl,-pie
@@ -36,7 +36,7 @@ ifeq ($(DEBUG), 1)
 	OPT_FLAGS += -g -O0 -DDEBUG_MODE
 	ASFLAGS += -g
 else
-	OPT_FLAGS += -O2 -Oz -DNDEBUG
+	OPT_FLAGS += -O2 -DNDEBUG
 	LDFLAGS += -Wl,-S
 endif
 
@@ -119,7 +119,7 @@ check-ram-disk:
 build: $(BUILD_DIR)/$(AGENT_NAME) $(BUILD_DIR)/$(PLIST_NAME) $(BUILD_DIR)/uninstall
 
 $(BUILD_DIR)/$(AGENT_NAME): $(OBJS) | $(BUILD_DIR)/.dirstamp
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm | $(OBJ_DIR)/.dirstamp
 	$(CXX) $(CXXFLAGS) -x objective-c++ -c $< -o $@

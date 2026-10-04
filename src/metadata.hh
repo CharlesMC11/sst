@@ -1,16 +1,18 @@
 #ifndef SST__METADATA__HH
 #define SST__METADATA__HH
 
+#include <chrono>
+#include <format>
 #include <string>
 #include <string_view>
 
 namespace sst::image {
 
     struct metadata final {
-        const std::string output_dir;
-        const std::string arg_files_dir;
-        const std::string hardware;
-        const std::string software;
+        std::string output_dir;
+        std::string arg_files_dir;
+        std::string hardware;
+        std::string software;
         std::string timezone;
 
         metadata(std::string_view output_dir, std::string_view arg_files_dir,

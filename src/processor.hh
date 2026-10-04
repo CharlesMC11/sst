@@ -24,10 +24,11 @@ namespace sst {
         auto operator=(const processor&) -> processor& = delete;
         auto operator=(processor&&) -> processor& = delete;
 
-        void send(std::string_view args) const noexcept;
+        void send(std::string_view args) const;
 
     private:
-        struct pipe final {
+        class pipe final {
+        public:
             int fds[2UZ]{-1, -1};
 
             [[nodiscard]] pipe() noexcept;

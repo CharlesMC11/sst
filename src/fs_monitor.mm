@@ -44,9 +44,9 @@ sst::fs::monitor::monitor(std::vector<std::string>& buffer,
             &::kCFTypeArrayCallBacks)};
 
     FSEventStreamContext context{0, this, nullptr, nullptr, nullptr};
-    stream_.reset(::FSEventStreamCreate(kCFAllocatorDefault, callback, &context,
-            paths.get(), kFSEventStreamEventIdSinceNow, 0.25,
-            kFSEventStreamCreateFlagFileEvents));
+    stream_.reset(::FSEventStreamCreate(::kCFAllocatorDefault, callback,
+            &context, paths.get(), ::kFSEventStreamEventIdSinceNow, 0.25,
+            ::kFSEventStreamCreateFlagFileEvents));
 }
 
 sst::fs::monitor::~monitor() noexcept
@@ -77,7 +77,7 @@ void sst::fs::monitor::start()
     //     return;
     // }
 
-    DIR* dir_stream = ::fdopendir(dir_fd_);
+    DIR* dir_stream{::fdopendir(dir_fd_)};
     if (!dir_stream) [[unlikely]] {
         std::cerr << "[sstd:monitor] Failed to open directory stream for file "
                      "descriptor duplicate: "
@@ -90,7 +90,7 @@ void sst::fs::monitor::start()
         return;
     }
 
-    struct dirent* entry;
+    struct dirent* entry{nullptr};
     while ((entry = ::readdir(dir_stream))) {
         const char* filename{entry->d_name};
 
@@ -120,6 +120,7 @@ void sst::fs::monitor::start()
         std::cerr << "[sstd:monitor] Failed to close directory stream.\n";
         return;
     }
+    dir_stream = nullptr;
 
     sst::sorter::natural_sort(buffer_);
     for (const auto& file_path: buffer_) {

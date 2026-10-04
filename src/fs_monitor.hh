@@ -49,10 +49,10 @@ namespace sst {
             std::vector<std::string>& buffer_;
             sst::memory::CFPtr<::FSEventStreamRef> stream_{nullptr};
 
-            ::dispatch_queue_t queue_{nullptr};
-            sst::processor& processor_;
+            const ::dispatch_queue_t queue_{nullptr};
+            const sst::processor& processor_;
 
-            const char* directory_{nullptr};
+            const char* const directory_{nullptr};
             int dir_fd_{-1};
         };
 

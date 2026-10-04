@@ -21,7 +21,7 @@
 
 std::string get_os_version();
 
-int main(const int argc, const char* argv[])
+int main(const int argc, const char* const argv[])
 {
     if (argc < 7) [[unlikely]] {
         std::cerr << "Usage: " << argv[0]
@@ -30,12 +30,12 @@ int main(const int argc, const char* argv[])
         return EX_USAGE;
     }
 
-    const char* exiftool_path{argv[1]};
-    const char* input_dir{argv[2]};
-    const char* output_dir{argv[3]};
-    const char* tmp_dir{argv[4]};
-    const char* arg_files_dir{argv[5]};
-    const char* hw_model{argv[6]};
+    const char* const exiftool_path{argv[1]};
+    const char* const input_dir{argv[2]};
+    const char* const output_dir{argv[3]};
+    const char* const tmp_dir{argv[4]};
+    const char* const arg_files_dir{argv[5]};
+    const char* const hw_model{argv[6]};
 
     std::cout << "[sstd] Starting daemon…" << std::endl;
 

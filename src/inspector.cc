@@ -38,14 +38,14 @@ void sst::inspector::scan_directory(
     auto paths{static_cast<const char* const*>(event_paths)};
     for (std::size_t i{0UZ}; i < num_events; ++i) {
 
-        const char* path{paths[i]};
+        const char* const path{paths[i]};
         const std::size_t path_len{std::strlen(path)};
         if (path_len == 0UZ) [[unlikely]] {
             continue;
         }
 
         // The watched directory is guaranteed to have no subdirectories
-        const char* slash{std::strrchr(path, '/')};
+        const char* const slash{std::strrchr(path, '/')};
         if (slash == nullptr || slash[1] == '\0' || slash[1] == '.')
                 [[unlikely]] {
             continue;

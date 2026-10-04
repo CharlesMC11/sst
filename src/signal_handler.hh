@@ -22,7 +22,8 @@ namespace sst {
             const sst::fs::monitor& monitor;
         };
 
-        void register_signal_handler(int signal, sst::runtime::context context);
+        void register_signal_handler(
+                int sig, const sst::runtime::context context) noexcept;
 
     } // namespace runtime
 

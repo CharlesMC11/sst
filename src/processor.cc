@@ -18,7 +18,8 @@ constexpr char regex[]{
 
 namespace {
 
-    struct posix_spawn_file_actions final {
+    class posix_spawn_file_actions final {
+    public:
         ::posix_spawn_file_actions_t data;
 
         posix_spawn_file_actions() { ::posix_spawn_file_actions_init(&data); };
@@ -62,7 +63,7 @@ namespace sst {
                 std::format("{}/charlesmc.args", metadata_.arg_files_dir),
                 std::format("{}/screenshot.args", metadata_.arg_files_dir)};
 
-        const char* args[]{exiftool_path, "-stay_open", "True", "-@", "-",
+        const char* const args[]{exiftool_path, "-stay_open", "True", "-@", "-",
                 "-common_args", "-struct", "-preserve", "-verbose", "-o",
                 metadata_.output_dir.c_str(),
                 formatted_args_[0].c_str(), // hardware
@@ -77,7 +78,7 @@ namespace sst {
                 nullptr};
 
         if (::posix_spawn(&pid_, exiftool_path, &actions.data, nullptr,
-                    const_cast<char**>(args), environ) != 0) [[unlikely]] {
+                    const_cast<char**>(args), ::environ) != 0) [[unlikely]] {
             std::cerr << "[sstd:processor] Failed to spawn ExifTool.\n";
 
             pid_ = -1;
@@ -102,14 +103,14 @@ namespace sst {
         ::waitpid(pid_, nullptr, 0);
     }
 
-    void processor::send(std::string_view args) const noexcept
+    void processor::send(std::string_view args) const
     {
         std::cout << "[sstd:processor] Received args: " << args << std::endl;
 
         const std::string formatted_arg{std::format("{}\n-execute\n", args)};
 
         // FIXME: Check result && account for partial writes
-        write(pipe_.fds[1], formatted_arg.data(), formatted_arg.size());
+        ::write(pipe_.fds[1], formatted_arg.data(), formatted_arg.size());
     }
 
     processor::pipe::pipe() noexcept
