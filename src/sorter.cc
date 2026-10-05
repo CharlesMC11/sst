@@ -19,7 +19,8 @@ void sst::sorter::natural_sort(std::vector<std::string>& list)
     //                     CFURLGetString(url_b),
     //                     kCFCompareCaseInsensitive |
     //                             kCFCompareDiacriticInsensitive |
-    //                             kCFCompareLocalized | kCFCompareNumerically);
+    //                             kCFCompareLocalized |
+    //                             kCFCompareNumerically);
     //         },
     //         nullptr);
 }

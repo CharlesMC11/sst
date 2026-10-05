@@ -118,7 +118,7 @@ void sst::stream_context::cleanup()
             continue;
         }
 
-        if (sst::inspector::is_image(fd)) [[likely]] {
+        if (sst::filter::is_image(fd)) [[likely]] {
             const std::string full_path{
                     std::format("{}/{}", directory_, filename)};
             buffer_.push_back(full_path);

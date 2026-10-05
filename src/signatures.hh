@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-namespace sst::inspector {
+namespace sst::filter {
 
     inline constexpr std::int64_t kAlignment{16L};
 
@@ -30,6 +30,6 @@ namespace sst::inspector {
                 has_image_signature(buffer);
     }
 
-} // namespace sst::inspector
+} // namespace sst::filter
 
 #endif // SST__SIGNATURES__H

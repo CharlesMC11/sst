@@ -12,8 +12,8 @@
 #include <string>
 #include <vector>
 
-#include "inspector.hh"
 #include "memory.hh"
+#include "orchestrator.hh"
 #include "processor.hh"
 #include "signal_handler.hh"
 #include "sorter.hh"
@@ -63,7 +63,7 @@ int main(const int argc, const char* const argv[])
 
     std::println("[sstd] Initializing watcher…");
     sst::stream_context monitor{
-            sst::inspector::scan_directory, queue, processor, input_dir};
+            sst::orchestrator::orchestrate, queue, processor, input_dir};
     std::println("[sstd] Initialized to watch: {}.", input_dir);
 
     // Prepare signal handlers for teardown
