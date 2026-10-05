@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 CWD = Path(__file__).parent
-TEST_FILE = CWD / "test_processor_send.txt"
+TEST_FILE = CWD / "test_processor.txt"
 
 
 with TEST_FILE.open("w", encoding="utf-8") as f:
