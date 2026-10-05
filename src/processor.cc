@@ -24,7 +24,7 @@ namespace {
         ::posix_spawn_file_actions_t data{nullptr};
 
         posix_spawn_file_actions() { ::posix_spawn_file_actions_init(&data); };
-        ~posix_spawn_file_actions()
+        ~posix_spawn_file_actions() noexcept
         {
             ::posix_spawn_file_actions_destroy(&data);
         };

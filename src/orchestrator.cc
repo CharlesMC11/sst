@@ -1,5 +1,3 @@
-#include "inspector.hh"
-
 #include <CoreServices/CoreServices.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -9,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "orchestrator.hh"
 #include "processor.hh"
 #include "signatures.hh"
 #include "sorter.hh"
@@ -16,7 +15,7 @@
 
 extern "C" const int kIOFlags; // Declared in `fs_monitor.mm`
 
-void sst::inspector::scan_directory(
+void sst::orchestrator::scan_directory(
         [[maybe_unused]] ::ConstFSEventStreamRef stream_ref,
         void* client_callback_info, std::size_t num_events, void* event_paths,
         const ::FSEventStreamEventFlags event_flags[],
@@ -62,7 +61,7 @@ void sst::inspector::scan_directory(
                 continue;
             }
 
-            if (sst::inspector::is_image(fd)) [[likely]] {
+            if (sst::orchestrator::is_image(fd)) [[likely]] {
                 buffer.emplace_back(path);
                 ++count;
             }
