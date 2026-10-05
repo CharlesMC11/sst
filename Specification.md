@@ -59,7 +59,7 @@
 2. `ExifTool` handler
     * executable path : string
     * running status : bool
-    * arguments list (e.g.: `$OUTPUT_DIR`) : list of strings
+    * formatted arguments list (e.g.: `$OUTPUT_DIR`) : list of strings
     * IPC file descriptors : pair of integers
     * log file path : string
     * max retries : integer
@@ -102,7 +102,7 @@
     * queue handle : queue ptr
     * runtime context :
 
-10. `UNUserNotificationCenter` handler (function/s?)
+10. `UNUserNotificationCenter` handler (function)
     * number of processed originals : integer
 
 ## State Diagram
