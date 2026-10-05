@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.1)
-project(test-sprite-engine ASM CXX OBJCXX)
+project(sst ASM CXX OBJCXX)
 
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
