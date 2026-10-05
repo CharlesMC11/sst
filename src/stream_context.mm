@@ -20,8 +20,6 @@
 #include "memory.hh"
 #include "orchestrator.hh"
 #include "processor.hh"
-#include "signatures.hh"
-#include "sorter.hh"
 
 extern "C" const int kIOFlags; // Defined in `orchestrator.cc`
 

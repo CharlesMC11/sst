@@ -21,7 +21,8 @@ add_library(sstlib STATIC
         src/stream_context.mm
         src/orchestrator.hh
         src/orchestrator.cc
-        src/signatures.hh
+        src/filter.hh
+        src/filter.cc
         src/signatures.s
         src/sorter.hh
         src/sorter.cc

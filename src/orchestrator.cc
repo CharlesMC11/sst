@@ -12,8 +12,8 @@
 #include <string>
 #include <vector>
 
+#include "filter.hh"
 #include "processor.hh"
-#include "signatures.hh"
 #include "sorter.hh"
 #include "stream_context.hh"
 
