@@ -17,10 +17,10 @@ add_library(sstlib STATIC
         src/processor.hh
         src/processor.cc
         src/memory.hh
-        src/fs_monitor.hh
-        src/fs_monitor.mm
-        src/inspector.hh
-        src/inspector.cc
+        src/stream_context.hh
+        src/stream_context.mm
+        src/orchestrator.hh
+        src/orchestrator.cc
         src/signatures.hh
         src/signatures.s
         src/sorter.hh
