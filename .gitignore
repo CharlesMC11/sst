@@ -2,6 +2,7 @@ build/
 cmake-build-debug/
 obj/
 *.link
+tests/test*.txt
 
 .idea/
 .vscode/
