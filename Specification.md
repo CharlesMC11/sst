@@ -45,7 +45,6 @@
 
 ## Attributes
 
-
 1.  Photo metadata
     * Artist : string
     * Copyright : string
@@ -61,14 +60,15 @@
     * running status : bool
     * formatted arguments list (e.g.: `$OUTPUT_DIR`) : list of strings
     * IPC file descriptors : pair of integers
-    * log file path : string
     * max retries : integer
 
-3. `FSEventStream` handler
+3. `FSEventStreamContext` handler
     * `$INPUT_DIR` : string
+    * `$INPUT_DIR` fd : integer
     * stream handle : stream ptr
     * queue handle : queue ptr
     * callback function : Orchestrator callback
+    * latency : float
 
 4. Filter function
     * file paths : list of strings
