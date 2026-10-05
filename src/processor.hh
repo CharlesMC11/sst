@@ -23,8 +23,6 @@ namespace sst {
         auto operator=(const processor&) -> processor& = delete;
         auto operator=(processor&&) -> processor& = delete;
 
-        [[nodiscard]] bool is_running() const noexcept { return pid_ != -1; }
-
         void send(std::string_view args) const;
 
     private:

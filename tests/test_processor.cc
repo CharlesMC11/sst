@@ -8,16 +8,9 @@
 
 static const sst::image::metadata kMetadata{"", "", "", ""};
 
-TEST(SstdTest, TestIsRunningFailure)
+TEST(SstdTest, TestConstructorFail)
 {
-    const sst::processor processor{"prog", kMetadata};
-    ASSERT_THROW(processor.is_running(), std::system_error);
-}
-
-TEST(SstdTest, TestIsRunningSuccess)
-{
-    const sst::processor processor{TEST_PROCESSOR_IS_RUNNING, kMetadata};
-    ASSERT_TRUE(processor.is_running());
+    ASSERT_THROW(sst::processor("prog", kMetadata), std::system_error);
 }
 
 TEST(SsstdTest, TestSend)
