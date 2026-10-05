@@ -1,7 +1,7 @@
 #pragma once
 
 #include <CoreServices/CoreServices.h>
-#include <dispatch/queue.h>
+#include <dispatch/dispatch.h>
 
 #include <string>
 #include <vector>
@@ -39,13 +39,11 @@ namespace sst {
         }
 
     private:
-        std::vector<std::string> buffer_;
-        sst::memory::CFPtr<::FSEventStreamRef> stream_{nullptr};
-
         const sst::processor& processor_;
-
         const char* const dir_path_{nullptr};
         int dir_fd_{-1};
+        sst::memory::CFPtr<::FSEventStreamRef> stream_{nullptr};
+        std::vector<std::string> buffer_;
     };
 
 } // namespace sst

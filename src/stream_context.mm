@@ -2,11 +2,9 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreServices/CoreServices.h>
-#include <Foundation/Foundation.h>
 #include <dirent.h>
 #include <dispatch/dispatch.h>
 #include <fcntl.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <cerrno>
@@ -15,7 +13,6 @@
 #include <ostream>
 #include <string>
 #include <system_error>
-#include <vector>
 
 #include "memory.hh"
 #include "orchestrator.hh"
@@ -25,7 +22,7 @@ extern "C" const int kIOFlags; // Defined in `orchestrator.cc`
 
 sst::stream_context::stream_context(const ::FSEventStreamCallback callback,
         const ::dispatch_queue_t queue, sst::processor& processor,
-        const char directory[], CFTimeInterval latency)
+        const char directory[], const CFTimeInterval latency)
     : processor_{processor}, dir_path_{directory}
 {
     dir_fd_ = ::open(directory, kIOFlags | O_DIRECTORY);
@@ -43,13 +40,16 @@ sst::stream_context::stream_context(const ::FSEventStreamCallback callback,
             ::CFStringCreateWithCString(
                     nullptr, directory, ::kCFStringEncodingUTF8)};
     const void* dir_container[]{dir_cfstr.get()};
-    const sst::memory::CFPtr<::CFArrayRef> paths{::CFArrayCreate(nullptr,
-            reinterpret_cast<const void**>(dir_container), 1,
-            &::kCFTypeArrayCallBacks)};
+    const sst::memory::CFPtr<::CFArrayRef> paths{::CFArrayCreate(
+            nullptr, dir_container, 1Z, &::kCFTypeArrayCallBacks)};
 
-    FSEventStreamContext context{0, this, nullptr, nullptr, nullptr};
-    stream_.reset(::FSEventStreamCreate(::kCFAllocatorDefault, callback,
-            &context, paths.get(), ::kFSEventStreamEventIdSinceNow, latency,
+    FSEventStreamContext context{.version = 0Z,
+            .info = this,
+            .retain = nullptr,
+            .release = nullptr,
+            .copyDescription = nullptr};
+    stream_.reset(::FSEventStreamCreate(nullptr, callback, &context,
+            paths.get(), ::kFSEventStreamEventIdSinceNow, latency,
             ::kFSEventStreamCreateFlagFileEvents));
 
     if (stream_) [[likely]] {
