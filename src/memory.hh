@@ -1,5 +1,4 @@
-#ifndef SST__MEMORY__HH
-#define SST__MEMORY__HH
+#pragma once
 
 #include <CoreFoundation/CFBase.h>
 #include <CoreServices/CoreServices.h>
@@ -32,5 +31,3 @@ namespace sst::memory {
     using CFPtr = std::unique_ptr<std::remove_pointer_t<T>, cf_releaser<T>>;
 
 } // namespace sst::memory
-
-#endif // SST__MEMORY__HH
