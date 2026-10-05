@@ -3,12 +3,24 @@
 #include <CoreServices/CoreServices.h>
 
 #include <cstddef>
+#include <string>
+#include <vector>
 
-namespace sst::orchestrator {
+namespace sst {
 
-    void orchestrate(::ConstFSEventStreamRef stream_ref,
-            void* client_callback_info, std::size_t num_events,
-            void* event_paths, const ::FSEventStreamEventFlags event_flags[],
-            const ::FSEventStreamEventId event_ids[]);
+    class processor;
 
-} // namespace sst::orchestrator
+    namespace orchestrator {
+
+        void cleanup(int dir_fd, const char* dir_path,
+                const processor& processor, std::vector<std::string>& files);
+
+        void orchestrate(::ConstFSEventStreamRef stream_ref,
+                void* client_callback_info, std::size_t num_events,
+                void* event_paths,
+                const ::FSEventStreamEventFlags event_flags[],
+                const ::FSEventStreamEventId event_ids[]);
+
+    } // namespace orchestrator
+
+} // namespace sst
