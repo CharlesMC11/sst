@@ -1,32 +1,21 @@
-#ifndef SST__SIGNAL_HANDLER__HH
-#define SST__SIGNAL_HANDLER__HH
+#pragma once
 
 #include <dispatch/dispatch.h>
 
-#include <string>
-#include <vector>
-
 namespace sst {
 
-    namespace fs {
-
-        class monitor;
-
-    } // namespace fs
+    class stream_context;
 
     namespace runtime {
 
         struct context final {
-            const ::dispatch_queue_t queue;
-            const std::vector<std::string>& buffer;
-            const sst::fs::monitor& monitor;
+            ::dispatch_queue_t queue;
+            const sst::stream_context& monitor;
         };
 
         void register_signal_handler(
-                int sig, const sst::runtime::context context) noexcept;
+                int sig, sst::runtime::context context) noexcept;
 
     } // namespace runtime
 
 } // namespace sst
-
-#endif // SST__SIGNAL_HANDLER__HH

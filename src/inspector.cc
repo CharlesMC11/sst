@@ -1,23 +1,18 @@
 #include "inspector.hh"
 
 #include <CoreServices/CoreServices.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 #include <cstddef>
-#include <cstdint>
 #include <cstring>
-#include <format>
-#include <iostream>
 #include <string>
 #include <vector>
 
-#include "fs_monitor.hh"
-#include "memory.hh"
 #include "processor.hh"
 #include "signatures.hh"
 #include "sorter.hh"
+#include "stream_context.hh"
 
 extern "C" const int kIOFlags; // Declared in `fs_monitor.mm`
 
@@ -27,7 +22,8 @@ void sst::inspector::scan_directory(
         const ::FSEventStreamEventFlags event_flags[],
         [[maybe_unused]] const ::FSEventStreamEventId event_ids[])
 {
-    const auto monitor{static_cast<sst::fs::monitor*>(client_callback_info)};
+    const auto monitor{
+            static_cast<sst::stream_context*>(client_callback_info)};
     const sst::processor& processor{monitor->processor()};
     const int dir_fd{monitor->dir_fd()};
 

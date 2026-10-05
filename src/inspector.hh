@@ -1,10 +1,8 @@
-#ifndef SST__INSPECTOR__HH
-#define SST__INSPECTOR__HH
+#pragma once
 
 #include <CoreServices/CoreServices.h>
 
 #include <cstddef>
-#include <string>
 #include <vector>
 
 namespace sst::inspector {
@@ -15,5 +13,3 @@ namespace sst::inspector {
             const ::FSEventStreamEventId event_ids[]);
 
 } // namespace sst::inspector
-
-#endif // SST__INSPECTOR__HH
