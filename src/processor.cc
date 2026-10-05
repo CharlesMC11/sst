@@ -1,6 +1,5 @@
 #include "processor.hh"
 
-#include <fcntl.h>
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -13,14 +12,14 @@
 // FIXME: Apparently this is brittle even though it works
 extern char** environ;
 
-constexpr char regex[]{
+static inline constexpr char kFilenameRegex[]{
         R"(Filename;s/^\D+(\d{4})-(\d{2})-(\d{2}) at (\d{2})\.(\d{2})\.(\d{2})(?: \((\d)\))?.+$)"};
 
 namespace {
 
     class posix_spawn_file_actions final {
     public:
-        ::posix_spawn_file_actions_t data;
+        ::posix_spawn_file_actions_t data{nullptr};
 
         posix_spawn_file_actions() { ::posix_spawn_file_actions_init(&data); };
         ~posix_spawn_file_actions()
@@ -37,13 +36,12 @@ namespace {
                 -> posix_spawn_file_actions& = delete;
     };
 
-} // namespace
+} // anonymous namespace
 
 namespace sst {
 
     processor::processor(
-            const char* exiftool_path, const image::metadata& metadata)
-        : metadata_{metadata}
+            const char* const exiftool_path, const image::metadata& metadata)
     {
         if (!pipe_.is_valid()) [[unlikely]] {
             return;
@@ -54,18 +52,19 @@ namespace sst {
                 &actions.data, pipe_.fds[0], STDIN_FILENO);
         ::posix_spawn_file_actions_addclose(&actions.data, pipe_.fds[1]);
 
-        formatted_args_ = {std::format("-Model={}", metadata_.hardware),
-                std::format("-Software={}", metadata_.software),
-                std::format("-OffsetTime*={}", metadata_.timezone),
-                std::format("-AllDates<${{{}/$1:$2:$3 $4:$5:$6{}/}}", regex,
-                        metadata_.timezone),
-                std::format("-Filename<${{{}/$1$2$3-$4$5$6/}}%-c%lE", regex),
-                std::format("{}/charlesmc.args", metadata_.arg_files_dir),
-                std::format("{}/screenshot.args", metadata_.arg_files_dir)};
+        formatted_args_ = {std::format("-Model={}", metadata.hardware),
+                std::format("-Software={}", metadata.software),
+                std::format("-OffsetTime*={}", metadata.timezone),
+                std::format("-AllDates<${{{}/$1:$2:$3 $4:$5:$6{}/}}",
+                        kFilenameRegex, metadata.timezone),
+                std::format("-Filename<${{{}/$1$2$3-$4$5$6/}}%-c%lE",
+                        kFilenameRegex),
+                std::format("{}/charlesmc.args", metadata.arg_files_dir),
+                std::format("{}/screenshot.args", metadata.arg_files_dir)};
 
-        const char* const args[]{exiftool_path, "-stay_open", "True", "-@", "-",
-                "-common_args", "-struct", "-preserve", "-verbose", "-o",
-                metadata_.output_dir.c_str(),
+        const char* const args[]{exiftool_path, "-stay_open", "True", "-@",
+                "-", "-common_args", "-struct", "-preserve", "-verbose", "-o",
+                metadata.output_dir.c_str(),
                 formatted_args_[0].c_str(), // hardware
                 formatted_args_[1].c_str(), // software
                 formatted_args_[2].c_str(), // timezone
@@ -79,16 +78,15 @@ namespace sst {
 
         if (::posix_spawn(&pid_, exiftool_path, &actions.data, nullptr,
                     const_cast<char**>(args), ::environ) != 0) [[unlikely]] {
-            std::cerr << "[sstd:processor] Failed to spawn ExifTool.\n";
-
             pid_ = -1;
+            std::println(
+                    std::cerr, "[sstd:processor] Failed to spawn ExifTool.");
 
             return;
         }
 
         pipe_.close(0UZ);
-
-        std::cout << "[sstd:processor] ExifTool is now running…" << std::endl;
+        std::println("[sstd:processor] ExifTool is now running…");
     }
 
     processor::~processor()
@@ -105,7 +103,7 @@ namespace sst {
 
     void processor::send(std::string_view args) const
     {
-        std::cout << "[sstd:processor] Received args: " << args << std::endl;
+        std::println("[sstd:processor] Received args: {}", args);
 
         const std::string formatted_arg{std::format("{}\n-execute\n", args)};
 
@@ -116,7 +114,7 @@ namespace sst {
     processor::pipe::pipe() noexcept
     {
         if (::pipe(fds) != 0) [[unlikely]] {
-            std::cerr << "[sstd:processor] Failed to open a pipe.\n";
+            std::println(std::cerr, "[sstd:processor] Failed to open a pipe.");
             return;
         }
     }
@@ -127,15 +125,15 @@ namespace sst {
         close(1UZ);
     }
 
-    void processor::pipe::close(std::size_t idx) noexcept
+    void processor::pipe::close(const std::size_t idx)
     {
         if (fds[idx] == -1) [[unlikely]] {
             return;
         }
 
         if (::close(fds[idx]) != 0) [[unlikely]] {
-            std::cerr << "Could not close file descriptor: " << fds[idx]
-                      << ".\n";
+            std::println(std::cerr, "Could not close file descriptor: {}.",
+                    fds[idx]);
         }
 
         fds[idx] = -1;

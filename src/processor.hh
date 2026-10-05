@@ -1,5 +1,4 @@
-#ifndef SST__PROCESSOR__HH
-#define SST__PROCESSOR__HH
+#pragma once
 
 #include <sys/types.h>
 
@@ -24,6 +23,8 @@ namespace sst {
         auto operator=(const processor&) -> processor& = delete;
         auto operator=(processor&&) -> processor& = delete;
 
+        [[nodiscard]] bool is_running() const noexcept { return pid_ != -1; }
+
         void send(std::string_view args) const;
 
     private:
@@ -32,7 +33,7 @@ namespace sst {
             int fds[2UZ]{-1, -1};
 
             [[nodiscard]] pipe() noexcept;
-            ~pipe() noexcept;
+            ~pipe();
 
             pipe(const pipe&) = delete;
             pipe(pipe&&) = delete;
@@ -48,12 +49,9 @@ namespace sst {
             }
         };
 
-        const sst::image::metadata& metadata_;
         sst::processor::pipe pipe_;
         ::pid_t pid_{-1};
         std::array<std::string, 7UZ> formatted_args_;
     };
 
 } // namespace sst
-
-#endif // SST__PROCESSOR__HH
