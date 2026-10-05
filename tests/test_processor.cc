@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <fstream>
+#include <system_error>
 
 #include "metadata.hh"
 #include "processor.hh"
@@ -10,7 +11,7 @@ static const sst::image::metadata kMetadata{"", "", "", ""};
 TEST(SstdTest, TestIsRunningFailure)
 {
     const sst::processor processor{"prog", kMetadata};
-    ASSERT_FALSE(processor.is_running());
+    ASSERT_THROW(processor.is_running(), std::system_error);
 }
 
 TEST(SstdTest, TestIsRunningSuccess)

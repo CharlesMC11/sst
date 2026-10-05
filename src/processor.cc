@@ -4,10 +4,12 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <cerrno>
 #include <cstddef>
 #include <format>
 #include <iostream>
 #include <string_view>
+#include <system_error>
 
 // FIXME: Apparently this is brittle even though it works
 extern char** environ;
@@ -44,7 +46,8 @@ namespace sst {
             const char* const exiftool_path, const image::metadata& metadata)
     {
         if (!pipe_.is_valid()) [[unlikely]] {
-            return;
+            throw std::system_error{errno, std::generic_category(),
+                    "[sstd:processor] Failed to create a pipe."};
         }
 
         ::posix_spawn_file_actions actions;
@@ -78,11 +81,8 @@ namespace sst {
 
         if (::posix_spawn(&pid_, exiftool_path, &actions.data, nullptr,
                     const_cast<char**>(args), ::environ) != 0) [[unlikely]] {
-            pid_ = -1;
-            std::println(
-                    std::cerr, "[sstd:processor] Failed to spawn ExifTool.");
-
-            return;
+            throw std::system_error{errno, std::generic_category(),
+                    "[sstd:processor] Failed to spawn ExifTool."};
         }
 
         pipe_.close(0UZ);
@@ -119,7 +119,7 @@ namespace sst {
         }
     }
 
-    processor::pipe::~pipe() noexcept
+    processor::pipe::~pipe()
     {
         close(0UZ);
         close(1UZ);

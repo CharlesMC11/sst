@@ -12,7 +12,7 @@ namespace sst {
 
     class processor final {
     public:
-        [[nodiscard]] explicit processor(const char* exiftool_path,
+        explicit processor(const char* exiftool_path,
                 const sst::image::metadata& metadata);
 
         ~processor();
@@ -41,7 +41,7 @@ namespace sst {
             auto operator=(const pipe&) -> pipe& = delete;
             auto operator=(pipe&&) -> pipe& = delete;
 
-            void close(std::size_t idx) noexcept;
+            void close(std::size_t idx);
 
             [[nodiscard]] bool is_valid() const noexcept
             {
