@@ -34,7 +34,7 @@ sst::stream_context::stream_context(const ::FSEventStreamCallback callback,
     }
 
     // TODO: This is technically not related to the stream
-    sst::orchestrator::cleanup(dir_fd_, processor_, buffer_);
+    sst::orchestrator::cleanup(processor_, dir_fd_, buffer_);
 
     const sst::memory::cf_ptr<::CFStringRef> dir_cfstr{
             ::CFStringCreateWithCString(
@@ -66,7 +66,7 @@ sst::stream_context::~stream_context() noexcept
     }
 
     // TODO: This is technically not related to the stream
-    sst::orchestrator::cleanup(dir_fd_, processor_, buffer_);
+    sst::orchestrator::cleanup(processor_, dir_fd_, buffer_);
 
     if (dir_fd_ != -1 && ::close(dir_fd_) != 0) [[unlikely]] {
         std::println(std::cerr,

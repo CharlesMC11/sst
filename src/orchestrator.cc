@@ -27,7 +27,7 @@ static inline constexpr unsigned kFSEventStreamFlags{
 static void inspect(
         int dir_fd, const char* filename, std::vector<std::string>& files);
 
-void sst::orchestrator::cleanup(int dir_fd, const processor& processor,
+void sst::orchestrator::cleanup(const processor& processor, int dir_fd,
         std::vector<std::string>& files)
 {
     if (dir_fd == -1) [[unlikely]] {
