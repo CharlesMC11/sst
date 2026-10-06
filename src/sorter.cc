@@ -2,40 +2,29 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 
-#include <iostream>
+#include <algorithm>
 #include <string>
 #include <vector>
 
-// FIXME: Reimplement in C++; maybe use Arm Neon?
+#include "memory.hh"
+
+// FIXME: Lots of heap allocation going on here
 void sst::sorter::natural_sort(std::vector<std::string>& list)
 {
-    // CFArraySortValues(
-    //         list, CFRangeMake(0, CFArrayGetCount(list)),
-    //         [](const void* a, const void* b, void*) {
-    //             const auto url_a{static_cast<CFURLRef>(a)};
-    //             const auto url_b{static_cast<CFURLRef>(b)};
+    std::ranges::sort(list.begin(), list.end(),
+            [](const std::string& a, const std::string& b) -> bool {
+                const sst::memory::cf_ptr<CFStringRef> a_cstr{
+                        ::CFStringCreateWithCString(
+                                nullptr, a.c_str(), ::kCFStringEncodingUTF8)};
+                const sst::memory::cf_ptr<CFStringRef> b_cstr{
+                        ::CFStringCreateWithCString(
+                                nullptr, b.c_str(), ::kCFStringEncodingUTF8)};
 
-    //             return CFStringCompare(CFURLGetString(url_a),
-    //                     CFURLGetString(url_b),
-    //                     kCFCompareCaseInsensitive |
-    //                             kCFCompareDiacriticInsensitive |
-    //                             kCFCompareLocalized |
-    //                             kCFCompareNumerically);
-    //         },
-    //         nullptr);
-}
-
-void sst::sorter::print_sorted(std::vector<std::string>& list)
-{
-    if (list.empty()) [[unlikely]] {
-        return;
-    }
-
-    sst::sorter::natural_sort(list);
-
-    std::cout << "[sstd::sorter] Printing buffer contents:\n";
-    for (const auto& path: list) {
-        std::cout << path << '\n';
-    }
-    std::cout << std::flush;
+                return ::CFStringCompare(a_cstr.get(), b_cstr.get(),
+                               ::kCFCompareCaseInsensitive |
+                                       ::kCFCompareDiacriticInsensitive |
+                                       ::kCFCompareLocalized |
+                                       kCFCompareNumerically) ==
+                        ::kCFCompareLessThan;
+            });
 }
