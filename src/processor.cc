@@ -56,8 +56,8 @@ namespace sst {
                 &actions.data, pipe_.fds[0], STDIN_FILENO);
         ::posix_spawn_file_actions_addclose(&actions.data, pipe_.fds[1]);
 
-        formatted_args_ = {std::format("-Model={}", metadata.hardware),
-                std::format("-Software={}", metadata.software),
+        formatted_args_ = {std::format("-Model={}", metadata.hw_model),
+                std::format("-Software={}", metadata.os_ver),
                 std::format("-OffsetTime*={}", metadata.timezone),
                 std::format("-AllDates<${{{}/$1:$2:$3 $4:$5:$6{}/}}",
                         kFilenameRegex, metadata.timezone),

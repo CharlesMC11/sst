@@ -11,16 +11,16 @@ namespace sst::image {
         const char* const input_dir;
         const char* const output_dir;
         const char* const arg_files_dir;
-        const char* const hardware;
-        std::string software;
+        const char* const hw_model;
+        std::string copyright;
         std::string timezone;
+        std::string os_ver;
 
         metadata(const char* const input_dir, const char* const output_dir,
-                const char* const arg_files_dir, const char* const hardware,
-                const std::string_view software)
+                const char* const arg_files_dir, const char* const model,
+                const std::string_view os_ver)
             : input_dir{input_dir}, output_dir{output_dir},
-              arg_files_dir{arg_files_dir}, hardware{hardware},
-              software{software}
+              arg_files_dir{arg_files_dir}, hw_model{model}, os_ver{os_ver}
         {
             // TODO: Actually get the timezone
             using std::string_literals::operator""s;
