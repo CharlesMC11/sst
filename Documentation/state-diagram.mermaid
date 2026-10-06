@@ -1,0 +1,25 @@
+stateDiagram-v2
+  [*] --> Startup : Daemon Invoked
+
+  state is_initialized <<choice>>
+  Startup --> is_initialized : Set-Up ExifTool & FSEventStream
+  is_initialized --> [*] : [Failure] Throw
+  is_initialized --> Loop : [Success] Queue Dispatch
+
+  state "Main Loop" as Loop {
+    [*] --> Idle : Run Dispatch
+    Processing --> Idle : No Valid Files
+    Idle --> Processing : FSEvent Received
+
+    Processing --> Async : Write Processed Files to Disk
+    Async --> Idle : Async Process Dispatched
+
+    state "Background Queue" as Async {
+      [*] --> Archiving : Original Paths Received
+      Archiving --> [*] : Display Notification Banner
+    }
+  }
+
+  Loop --> Teardown : SIGINT / SIGTERM
+  Teardown --> [*] : EXIT NONZERO
+  Teardown --> [*] : EXIT OK

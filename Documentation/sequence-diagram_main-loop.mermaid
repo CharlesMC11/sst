@@ -1,0 +1,72 @@
+---
+title: Main Loop
+---
+sequenceDiagram
+autonumber
+
+actor User
+
+box rgb(30, 30, 40) Main Thread
+  participant FS@{ type: boundary } as FSEvents / Kernel
+  participant O as Orchestrator Callback
+  participant F as Filter
+  participant S as Sorter
+  participant P as Processor
+end
+
+box rgb(40, 30, 30) Subprocess
+  participant ET@{ type: boundary } as ExifTool
+end
+
+box rgb(30, 40, 30) Background Queue
+  participant BG@{ type: boundary } as Background Queue Listener
+  participant A as Archiver
+  participant N@{ type: boundary } as UNUserNotificationCenter
+end
+
+User ->> FS : Save Screenshots to $INPUT_DIR
+FS ->> O : Deliver Event Paths
+
+activate O
+  O ->> F : Filter Images
+    activate F
+      loop for each file path
+        F ->> F : Is Regular File?
+        F ->> F : Has Valid Filename?
+        F ->> F : Has Magic Bytes?
+      end
+      F -->> O : Valid Filenames
+    deactivate F
+
+  O ->> S : Sort Filenames
+  activate S
+    S -->> O : Sorted List
+  deactivate S
+
+  O ->> P : Construct ExifTool Args List
+  activate P
+    P ->> ET : Write Filenames to Pipe
+    activate ET
+      ET -->> P : Write Files to $OUTPUT_DIR
+    deactivate ET
+    P -->> O : Ready
+  deactivate P
+
+  Note over O,BG: Async Process
+  O --) BG : Send Paths of Originals of Processed Files
+  activate BG
+    O -->> FS : Done
+
+deactivate O
+
+    BG ->> A : Add Originals to Monthly Archive
+    activate A
+    A -->> BG : Done
+    deactivate A
+
+    BG ->> N : Request Banner Notification (N Screenshots Tagged)
+
+    activate N
+      N -->> User : Display macOS Banner
+    deactivate N
+  deactivate BG

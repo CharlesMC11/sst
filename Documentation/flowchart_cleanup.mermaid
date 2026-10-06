@@ -1,0 +1,15 @@
+---
+title: Cleanup
+---
+flowchart
+  OpenDir[[Open $INPUT_DIR Stream]] --> |Failure| EXIT([EXIT NONZERO])
+  OpenDir --> |Failure| OpenDir?{Max Attempts Exhausted?}
+  OpenDir? --> |Yes| EXIT
+  OpenDir? --> |No| OpenDir
+  OpenDir --> |Success| Orchestrator((Orchestrator))
+
+  Orchestrator --> |Check for Skip| Orchestrator?{Skipped?}
+  Orchestrator? --> |Yes| EXIT
+  Orchestrator? --> |No| CloseDir[[Close $INPUT_DIR Stream]]
+  CloseDir --> |Failure| EXIT
+  CloseDir --> |Success| ClosedDir[/$INPUT_DIR Stream Closed/]

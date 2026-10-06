@@ -10,4 +10,4 @@ Originally written in Zsh for Folder Actions, this evolved into a deep‐dive st
 
 ## Specification
 
-The project architecture can be read in [Specification.md](Specification.md).
+The project architecture can be read in [Documentation/](Documentation/).

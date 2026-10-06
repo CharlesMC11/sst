@@ -1,0 +1,13 @@
+---
+title: Teardown
+---
+flowchart
+  Main[[Main Loop]] --> Signals[/SIGINT / SIGTERM/]
+  Signals --> Stop[[Stop & Invalidate FSEventStream]]
+  Stop --> Clean((Cleanup $INPUT_DIR))
+  Clean --> Close[[Close Pipe]]
+  Close --> |Failure| Closed?{Max Attempts Exhausted?}
+  Closed? --> |No| Close
+  Closed? --> |Yes: EXIT NONZERO| Reap[[Wait for Child PID]]
+  Close --> |Success: EXIT OK| Reap
+  Reap --> Exit([EXIT])

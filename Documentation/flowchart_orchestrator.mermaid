@@ -1,0 +1,38 @@
+---
+title: Orchestrator
+---
+flowchart
+  subgraph Filter
+    direction TB
+    Loop[Iterate $INPUT_DIR] --> File{Is Regular File?}
+    File --> |No| Loop
+    File --> |Yes| Filename{Has Valid Filename?}
+    Filename --> |No| Loop
+    Filename --> |Yes| Open[[Open File]]
+    Open --> |Failure| Max1{Max Attempts Exhausted?}
+    Max1 --> |No| Open
+    Max1 --> |Yes| Loop
+    Open --> |Success| Magic{Has Magic Bytes?}
+    Magic --> |No| Close[[Close File]]
+    Close --> |Failure| Closed?{Max Attempts Exhausted?}
+    Closed? --> |No| Close
+    Closed? --> |Yes| Loop
+    Close --> |Success| Loop
+    Magic --> |Yes| Add[/Add Filename to List/]
+    Add --> Close[[Close File]]
+  end
+
+  Filter --> Sorter{{Sort Filenames}}
+  Sorter --> Processor
+
+  subgraph Processor
+    Args{{Construct ExifTool Args List}} --> Pipe[[Write to Pipe]]
+    Pipe --> |Failure| Pipe?{Max Attempts Exhausted?}
+    Pipe? --> |No| Pipe
+    Pipe? --> |Yes| Skip
+    Pipe --> |Success| ExifTool(ExifTool Process)
+    ExifTool --> Write[/Write to $OUTPUT_DIR/]
+  end
+
+  Processor --> Success{{Gather Originals of Successfully Processed Files}}
+  Success --> Async[[Background Queue]]

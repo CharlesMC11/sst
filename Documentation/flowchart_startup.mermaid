@@ -1,0 +1,25 @@
+---
+title: Startup
+---
+flowchart
+  IN([Daemon Invoked]) --> Parse{{Parse CLI Arguments / plist Config}}
+  Parse --> ExifTool
+
+  subgraph ExifTool [Spawn ExifTool Subprocess]
+      direction TB
+    Args{{Format ExifTool Common Arguments}} --> Pipe[[Open Pipe]]
+    Pipe --> |Failure| Throw1([Throw])
+    Pipe --> |Success| Spawn[[Spawn Subprocess]]
+    Spawn --> |Failure| Throw1
+    Spawn --> |Success| Run(ExifTool Running)
+  end
+
+  ExifTool --> FDOpen[[Open $INPUT_DIR File Descriptor]]
+  FDOpen --> |Failure| Throw2([Throw])
+  FDOpen --> |Success| Cleanup((Cleanup $INPUT_DIR))
+
+  Cleanup --> Dispatch[[Get Dispatch Queue]]
+  Dispatch --> Signals{{Set-Up Signal Handlers}}
+  Signals --> FSEvent[[Create FSEventStreamContext]]
+  FSEvent --> Attach[[Attach to Dispatch]]
+  Attach --> Start[[Main Loop]]
