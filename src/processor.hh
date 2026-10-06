@@ -14,7 +14,8 @@ namespace sst {
     class processor final {
     public:
         processor(const char* exiftool_path,
-                const sst::image::metadata& metadata);
+                const sst::image::metadata& metadata,
+                unsigned max_retries = 0U);
 
         ~processor();
 
@@ -35,7 +36,7 @@ namespace sst {
          * @param filenames
          * The relative filenames to send
          */
-        void send_filenames(const std::vector<std::string>& filenames) const;
+        bool send_filenames(const std::vector<std::string>& filenames) const;
 
     private:
         class pipe final {
@@ -62,9 +63,10 @@ namespace sst {
         const char* const input_dir_;
         sst::processor::pipe pipe_;
         ::pid_t pid_{-1};
+        unsigned max_retries_;
         std::array<std::string, 7UZ> formatted_args_;
 
-        void send(std::string_view args) const;
+        [[nodiscard]] bool send(std::string_view args) const;
     };
 
 } // namespace sst

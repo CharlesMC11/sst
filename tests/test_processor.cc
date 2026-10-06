@@ -6,7 +6,8 @@
 #include "metadata.hh"
 #include "processor.hh"
 
-static const sst::image::metadata kMetadata{"in_dir", "out_dir", "args_dir", "model", "os"};
+static const sst::image::metadata kMetadata{
+        "in_dir", "out_dir", "args_dir", "model", "os"};
 
 TEST(SstdTest, TestConstructorFail)
 {
@@ -19,7 +20,7 @@ TEST(SstdTest, TestIsRunning)
     ASSERT_TRUE(processor.is_running());
 }
 
-TEST(SsstdTest, TestSend)
+TEST(SstdTest, TestSendFilenames)
 {
     {
         const sst::processor processor{TEST_PROCESSOR_SEND, kMetadata};
@@ -41,4 +42,9 @@ TEST(SsstdTest, TestSend)
 
     std::getline(infile, line);
     ASSERT_TRUE(line.contains("False"));
+}
+
+TEST(SstdTest, TestResend)
+{
+    const sst::processor processor{TEST_PROCESSOR_IS_RUNNING, kMetadata, 3U};
 }

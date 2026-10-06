@@ -43,9 +43,9 @@ namespace {
 
 namespace sst {
 
-    processor::processor(
-            const char* const exiftool_path, const image::metadata& metadata)
-        : input_dir_{metadata.input_dir}
+    processor::processor(const char* const exiftool_path,
+            const image::metadata& metadata, const unsigned max_retries)
+        : input_dir_{metadata.input_dir}, max_retries_{max_retries}
     {
         ::posix_spawn_file_actions actions;
         ::posix_spawn_file_actions_adddup2(
@@ -92,6 +92,7 @@ namespace sst {
             return;
         }
 
+        // TODO: Grab result here later
         send("-stay_open\nFalse\n-execute\n");
         pipe_.close(1UZ);
 
@@ -99,7 +100,7 @@ namespace sst {
     }
 
     // TODO: Could probably clean this up later
-    void processor::send_filenames(
+    bool processor::send_filenames(
             const std::vector<std::string>& filenames) const
     {
         std::string formatted_args;
@@ -109,17 +110,7 @@ namespace sst {
             formatted_args += std::format("{}/{} ", input_dir_, filename);
         }
 
-        send(formatted_args);
-    }
-
-    void processor::send(std::string_view args) const
-    {
-        std::println("[sstd:processor] Received args: {}", args);
-
-        const std::string formatted_args{std::format("{}\n-execute\n", args)};
-
-        // FIXME: Check result && account for partial writes
-        ::write(pipe_.fds[1], formatted_args.data(), formatted_args.size());
+        return send(formatted_args);
     }
 
     processor::pipe::pipe()
@@ -148,6 +139,19 @@ namespace sst {
         }
 
         fds[idx] = -1;
+    }
+
+    [[nodiscard]] bool processor::send(std::string_view args) const
+    {
+        std::println("[sstd:processor] Received args: {}", args);
+
+        const std::string formatted_args{std::format("{}\n-execute\n", args)};
+
+        // FIXME: Check result && account for partial writes
+        ::write(pipe_.fds[1], formatted_args.data(), formatted_args.size());
+
+        // FIXME: Send a proper signal
+        return true;
     }
 
 } // namespace sst
