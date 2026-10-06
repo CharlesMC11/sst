@@ -19,8 +19,9 @@
 
 extern "C" const int kIOFlags{O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_CLOFORK};
 
-void sst::orchestrator::cleanup(int dir_fd, const char* const dir_path,
-        const processor& processor, std::vector<std::string>& files)
+static void inspect(
+        int dir_fd, const char* filename, std::vector<std::string>& files);
+
 void sst::orchestrator::cleanup(int dir_fd, const processor& processor,
         std::vector<std::string>& files)
 {
@@ -53,7 +54,7 @@ void sst::orchestrator::cleanup(int dir_fd, const processor& processor,
         return;
     }
 
-    struct dirent* entry{nullptr};
+    dirent* entry{nullptr};
     while ((entry = ::readdir(dir_stream))) {
         const char* filename{entry->d_name};
 
@@ -61,22 +62,7 @@ void sst::orchestrator::cleanup(int dir_fd, const processor& processor,
             continue;
         }
 
-        const int fd{::openat(dir_fd, filename, kIOFlags)};
-        if (fd < 0) [[unlikely]] {
-            continue;
-        }
-
-        if (sst::filter::is_image(fd)) [[likely]] {
-            const std::string full_path{
-                    std::format("{}/{}", dir_path, filename)};
-            files.push_back(full_path);
-            std::println(
-                    "[sstd:stream_context] Found entry: {}", entry->d_name);
-        }
-
-        if (::close(fd) != 0) {
-            // TODO: Some error message
-        }
+        inspect(dir_fd, filename, files);
     }
 
     if (::fdclosedir(dir_stream) == -1) [[unlikely]] {
@@ -84,12 +70,10 @@ void sst::orchestrator::cleanup(int dir_fd, const processor& processor,
                 << "[sstd:stream_context] Failed to close directory stream.\n";
         return;
     }
-    dir_stream = nullptr;
 
     sst::sorter::natural_sort(files);
-    for (const auto& file_path: files) {
-        processor.send(file_path);
-    }
+    std::ranges::for_each(files.begin(), files.end(),
+            [&processor](const auto& f) -> void { processor.send(f); });
 }
 
 void sst::orchestrator::orchestrate(
@@ -133,26 +117,30 @@ void sst::orchestrator::orchestrate(
                                 ::kFSEventStreamEventFlagItemRenamed)) != 0};
 
         if (is_relevant && is_file) [[likely]] {
-            const int fd{::openat(dir_fd, slash + 1, kIOFlags)};
-            if (fd < 0) [[unlikely]] {
-                continue;
-            }
-
-            if (sst::filter::is_image(fd)) [[likely]] {
-                buffer.emplace_back(path);
-                ++count;
-            }
-
-            if (::close(fd) != 0) [[unlikely]] {
-                // TODO: Some error message
-            }
+            inspect(dir_fd, slash + 1, buffer);
         }
     }
 
-    if (count > 0UZ) [[likely]] {
+    if (!buffer.empty()) [[likely]] {
         sst::sorter::natural_sort(buffer);
-        for (const auto& file_path: buffer) {
-            processor.send(file_path);
-        }
+        std::ranges::for_each(buffer.begin(), buffer.end(),
+                [&processor](const auto& f) -> void { processor.send(f); });
+    }
+}
+
+static void inspect(const int dir_fd, const char* filename,
+        std::vector<std::string>& files)
+{
+    const int fd{::openat(dir_fd, filename, kIOFlags)};
+    if (fd < 0) [[unlikely]] {
+        return;
+    }
+
+    if (sst::filter::is_image(fd)) [[likely]] {
+        files.emplace_back(filename);
+    }
+
+    if (::close(fd) != 0) [[unlikely]] {
+        // TODO: Some error message
     }
 }
