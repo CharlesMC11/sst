@@ -100,9 +100,9 @@ void sst::orchestrator::orchestrate(
 
         const char* const path{paths[i]};
         // Is there even a possibility of FSEvents sending an empty string?
-        // if (std::strlen(path) == 0UZ) [[unlikely]] {
-        //     continue;
-        // }
+        if (path[0] == '\0') [[unlikely]] {
+            continue;
+        }
 
         // The watched directory is guaranteed to have no subdirectories
         const char* const slash{std::strrchr(path, '/')};
