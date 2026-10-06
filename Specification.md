@@ -4,10 +4,10 @@
 
 ### Startup
 
-1. Prepare configurations to pass to `ExifTool` and `FSEventStream`: e.g.: directory paths, image metadata
+1. Prepare configurations to pass to `ExifTool` and `FSEventStream`
 2. Spawn `ExifTool` as a persistent background process
 3. Manually process `$INPUT_DIR` to clean up leftover files
-4. Prepare the context needed by the callback function passed to `FSEventStream`
+4. Prepare `FSEventStreamContext`
 5. Prepare signal handlers for teardown
 6. Attach the `FSeventStream` to the `dispatch_queue`
 7. Run the main loop
@@ -16,21 +16,22 @@
 
 1. `FSEventStream` monitors `$INPUT_DIR`
 2. `FSEvents` lists the paths of new files added to `$INPUT_DIR`
-3. Filter regular files that do not start with '\_' (files still being written) nor '.'
-4. Check files for magic bytes
-5. Add the paths of valid files into a list
-6. Sort the paths using natural sort
-7. Send sorted paths to `ExifTool` for metadata injection and renaming
-8. `ExifTool` sends the processed files to `$OUTPUT_DIR`
-9. Archive the originals of successfully processed files; store in a monthly archive
-10. `UNUserNotificationCenter` announces that $N$ screenshots were successfully processed
+3. Filter regular files:
+   1. Filename does not start with '\_' (files still being written) nor '.'
+   2. Check for magic bytes
+4. Add the paths of valid files into a list
+5. Sort the paths using natural sort
+6. Send sorted paths to `ExifTool` for metadata injection and renaming
+7. `ExifTool` writes the processed files to `$OUTPUT_DIR`
+8.  Store originals of successfully processed files in a monthly archive
+9.  `UNUserNotificationCenter` announces that $N$ screenshots were successfully processed
 
 ### Teardown
 
 1. Capture interrupts
 2. Stop and release `FSEventStream`
 3. Manually process `$INPUT_DIR` to clean up leftover files
-4. Close `ExifTool` and its spawned process
+4. Close `ExifTool` and clean up resources
 
 ## Abstractions
 
@@ -104,60 +105,133 @@
    - output_dir : string
    - max_retries : integer
 
-10. `UNUserNotificationCenter` handler (function)
+10. `UNUserNotificationCenter` handler
     - number_of_processed_originals : integer
 
 ## State Diagram
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Startup : daemon invoked
+  [*] --> Startup : Daemon Invoked
 
   state is_initialized <<choice>>
-  Startup --> is_initialized : set-up ExifTool & FSEventStream
-  is_initialized --> Loop : [success] queue dispatch
-  is_initialized --> [*] : [failure] throw
+  Startup --> is_initialized : Set-Up ExifTool & FSEventStream
+  is_initialized --> [*] : [Failure] Throw
+  is_initialized --> Loop : [Success] Queue Dispatch
 
   state "Main Loop" as Loop {
-    [*] --> Idle : run dispatch
-    Idle --> Processing : FSEvent received
-    Processing --> Idle : write files to disk
-  }
+    [*] --> Idle : Run Dispatch
+    Processing --> Idle : No Valid Files
+    Idle --> Processing : FSEvent Received
 
-  Processing --> BGQueue : [async] archive originals of successfully processed files
+    Processing --> Async : Write Processed Files to Disk
+    Async --> Idle : Async Process Dispatched
 
-  state "Background Queue" as BGQueue {
-    [*] --> Archiving: paths received
-    Archiving --> [*] : display notification banner
+    state "Background Queue" as Async {
+      [*] --> Archiving : Original Paths Received
+      Archiving --> [*] : Display Notification Banner
+    }
   }
 
   Loop --> Teardown : SIGINT / SIGTERM
-  Teardown --> [*] : EX_OK
+  Teardown --> [*] : EXIT NONZERO
+  Teardown --> [*] : EXIT OK
 ```
 
-## Startup Flowchart
+## Flowcharts
 
+### Startup
 ```mermaid
-flowchart TB
-  Invoke([Daemon Invoked]) --> Parse[Parse CLI arguments /
-  plist Config]
-  Parse --> Prep[Prepare Image Metadata]
-  Prep --> ExifTool
+flowchart
+  IN([Daemon Invoked]) --> Parse{{Parse CLI Arguments / plist Config}}
+  Parse --> ExifTool
 
-  subgraph ExifTool [Spawn ExifTool]
-    Pipe[Open Unix Pipe] --> Spawn{Spawn Subprocess}
+  subgraph ExifTool [Spawn ExifTool Subprocess]
+      direction TB
+    Args{{Format ExifTool Common Arguments}} --> Pipe[[Open Pipe]]
+    Pipe --> |Failure| Throw1([Throw])
+    Pipe --> |Success| Spawn[[Spawn Subprocess]]
+    Spawn --> |Failure| Throw1
+    Spawn --> |Success| Run(ExifTool Running)
   end
 
-  Spawn --> |Failure| F
-  Spawn --> |Success| Open{Open $INPUT_DIR}
+  ExifTool --> FDOpen[[Open $INPUT_DIR File Descriptor]]
+  FDOpen --> |Failure| Throw2([Throw])
+  FDOpen --> |Success| Cleanup((Cleanup $INPUT_DIR))
 
-  Open --> |Failure| F([Exit])
-  Open --> |Success| Clean[Manually process $INPUT_DIR for leftover files]
+  Cleanup --> Dispatch[[Get Dispatch Queue]]
+  Dispatch --> Signals{{Set-Up Signal Handlers}}
+  Signals --> FSEvent[[Create FSEventStreamContext]]
+  FSEvent --> Attach[[Attach to Dispatch]]
+  Attach --> Start[[Main Loop]]
+```
+### Teardown
 
-  Clean --> Q[Get Dispatch Queue]
-  Q --> FS[Create FSEventStreamContext]
+```mermaid
+flowchart
+  Main[[Main Loop]] --> Signals[/SIGINT / SIGTERM/]
+  Signals --> Stop[[Stop & Invalidate FSEventStream]]
+  Stop --> Clean((Cleanup $INPUT_DIR))
+  Clean --> Close[[Close Pipe]]
+  Close --> |Failure| Closed?{Max Attempts Exhausted?}
+  Closed? --> |No| Close
+  Closed? --> |Yes: EXIT NONZERO| Reap[[Wait for Child PID]]
+  Close --> |Success: EXIT OK| Reap
+  Reap --> Exit([EXIT])
+```
 
-  FS --> Start[Main Loop]
+### Cleanup $INPUT_DIR
+```mermaid
+flowchart
+  OpenDir[[Open $INPUT_DIR Stream]] --> |Failure| EXIT([EXIT NONZERO])
+  OpenDir --> |Failure| OpenDir?{Max Attempts Exhausted?}
+  OpenDir? --> |Yes| EXIT
+  OpenDir? --> |No| OpenDir
+  OpenDir --> |Success| Orchestrator((Orchestrator))
+
+  Orchestrator --> |Check for Skip| Orchestrator?{Skipped?}
+  Orchestrator? --> |Yes| EXIT
+  Orchestrator? --> |No| CloseDir[[Close $INPUT_DIR Stream]]
+  CloseDir --> |Failure| EXIT
+  CloseDir --> |Success| ClosedDir[/$INPUT_DIR Stream Closed/]
+```
+### Orchestrator
+```mermaid
+flowchart
+  subgraph Filter
+    direction TB
+    Loop[Iterate $INPUT_DIR] --> File{Is Regular File?}
+    File --> |No| Loop
+    File --> |Yes| Filename{Has Valid Filename?}
+    Filename --> |No| Loop
+    Filename --> |Yes| Open[[Open File]]
+    Open --> |Failure| Max1{Max Attempts Exhausted?}
+    Max1 --> |No| Open
+    Max1 --> |Yes| Loop
+    Open --> |Success| Magic{Has Magic Bytes?}
+    Magic --> |No| Close[[Close File]]
+    Close --> |Failure| Closed?{Max Attempts Exhausted?}
+    Closed? --> |No| Close
+    Closed? --> |Yes| Loop
+    Close --> |Success| Loop
+    Magic --> |Yes| Add[/Add Filename to List/]
+    Add --> Close[[Close File]]
+  end
+
+  Filter --> Sorter{{Sort Filenames}}
+  Sorter --> Processor
+
+  subgraph Processor
+    Args{{Construct ExifTool Args List}} --> Pipe[[Write to Pipe]]
+    Pipe --> |Failure| Pipe?{Max Attempts Exhausted?}
+    Pipe? --> |No| Pipe
+    Pipe? --> |Yes| Skip
+    Pipe --> |Success| ExifTool(ExifTool Process)
+    ExifTool --> Write[/Write to $OUTPUT_DIR/]
+  end
+
+  Processor --> Success{{Gather Originals of Successfully Processed Files}}
+  Success --> Async[[Background Queue]]
 ```
 
 ## Sequence Diagram
@@ -179,80 +253,60 @@ box rgb(30, 30, 40) Main Thread
   participant P as Processor
 end
 
-box rgb(40, 30, 30) Sub-Process
+box rgb(40, 30, 30) Subprocess
   participant ET@{ type: boundary } as ExifTool
 end
 
 box rgb(30, 40, 30) Background Queue
-  participant BG as Background Worker Queue
-  participant A@{ type: boundary } as Archiver
+  participant BG@{ type: boundary } as Background Queue Listener
+  participant A as Archiver
   participant N@{ type: boundary } as UNUserNotificationCenter
 end
 
-User ->> FS : save screenshot to $INPUT_DIR
-FS ->> O : deliver event paths
+User ->> FS : Save Screenshots to $INPUT_DIR
+FS ->> O : Deliver Event Paths
 
 activate O
-  O ->> F : filter for valid images
+  O ->> F : Filter Images
     activate F
       loop for each file path
-        F ->> F : is regular file
-        alt no
-          F -->> O : skip
-        else yes
-          F ->> F : has valid filename
-          alt no
-            F -->> O : skip
-          else yes
-            F ->> F : has magic bytes
-            alt yes
-              F -->> O : add to filename list
-            else no
-              F -->> O : skip
-            end
-          end
-        end
+        F ->> F : Is Regular File?
+        F ->> F : Has Valid Filename?
+        F ->> F : Has Magic Bytes?
       end
+      F -->> O : Valid Filenames
     deactivate F
 
-  O ->> S : natural sort
+  O ->> S : Sort Filenames
   activate S
-    S -->> O : sorted paths
+    S -->> O : Sorted List
   deactivate S
 
-  O ->> P : send sorted paths
+  O ->> P : Construct ExifTool Args List
   activate P
-    P ->> ET : write filenames to pipe
-      activate ET
-        ET -->> P : write files to $OUTPUT_DIR
-      deactivate ET
-    P -->> O : done
+    P ->> ET : Write Filenames to Pipe
+    activate ET
+      ET -->> P : Write Files to $OUTPUT_DIR
+    deactivate ET
+    P -->> O : Ready
   deactivate P
 
   Note over O,BG: Async Process
-  O --) BG : send paths of originals of processed files
+  O --) BG : Send Paths of Originals of Processed Files
   activate BG
-    O -->> FS : done
+    O -->> FS : Done
 
 deactivate O
 
-    BG ->> A : add originals to monthly archive
+    BG ->> A : Add Originals to Monthly Archive
     activate A
-    A -->> BG : done
+    A -->> BG : Done
     deactivate A
 
-    BG ->> N : request banner notification (N screenshots tagged)
+    BG ->> N : Request Banner Notification (N Screenshots Tagged)
 
     activate N
-      N -->> User : display macOS banner
+      N -->> User : Display macOS Banner
     deactivate N
   deactivate BG
-```
-
-```mermaid
----
-title: Teardown
----
-sequenceDiagram
-autonumber
 ```
