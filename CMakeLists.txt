@@ -40,11 +40,14 @@ add_executable(sstd
         src/sstd.mm
 )
 
-target_link_libraries(sstd PRIVATE
-        sstlib
+target_link_libraries(sstlib PUBLIC
         ${CORE_FOUNDATION_FRAMEWORK}
         ${CORE_SERVICES_FRAMEWORK}
         ${FOUNDATION_FRAMEWORK}
+)
+
+target_link_libraries(sstd PRIVATE
+        sstlib
 )
 
 include(FetchContent)
