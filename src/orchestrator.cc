@@ -19,6 +19,11 @@
 
 extern "C" const int kIOFlags{O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_CLOFORK};
 
+static inline constexpr unsigned kFSEventStreamFlags{
+        ::kFSEventStreamEventFlagItemIsFile |
+        ::kFSEventStreamEventFlagItemCreated |
+        ::kFSEventStreamEventFlagItemRenamed};
+
 static void inspect(
         int dir_fd, const char* filename, std::vector<std::string>& files);
 
@@ -107,16 +112,7 @@ void sst::orchestrator::orchestrate(
             continue;
         }
 
-        const ::FSEventStreamEventFlags curr_flags{event_flags[i]};
-
-        const bool is_file{
-                (curr_flags & ::kFSEventStreamEventFlagItemIsFile) != 0};
-        const bool is_relevant{
-                (curr_flags &
-                        (::kFSEventStreamEventFlagItemCreated |
-                                ::kFSEventStreamEventFlagItemRenamed)) != 0};
-
-        if (is_relevant && is_file) [[likely]] {
+        if ((event_flags[i] & kFSEventStreamFlags) != 0) [[likely]] {
             inspect(dir_fd, slash + 1, buffer);
         }
     }
