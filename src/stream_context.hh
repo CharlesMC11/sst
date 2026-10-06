@@ -14,9 +14,9 @@ namespace sst {
 
     class stream_context final {
     public:
-        [[nodiscard]] explicit stream_context(::FSEventStreamCallback callback,
+        explicit stream_context(::FSEventStreamCallback callback,
                 ::dispatch_queue_t queue, sst::processor& processor,
-                const char directory[], CFTimeInterval latency = 0.25);
+                const char* input_dir, CFTimeInterval latency = 0.25);
 
         ~stream_context() noexcept;
 

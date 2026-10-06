@@ -22,15 +22,15 @@ extern "C" const int kIOFlags; // Defined in `orchestrator.cc`
 
 sst::stream_context::stream_context(const ::FSEventStreamCallback callback,
         const ::dispatch_queue_t queue, sst::processor& processor,
-        const char directory[], const CFTimeInterval latency)
-    : processor_{processor}, dir_path_{directory}
+        const char* const input_dir, const CFTimeInterval latency)
+    : processor_{processor}, dir_path_{input_dir}
 {
-    dir_fd_ = ::open(directory, kIOFlags | O_DIRECTORY);
+    dir_fd_ = ::open(input_dir, kIOFlags | O_DIRECTORY);
     if (dir_fd_ == -1) [[unlikely]] {
         throw std::system_error{errno, std::generic_category(),
                 std::format(
                         "[sstd:stream_context] Failed to open directory: '{}'",
-                        directory)};
+                        input_dir)};
     }
 
     // TODO: This is technically not related to the stream
@@ -38,7 +38,7 @@ sst::stream_context::stream_context(const ::FSEventStreamCallback callback,
 
     const sst::memory::cf_ptr<::CFStringRef> dir_cfstr{
             ::CFStringCreateWithCString(
-                    nullptr, directory, ::kCFStringEncodingUTF8)};
+                    nullptr, input_dir, ::kCFStringEncodingUTF8)};
     const void* dir_container[]{dir_cfstr.get()};
     const sst::memory::cf_ptr<::CFArrayRef> paths{::CFArrayCreate(
             nullptr, dir_container, 1Z, &::kCFTypeArrayCallBacks)};
