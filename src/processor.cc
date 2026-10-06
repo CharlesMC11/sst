@@ -68,7 +68,7 @@ namespace sst {
 
         const char* const args[]{exiftool_path, "-stay_open", "True", "-@",
                 "-", "-common_args", "-struct", "-preserve", "-verbose", "-o",
-                metadata.output_dir.c_str(),
+                metadata.output_dir,
                 formatted_args_[0].c_str(), // hardware
                 formatted_args_[1].c_str(), // software
                 formatted_args_[2].c_str(), // timezone
