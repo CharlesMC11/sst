@@ -1,6 +1,6 @@
 # sst (Screenshot Tagger)
 
-## Functional Spec
+## Operational Requirements
 
 ### Startup
 
@@ -8,8 +8,8 @@
 2. Spawn `ExifTool` as a persistent background process
 3. Manually process `$INPUT_DIR` to clean up leftover files
 4. Prepare the context needed by the callback function passed to `FSEventStream`
-5. Attach the `FSeventStream` to the `dispatch_queue`
-6. Prepare signal handlers for teardown
+5. Prepare signal handlers for teardown
+6. Attach the `FSeventStream` to the `dispatch_queue`
 7. Run the main loop
 
 ### Main Loop
@@ -34,43 +34,43 @@
 
 ## Abstractions
 
-1. `ExifTool` handler (spawning, piping, cleanup)
+1. `ExifTool` handler (piping, spawning)
 2. `FSEventStream` handler (context creation, releaser)
 3. `dispatch_queue` (enqueueing, dequeueing)
 4. Signal handler (capturing interrupts)
 5. Orchestrator callback function
 6. Filter (checking name & magic bytes)
 7. Sorter (natural sort)
-8. Archiver (add to monthly archive)
+8. Archiver (monthly archive)
 9. `UNUserNotificationCenter` handler (banner)
 
-## Attributes
+## Component Specification
 
 1. Photo metadata
+   - input_dir : string
    - output_dir : string
    - arg_files_dir : string
    - artist : string
    - copyright : string
    - filename_regex : string
-   - datetime : string
    - timezone : string
-   - hardware_name : string
+   - hardware_make : string
+   - hardware_model : string
    - macOS_version : string
 
 2. `ExifTool` handler
    - executable_path : string
    - is_running : bool
-   - formatted_arguments : string list
+   - formatted_arg : string list
    - IPC_file_descriptors : integer pair
    - max_retries : integer
 
 3. `FSEventStreamContext` handler
+   - callback_function : Orchestrator callback
    - input_dir : string
    - input_dir_fd : integer
-   - stream_handle : stream ptr
    - queue_handle : queue ptr
-   - files_buffer : string list
-   - callback_function : Orchestrator callback
+   - stream_handle : stream ptr
    - latency : float
 
 4. `dispatch_queue`
@@ -79,7 +79,7 @@
 5. Signal handler
    - signals : integer list
    - queue_handle : queue
-   - runtime_context :
+   - runtime_context : struct
 
 6. Orchestrator (`FSEventStream` callback) function
    - input_dir : string
@@ -96,7 +96,6 @@
 
 8. Sorter function
    - file_paths : string list
-   - locale : string
 
 9. Archiver function
    - file_paths : string list
@@ -112,122 +111,148 @@
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Uninitialized
+  [*] --> Startup : daemon invoked
 
-  state Startup {
-    Uninitialized --> Configured : process image metadata and `ExifTool` args
-    Configured --> Spawned : spawn persistent `ExifTool`
-    Spawned --> Opened : open file descriptor for $INPUT_DIR
-    Opened --> Sweeping: clean up leftover files
+  state is_initialized <<choice>>
+  Startup --> is_initialized : set-up ExifTool & FSEventStream
+  is_initialized --> Loop : [success] queue dispatch
+  is_initialized --> [*] : [failure] throw
+
+  state "Main Loop" as Loop {
+    [*] --> Idle : run dispatch
+    Idle --> Processing : FSEvent received
+    Processing --> Idle : write files to disk
   }
 
-  Sweeping --> Idle : attach `FSEventStream` to `dispatch_queue` & start
-
-  state "Screenshot Loop" as MainLoop {
-    Idle --> EventReceived : detected changes in $INPUT_DIR
-
-    state "Critical Path" as CriticalPath {
-    EventReceived --> Filtering : invoke callback
-
-    Filtering --> Sorting : magic bytes are valid
-    Filtering --> Idle : no valid files found / max retries attempted
-    Filtering --> Filtering : retry (max N attempts)
-
-    Sorting --> Processing : by name
-
-    Processing --> AsyncDispatch : files tagged & moved
-    Processing --> Processing : retry (max N attempts)
-    Processing --> Idle : max retries attempted
-    }
-
-    AsyncDispatch --> Idle : dispatch to background
-  }
+  Processing --> BGQueue : [async] archive originals of successfully processed files
 
   state "Background Queue" as BGQueue {
-    [*] --> Archiving : received paths
-    Archiving --> Notifying : originals archived or max retries attempted
-    Archiving --> Archiving : retry (max N attempts)
-    Notifying --> Complete : banner posted
-    Complete --> [*]
+    [*] --> Archiving: paths received
+    Archiving --> [*] : display notification banner
   }
 
-  AsyncDispatch --> BGQueue : archive originals
+  Loop --> Teardown : SIGINT / SIGTERM
+  Teardown --> [*] : EX_OK
+```
 
-  Idle --> Stopped : catch SIGINT / SIGTERM
+## Startup Flowchart
 
-  state Teardown {
-    Stopped --> Flushing : clean up leftover files
-    Flushing --> Closed : close ExifTool and pipes
-    Closed --> Reaped : wait for child PID
-  }
+```mermaid
+flowchart TB
+  Invoke([Daemon Invoked]) --> Parse[Parse CLI arguments /
+  plist Config]
+  Parse --> Prep[Prepare Image Metadata]
+  Prep --> ExifTool
 
-  Reaped --> [*] : EX_OK
+  subgraph ExifTool [Spawn ExifTool]
+    Pipe[Open Unix Pipe] --> Spawn{Spawn Subprocess}
+  end
+
+  Spawn --> |Failure| F
+  Spawn --> |Success| Open{Open $INPUT_DIR}
+
+  Open --> |Failure| F([Exit])
+  Open --> |Success| Clean[Manually process $INPUT_DIR for leftover files]
+
+  Clean --> Q[Get Dispatch Queue]
+  Q --> FS[Create FSEventStreamContext]
+
+  FS --> Start[Main Loop]
 ```
 
 ## Sequence Diagram
 
 ```mermaid
 ---
-title: Screenshot Loop
+title: Main Loop
 ---
 sequenceDiagram
 autonumber
 
 actor User
-participant FS@{ type: boundary } as FSEvents
-participant O as Orchestrator Callback
-participant F as Filter
-participant S as Sorter
-participant P as Processor
-participant ET@{ type: boundary } as ExifTool
-participant BG as Background Worker Queue
-participant A@{ type: boundary } as Archiver
-participant N@{ type: boundary } as UNUserNotificationCenter
 
-User ->> FS : save new screenshot to $INPUT_DIR
+box rgb(30, 30, 40) Main Thread
+  participant FS@{ type: boundary } as FSEvents / Kernel
+  participant O as Orchestrator Callback
+  participant F as Filter
+  participant S as Sorter
+  participant P as Processor
+end
+
+box rgb(40, 30, 30) Sub-Process
+  participant ET@{ type: boundary } as ExifTool
+end
+
+box rgb(30, 40, 30) Background Queue
+  participant BG as Background Worker Queue
+  participant A@{ type: boundary } as Archiver
+  participant N@{ type: boundary } as UNUserNotificationCenter
+end
+
+User ->> FS : save screenshot to $INPUT_DIR
 FS ->> O : deliver event paths
 
 activate O
-  O ->> F : filter valid images
-
-  activate F
-    F -->> O : valid paths
-  deactivate F
+  O ->> F : filter for valid images
+    activate F
+      loop for each file path
+        F ->> F : is regular file
+        alt no
+          F -->> O : skip
+        else yes
+          F ->> F : has valid filename
+          alt no
+            F -->> O : skip
+          else yes
+            F ->> F : has magic bytes
+            alt yes
+              F -->> O : add to filename list
+            else no
+              F -->> O : skip
+            end
+          end
+        end
+      end
+    deactivate F
 
   O ->> S : natural sort
-
   activate S
     S -->> O : sorted paths
   deactivate S
 
   O ->> P : send sorted paths
-
   activate P
     P ->> ET : write filenames to pipe
-
-    activate ET
-      ET -->> P : write files to $OUTPUT_DIR
-    deactivate ET
-
+      activate ET
+        ET -->> P : write files to $OUTPUT_DIR
+      deactivate ET
     P -->> O : done
   deactivate P
 
   Note over O,BG: Async Process
   O --) BG : send paths of originals of processed files
-  O -->> FS : done
+  activate BG
+    O -->> FS : done
+
 deactivate O
 
-activate BG
-  BG ->> A : archive originals
+    BG ->> A : add originals to monthly archive
+    activate A
+    A -->> BG : done
+    deactivate A
 
-  activate A
-    A -->> BG : add to monthly archive in $OUTPUT_DIR
-  deactivate A
+    BG ->> N : request banner notification (N screenshots tagged)
 
-  BG ->> N : notification request
+    activate N
+      N -->> User : display macOS banner
+    deactivate N
+  deactivate BG
+```
 
-  activate N
-    N -->> User : display banner
-  deactivate N
-deactivate BG
+```mermaid
+---
+title: Teardown
+---
+sequenceDiagram
+autonumber
 ```
