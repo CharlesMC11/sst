@@ -12,7 +12,7 @@ namespace sst {
 
     namespace orchestrator {
 
-        void cleanup(int dir_fd, const processor& processor,
+        void cleanup(const processor& processor, int dir_fd,
                 std::vector<std::string>& files);
 
         void orchestrate(::ConstFSEventStreamRef stream_ref,
