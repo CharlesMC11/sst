@@ -6,7 +6,7 @@ flowchart
   Parse --> ExifTool
 
   subgraph ExifTool [Spawn ExifTool Subprocess]
-      direction TB
+    direction TB
     Args{{Format ExifTool Common Arguments}} --> Pipe[[Open Pipe]]
     Pipe --> |Failure| Throw1([Throw])
     Pipe --> |Success| Spawn[[Spawn Subprocess]]

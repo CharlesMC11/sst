@@ -2,6 +2,7 @@
 
 *.plist.template text eol=lf
 *.md             text diff=markdown
+*.mmd             text diff=markdown
 .git*            text
 
 *.hh             text diff=cpp

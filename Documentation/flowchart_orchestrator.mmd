@@ -14,9 +14,7 @@ flowchart
     Max1 --> |Yes| Loop
     Open --> |Success| Magic{Has Magic Bytes?}
     Magic --> |No| Close[[Close File]]
-    Close --> |Failure| Closed?{Max Attempts Exhausted?}
-    Closed? --> |No| Close
-    Closed? --> |Yes| Loop
+    Close --> |Failure| Loop
     Close --> |Success| Loop
     Magic --> |Yes| Add[/Add Filename to List/]
     Add --> Close[[Close File]]

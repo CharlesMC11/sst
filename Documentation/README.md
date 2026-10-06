@@ -15,14 +15,14 @@
 1. `FSEventStream` monitors `$INPUT_DIR`
 2. `FSEvents` lists the paths of new files added to `$INPUT_DIR`
 3. Filter regular files:
-   1. Filename does not start with '\_' (files still being written) nor '.'
-   2. Check for magic bytes
+    1. Filename does not start with '\_' (files still being written) nor '.'
+    2. Check for magic bytes
 4. Add the paths of valid files into a list
 5. Sort the paths using natural sort
 6. Send sorted paths to `ExifTool` for metadata injection and renaming
 7. `ExifTool` writes the processed files to `$OUTPUT_DIR`
-8.  Store originals of successfully processed files in a monthly archive
-9.  `UNUserNotificationCenter` announces that $N$ screenshots were successfully processed
+8. Store originals of successfully processed files in a monthly archive
+9. `UNUserNotificationCenter` announces that $N$ screenshots were successfully processed
 
 ## Teardown
 
@@ -46,62 +46,62 @@
 ## Component Specification
 
 1. Photo metadata
-   - input_dir : string
-   - output_dir : string
-   - arg_files_dir : string
-   - artist : string
-   - copyright : string
-   - filename_regex : string
-   - timezone : string
-   - hardware_make : string
-   - hardware_model : string
-   - macOS_version : string
+    - input_dir : string
+    - output_dir : string
+    - arg_files_dir : string
+    - artist : string
+    - copyright : string
+    - filename_regex : string
+    - timezone : string
+    - hardware_make : string
+    - hardware_model : string
+    - macOS_version : string
 
 2. `ExifTool` handler
-   - executable_path : string
-   - is_running : bool
-   - formatted_arg : string list
-   - IPC_file_descriptors : integer pair
-   - max_retries : integer
+    - executable_path : string
+    - is_running : bool
+    - formatted_arg : string list
+    - IPC_file_descriptors : integer pair
+    - max_retries : integer
 
 3. `FSEventStreamContext` handler
-   - callback_function : Orchestrator callback
-   - input_dir : string
-   - input_dir_fd : integer
-   - queue_handle : queue ptr
-   - stream_handle : stream ptr
-   - latency : float
+    - callback_function : Orchestrator callback
+    - input_dir : string
+    - input_dir_fd : integer
+    - queue_handle : queue ptr
+    - stream_handle : stream ptr
+    - latency : float
 
 4. `dispatch_queue`
-   - queue_handle : queue
+    - queue_handle : queue
 
 5. Signal handler
-   - signals : integer list
-   - queue_handle : queue
-   - runtime_context : struct
+    - signals : integer list
+    - queue_handle : queue
+    - runtime_context : struct
 
 6. Orchestrator (`FSEventStream` callback) function
-   - input_dir : string
-   - input_dir_fd : int
-   - file_paths : string list
-   - output_dir : string
+    - input_dir : string
+    - input_dir_fd : int
+    - file_paths : string list
+    - output_dir : string
 
 7. Filter function
-   - file_paths : string list
-   - event_flags : integer
-   - prefixes_to_ignore : string list | hardcoded checks
-   - magic_bytes : bytes
-   - max_retries : integer
+    - file_paths : string list
+    - event_flags : integer
+    - prefixes_to_ignore : string list | hardcoded checks
+    - magic_bytes : bytes
+    - max_retries : integer
 
 8. Sorter function
-   - file_paths : string list
+    - file_paths : string list
 
 9. Archiver function
-   - file_paths : string list
-   - archiver : executable / header
-   - current_date : datetime / string
-   - output_dir : string
-   - max_retries : integer
+    - file_paths : string list
+    - archiver : executable / header
+    - current_date : datetime / string
+    - output_dir : string
+    - max_retries : integer
 
 10. `UNUserNotificationCenter` handler
     - number_of_processed_originals : integer
