@@ -1,6 +1,6 @@
 #pragma once
 
-#include <CoreFoundation/CFBase.h>
+#include <CoreFoundation/CoreFoundation.h>
 #include <CoreServices/CoreServices.h>
 
 #include <memory>
@@ -28,6 +28,6 @@ namespace sst::memory {
     };
 
     template<typename T>
-    using CFPtr = std::unique_ptr<std::remove_pointer_t<T>, cf_releaser<T>>;
+    using cf_ptr = std::unique_ptr<std::remove_pointer_t<T>, cf_releaser<T>>;
 
 } // namespace sst::memory

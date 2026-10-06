@@ -42,7 +42,7 @@ namespace sst {
         const sst::processor& processor_;
         const char* const dir_path_{nullptr};
         int dir_fd_{-1};
-        sst::memory::CFPtr<::FSEventStreamRef> stream_{nullptr};
+        sst::memory::cf_ptr<::FSEventStreamRef> stream_{nullptr};
         std::vector<std::string> buffer_;
     };
 

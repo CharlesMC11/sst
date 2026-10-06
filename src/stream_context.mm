@@ -36,11 +36,11 @@ sst::stream_context::stream_context(const ::FSEventStreamCallback callback,
     // TODO: This is technically not related to the stream
     sst::orchestrator::cleanup(dir_fd_, dir_path_, processor_, buffer_);
 
-    const sst::memory::CFPtr<::CFStringRef> dir_cfstr{
+    const sst::memory::cf_ptr<::CFStringRef> dir_cfstr{
             ::CFStringCreateWithCString(
                     nullptr, directory, ::kCFStringEncodingUTF8)};
     const void* dir_container[]{dir_cfstr.get()};
-    const sst::memory::CFPtr<::CFArrayRef> paths{::CFArrayCreate(
+    const sst::memory::cf_ptr<::CFArrayRef> paths{::CFArrayCreate(
             nullptr, dir_container, 1Z, &::kCFTypeArrayCallBacks)};
 
     FSEventStreamContext context{.version = 0Z,
