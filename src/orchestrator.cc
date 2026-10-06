@@ -95,7 +95,6 @@ void sst::orchestrator::orchestrate(
     std::vector<std::string>& buffer{monitor->buffer()};
     buffer.clear();
 
-    std::size_t count{0UZ};
     const auto paths{static_cast<const char* const*>(event_paths)};
     for (std::size_t i{0UZ}; i < num_events; ++i) {
 
