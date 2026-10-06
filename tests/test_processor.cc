@@ -6,11 +6,17 @@
 #include "metadata.hh"
 #include "processor.hh"
 
-static const sst::image::metadata kMetadata{"", "", "", ""};
+static const sst::image::metadata kMetadata{"", "", "", "", ""};
 
 TEST(SstdTest, TestConstructorFail)
 {
     ASSERT_THROW(sst::processor("prog", kMetadata), std::system_error);
+}
+
+TEST(SstdTest, TestIsRunning)
+{
+    const sst::processor processor{TEST_PROCESSOR_IS_RUNNING, kMetadata};
+    ASSERT_TRUE(processor.is_running());
 }
 
 TEST(SsstdTest, TestSend)

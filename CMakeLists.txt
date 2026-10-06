@@ -60,8 +60,9 @@ add_executable(test_processor
 )
 
 target_compile_definitions(test_processor PRIVATE
-        TEST_PROCESSOR_SEND="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor.py"
-        TEST_PROCESSOR_SEND_FILE="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor.txt"
+        TEST_PROCESSOR_IS_RUNNING="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor_is_running.py"
+        TEST_PROCESSOR_SEND="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor_send.py"
+        TEST_PROCESSOR_SEND_FILE="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor_send.txt"
 )
 
 target_link_libraries(test_processor
