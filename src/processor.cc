@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string_view>
 #include <system_error>
+#include <vector>
 
 // FIXME: Apparently this is brittle even though it works
 extern char** environ;
@@ -46,11 +47,6 @@ namespace sst {
             const char* const exiftool_path, const image::metadata& metadata)
         : input_dir_{metadata.input_dir}
     {
-        if (!pipe_.is_valid()) [[unlikely]] {
-            throw std::system_error{errno, std::generic_category(),
-                    "[sstd:processor] Failed to create a pipe."};
-        }
-
         ::posix_spawn_file_actions actions;
         ::posix_spawn_file_actions_adddup2(
                 &actions.data, pipe_.fds[0], STDIN_FILENO);
@@ -102,22 +98,35 @@ namespace sst {
         ::waitpid(pid_, nullptr, 0);
     }
 
+    // TODO: Could probably clean this up later
+    void processor::send_filenames(
+            const std::vector<std::string>& filenames) const
+    {
+        std::string formatted_args;
+        formatted_args.reserve(PATH_MAX);
+
+        for (const auto& filename: filenames) {
+            formatted_args += std::format("{}/{} ", input_dir_, filename);
+        }
+
+        send(formatted_args);
+    }
+
     void processor::send(std::string_view args) const
     {
         std::println("[sstd:processor] Received args: {}", args);
 
-        const std::string formatted_arg{
-                std::format("{}/{}\n-execute\n", input_dir_, args)};
+        const std::string formatted_args{std::format("{}\n-execute\n", args)};
 
         // FIXME: Check result && account for partial writes
-        ::write(pipe_.fds[1], formatted_arg.data(), formatted_arg.size());
+        ::write(pipe_.fds[1], formatted_args.data(), formatted_args.size());
     }
 
-    processor::pipe::pipe() noexcept
+    processor::pipe::pipe()
     {
         if (::pipe(fds) != 0) [[unlikely]] {
-            std::println(std::cerr, "[sstd:processor] Failed to open a pipe.");
-            return;
+            throw std::system_error{errno, std::generic_category(),
+                    "[sstd:processor] Failed to create a pipe."};
         }
     }
 

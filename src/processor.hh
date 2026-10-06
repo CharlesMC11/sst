@@ -5,6 +5,7 @@
 #include <array>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "metadata.hh"
 
@@ -28,14 +29,20 @@ namespace sst {
             return pid_ != -1;
         }
 
-        void send(std::string_view args) const;
+        /**
+         * Send the filenames to ExifTool
+         *
+         * @param filenames
+         * The relative filenames to send
+         */
+        void send_filenames(const std::vector<std::string>& filenames) const;
 
     private:
         class pipe final {
         public:
             int fds[2UZ]{-1, -1};
 
-            [[nodiscard]] pipe() noexcept;
+            [[nodiscard]] pipe();
             ~pipe();
 
             pipe(const pipe&) = delete;
@@ -56,6 +63,8 @@ namespace sst {
         sst::processor::pipe pipe_;
         ::pid_t pid_{-1};
         std::array<std::string, 7UZ> formatted_args_;
+
+        void send(std::string_view args) const;
     };
 
 } // namespace sst

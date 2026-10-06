@@ -6,7 +6,7 @@
 #include "metadata.hh"
 #include "processor.hh"
 
-static const sst::image::metadata kMetadata{"", "", "", "", ""};
+static const sst::image::metadata kMetadata{"in_dir", "out_dir", "args_dir", "model", "os"};
 
 TEST(SstdTest, TestConstructorFail)
 {
@@ -23,7 +23,7 @@ TEST(SsstdTest, TestSend)
 {
     {
         const sst::processor processor{TEST_PROCESSOR_SEND, kMetadata};
-        processor.send("Hello, World!");
+        processor.send_filenames({"Hello", "World!"});
     }
 
     std::ifstream infile{TEST_PROCESSOR_SEND_FILE};
@@ -31,7 +31,7 @@ TEST(SsstdTest, TestSend)
 
     std::string line;
     std::getline(infile, line);
-    ASSERT_TRUE(line.contains("Hello, World!"));
+    ASSERT_TRUE(line.contains("in_dir/Hello in_dir/World!"));
 
     std::getline(infile, line);
     ASSERT_TRUE(line.contains("-execute"));

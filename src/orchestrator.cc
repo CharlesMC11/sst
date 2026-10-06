@@ -77,8 +77,7 @@ void sst::orchestrator::cleanup(const processor& processor, int dir_fd,
     }
 
     sst::sorter::natural_sort(files);
-    std::ranges::for_each(files.begin(), files.end(),
-            [&processor](const auto& f) -> void { processor.send(f); });
+    processor.send_filenames(files);
 }
 
 void sst::orchestrator::orchestrate(
@@ -118,8 +117,7 @@ void sst::orchestrator::orchestrate(
 
     if (!buffer.empty()) [[likely]] {
         sst::sorter::natural_sort(buffer);
-        std::ranges::for_each(buffer.begin(), buffer.end(),
-                [&processor](const auto& f) -> void { processor.send(f); });
+        processor.send_filenames(buffer);
     }
 }
 
