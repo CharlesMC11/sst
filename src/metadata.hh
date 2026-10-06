@@ -8,18 +8,19 @@
 namespace sst::image {
 
     struct metadata final {
-        std::string output_dir;
-        std::string arg_files_dir;
-        std::string hardware;
+        const char* const input_dir;
+        const char* const output_dir;
+        const char* const arg_files_dir;
+        const char* const hardware;
         std::string software;
         std::string timezone;
 
-        metadata(const std::string_view output_dir,
-                const std::string_view arg_files_dir,
-                const std::string_view hardware,
+        metadata(const char* const input_dir, const char* const output_dir,
+                const char* const arg_files_dir, const char* const hardware,
                 const std::string_view software)
-            : output_dir{output_dir}, arg_files_dir{arg_files_dir},
-              hardware{hardware}, software{software}
+            : input_dir{input_dir}, output_dir{output_dir},
+              arg_files_dir{arg_files_dir}, hardware{hardware},
+              software{software}
         {
             // TODO: Actually get the timezone
             using std::string_literals::operator""s;

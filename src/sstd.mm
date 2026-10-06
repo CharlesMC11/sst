@@ -44,8 +44,8 @@ int main(const int argc, const char* const argv[])
 
     // Prepare configurations to pass to ExifTool
 
-    const sst::image::metadata metadata{
-            output_dir, arg_files_dir, hw_model, ::get_os_version()};
+    const sst::image::metadata metadata{input_dir, output_dir, arg_files_dir,
+            hw_model, ::get_os_version()};
 
     std::println("[sstd] Initializing processor…");
     sst::processor processor{exiftool_path, metadata};

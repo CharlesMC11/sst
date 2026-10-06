@@ -47,6 +47,7 @@ namespace sst {
             }
         };
 
+        const char* const input_dir_;
         sst::processor::pipe pipe_;
         ::pid_t pid_{-1};
         std::array<std::string, 7UZ> formatted_args_;

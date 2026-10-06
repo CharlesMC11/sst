@@ -44,6 +44,7 @@ namespace sst {
 
     processor::processor(
             const char* const exiftool_path, const image::metadata& metadata)
+        : input_dir_{metadata.input_dir}
     {
         if (!pipe_.is_valid()) [[unlikely]] {
             throw std::system_error{errno, std::generic_category(),
@@ -105,7 +106,8 @@ namespace sst {
     {
         std::println("[sstd:processor] Received args: {}", args);
 
-        const std::string formatted_arg{std::format("{}\n-execute\n", args)};
+        const std::string formatted_arg{
+                std::format("{}/{}\n-execute\n", input_dir_, args)};
 
         // FIXME: Check result && account for partial writes
         ::write(pipe_.fds[1], formatted_arg.data(), formatted_arg.size());

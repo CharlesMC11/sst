@@ -21,6 +21,8 @@ extern "C" const int kIOFlags{O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_CLOFORK};
 
 void sst::orchestrator::cleanup(int dir_fd, const char* const dir_path,
         const processor& processor, std::vector<std::string>& files)
+void sst::orchestrator::cleanup(int dir_fd, const processor& processor,
+        std::vector<std::string>& files)
 {
     if (dir_fd == -1) [[unlikely]] {
         std::println(std::cerr,
