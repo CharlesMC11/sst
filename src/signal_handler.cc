@@ -12,7 +12,7 @@ void sst::runtime::register_signal_handler(int sig, context context) noexcept
     std::signal(sig, SIG_IGN);
 
     auto signal_source{::dispatch_source_create(
-            DISPATCH_SOURCE_TYPE_SIGNAL, sig, 0, context.queue)};
+            DISPATCH_SOURCE_TYPE_SIGNAL, sig, 0U, context.queue)};
 
     ::dispatch_source_set_event_handler(signal_source, ^{
       std::cerr << "\n[sstd] Shutdown signal received. Cleaning up…\n";
