@@ -52,8 +52,8 @@ int main(const int argc, const char* const argv[])
     std::println("[sstd] Initialized processor with metadata:\n\tOutput "
                  "Directory: {}\n\tArg Files Directory: {}\n\tHardware: "
                  "{}\n\tSoftware: {}\n\tTimezone: {}",
-            metadata.output_dir, metadata.arg_files_dir, metadata.hardware,
-            metadata.software, metadata.timezone);
+            metadata.output_dir, metadata.arg_files_dir, metadata.hw_model,
+            metadata.os_ver, metadata.timezone);
 
     // Prepare configurations to pass to FSEventStream
 
