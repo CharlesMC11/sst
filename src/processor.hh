@@ -12,7 +12,7 @@ namespace sst {
 
     class processor final {
     public:
-        explicit processor(const char* exiftool_path,
+        [[nodiscard]] processor(const char* exiftool_path,
                 const sst::image::metadata& metadata);
 
         ~processor();
