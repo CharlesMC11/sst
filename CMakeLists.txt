@@ -64,6 +64,7 @@ add_executable(test_processor
         tests/test_filter/test_filter.cc
         tests/test_orchestrator.cc
         tests/test_processor/test_processor.cc
+        tests/test_sorter.cc
 )
 
 target_compile_definitions(test_processor PRIVATE
