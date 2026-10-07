@@ -44,6 +44,11 @@ namespace sst {
 
         [[nodiscard]] bool shutdown() noexcept;
 
+        [[nodiscard]] unsigned max_retries() const noexcept
+        {
+            return max_retries_;
+        }
+
     private:
         class pipe final {
         public:
