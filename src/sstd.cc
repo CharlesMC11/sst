@@ -2,7 +2,6 @@
 #include <dispatch/dispatch.h>
 #include <sysexits.h>
 
-#include <climits>
 #include <csignal>
 #include <cstdlib>
 #include <format>
@@ -11,11 +10,9 @@
 #include <string>
 #include <vector>
 
-#include "memory.hh"
 #include "orchestrator.hh"
 #include "processor.hh"
 #include "signal_handler.hh"
-#include "sorter.hh"
 #include "stream_context.hh"
 
 // TODO: Use os/log.h

@@ -2,26 +2,13 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreServices/CoreServices.h>
-#include <dirent.h>
 #include <dispatch/dispatch.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-#include <cerrno>
-#include <cstdio>
-#include <format>
-#include <iostream>
-#include <ostream>
-#include <string>
-#include <system_error>
 
 #include "memory.hh"
-#include "orchestrator.hh"
-#include "processor.hh"
 
 sst::stream_context::stream_context(const ::FSEventStreamCallback callback,
         const ::dispatch_queue_t queue, sst::processor& processor,
-        const char* const input_dir, int input_dir_fd,
+        const char* const input_dir, const int input_dir_fd,
         const CFTimeInterval latency)
     : processor_{processor}, dir_fd_{input_dir_fd}
 {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <CoreServices/CoreServices.h>
-#include <fcntl.h>
 
 #include <cstddef>
 #include <string>
