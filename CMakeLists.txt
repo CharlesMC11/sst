@@ -60,12 +60,22 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 add_executable(test_processor
         tests/test_processor.cc
+        tests/test_filter/test_filter.cc
+        tests/test_processor/test_processor.cc
 )
 
 target_compile_definitions(test_processor PRIVATE
-        TEST_PROCESSOR_IS_RUNNING="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor_is_running.py"
-        TEST_PROCESSOR_SEND="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor_send.py"
-        TEST_PROCESSOR_SEND_FILE="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor_send.txt"
+        TEST_FILTER_HEIC1="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/heic1.bin"
+        TEST_FILTER_HEIC2="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/heic2.bin"
+        TEST_FILTER_JPEG="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/jpeg.bin"
+        TEST_FILTER_PNG="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/png.bin"
+        TEST_FILTER_TIFF1="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/tiff1.bin"
+        TEST_FILTER_TIFF2="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/tiff2.bin"
+        TEST_FILTER_LONG="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/long.bin"
+        TEST_FILTER_SHORT="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/short.bin"
+        TEST_PROCESSOR_IS_RUNNING="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor/test_processor_is_running.py"
+        TEST_PROCESSOR_SEND="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor/test_processor_send.py"
+        TEST_PROCESSOR_SEND_FILE="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor/test_processor_send.txt"
 )
 
 target_link_libraries(test_processor
