@@ -90,7 +90,7 @@ namespace sst {
 
     processor::~processor() noexcept
     {
-        if (pid_ == -1) [[unlikely]] {
+        if (pid_ == -1) [[likely]] {
             return;
         }
 
