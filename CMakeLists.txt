@@ -23,13 +23,13 @@ add_library(sstlib STATIC
         src/processor.mm
         src/orchestrator.hh
         src/orchestrator.cc
+        src/signal_handler.cc
         src/signal_handler.hh
-        src/signal_handler.mm
         src/signatures.s
         src/sorter.cc
         src/sorter.hh
+        src/stream_context.cc
         src/stream_context.hh
-        src/stream_context.mm
 )
 
 include_directories(
@@ -38,7 +38,7 @@ include_directories(
 )
 
 add_executable(sstd
-        src/sstd.mm
+        src/sstd.cc
 )
 
 target_link_libraries(sstlib PUBLIC
@@ -65,6 +65,7 @@ add_executable(test_processor
         tests/test_orchestrator.cc
         tests/test_processor/test_processor.cc
         tests/test_sorter.cc
+        tests/test_stream_context.cc
 )
 
 target_compile_definitions(test_processor PRIVATE
