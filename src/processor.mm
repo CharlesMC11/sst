@@ -63,8 +63,9 @@ namespace sst {
                 std::format("-OffsetTime*={}", timezone),
                 std::format("-AllDates<${{{}/$1:$2:$3 $4:$5:$6{}/}}",
                         kFilenameRegex, timezone),
-                std::format("-Filename<${{{}/$1$2$3-$4$5$6/}}%-c%lE",
-                        kFilenameRegex),
+                std::format(
+                        R"(-Filename<${{{}/my $N = $7 ? sprintf("%02d", $7) : "";"$1$2$3-$4$5$6{}_$N"/e}}%-c%lE)",
+                        kFilenameRegex, timezone),
                 std::format("{}/charlesmc.args", metadata.arg_files_dir),
                 std::format("{}/screenshot.args", metadata.arg_files_dir)};
 
@@ -214,10 +215,10 @@ namespace {
     [[nodiscard]] std::string get_timezone()
     {
         const NSTimeZone* local_timezone{[NSTimeZone localTimeZone]};
-        NSInteger offset_seconds{[local_timezone secondsFromGMT]};
-        double offset_hours{static_cast<double>(offset_seconds) / 3600.0};
+        const long offset_seconds{[local_timezone secondsFromGMT]};
+        const long offset_hours{offset_seconds / 3600L};
 
-        return std::format("{}:00", offset_hours);
+        return std::format("{:03d}00", offset_hours);
     }
 
     [[nodiscard]] std::string get_os_version()
