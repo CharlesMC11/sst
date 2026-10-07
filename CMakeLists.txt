@@ -17,11 +17,10 @@ add_library(sstlib STATIC
         src/filter.hh
         src/memory.hh
         src/metadata.hh
-        src/metadata.mm
         src/notifier.hh
         src/notifier.mm
-        src/processor.cc
         src/processor.hh
+        src/processor.mm
         src/orchestrator.hh
         src/orchestrator.cc
         src/signal_handler.hh

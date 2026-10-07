@@ -2,7 +2,6 @@
 
 #include <sys/types.h>
 
-#include <array>
 #include <string>
 #include <vector>
 

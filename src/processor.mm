@@ -1,5 +1,6 @@
 #include "processor.hh"
 
+#import <Foundation/Foundation.h>
 #include <crt_externs.h>
 #include <spawn.h>
 #include <sys/wait.h>
@@ -8,7 +9,6 @@
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
-#include <cstring>
 #include <format>
 #include <print>
 #include <string_view>
@@ -39,7 +39,10 @@ namespace {
                 -> posix_spawn_file_actions& = delete;
     };
 
-} // anonymous namespace
+    [[nodiscard]] std::string get_timezone();
+    [[nodiscard]] std::string get_os_version();
+
+} // unnamed namespace
 
 namespace sst {
 
@@ -52,12 +55,14 @@ namespace sst {
                 &actions.data, pipe_.fds[0UZ], STDIN_FILENO);
         ::posix_spawn_file_actions_addclose(&actions.data, pipe_.fds[1UZ]);
 
+        const std::string timezone{get_timezone()};
+
         const std::string formatted_args[]{
                 std::format("-Model={}", metadata.hw_model),
-                std::format("-Software={}", metadata.os_ver),
-                std::format("-OffsetTime*={}", metadata.timezone),
+                std::format("-Software={}", get_os_version()),
+                std::format("-OffsetTime*={}", timezone),
                 std::format("-AllDates<${{{}/$1:$2:$3 $4:$5:$6{}/}}",
-                        kFilenameRegex, metadata.timezone),
+                        kFilenameRegex, timezone),
                 std::format("-Filename<${{{}/$1$2$3-$4$5$6/}}%-c%lE",
                         kFilenameRegex),
                 std::format("{}/charlesmc.args", metadata.arg_files_dir),
@@ -204,3 +209,24 @@ namespace sst {
     }
 
 } // namespace sst
+
+namespace {
+    [[nodiscard]] std::string get_timezone()
+    {
+        const NSTimeZone* local_timezone{[NSTimeZone localTimeZone]};
+        NSInteger offset_seconds{[local_timezone secondsFromGMT]};
+        double offset_hours{static_cast<double>(offset_seconds) / 3600.0};
+
+        return std::format("{}:00", offset_hours);
+    }
+
+    [[nodiscard]] std::string get_os_version()
+    {
+        const NSOperatingSystemVersion os_ver{
+                [NSProcessInfo processInfo].operatingSystemVersion};
+
+        return std::format("{}.{}.{}", os_ver.majorVersion,
+                os_ver.minorVersion, os_ver.patchVersion);
+    }
+
+} // unnamed namespace
