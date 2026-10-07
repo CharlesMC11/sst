@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <fstream>
+#include <limits>
 #include <system_error>
 
 #include "metadata.hh"
@@ -46,5 +47,11 @@ TEST(SstdTest, TestSendFilenames)
 
 TEST(SstdTest, TestResend)
 {
-    const sst::processor processor{TEST_PROCESSOR_IS_RUNNING, kMetadata, 3U};
+    const sst::processor processor{TEST_PROCESSOR_IS_RUNNING, kMetadata, 3Z};
+
+    char long_string[PIPE_BUF];
+    std::fill(std::begin(long_string), std::end(long_string), 0x3F);
+    const std::vector<std::string> lots_of_files(PIPE_BUF, long_string);
+
+    ASSERT_TRUE(processor.send_filenames(lots_of_files));
 }

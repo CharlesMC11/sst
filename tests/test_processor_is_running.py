@@ -2,5 +2,5 @@
 
 import sys
 
-while (line := sys.stdin.realine()) and "False" not in line:
+while (line := sys.stdin.readline()) and "False" not in line:
     continue

@@ -100,7 +100,7 @@ namespace sst {
     }
 
     // TODO: Could probably clean this up later
-    bool processor::send_filenames(
+    [[nodiscard]] bool processor::send_filenames(
             const std::vector<std::string>& filenames) const
     {
         std::string formatted_args;
@@ -143,15 +143,24 @@ namespace sst {
 
     [[nodiscard]] bool processor::send(std::string_view args) const
     {
-        std::println("[sstd:processor] Received args: {}", args);
-
         const std::string formatted_args{std::format("{}\n-execute\n", args)};
 
-        // FIXME: Check result && account for partial writes
-        ::write(pipe_.fds[1], formatted_args.data(), formatted_args.size());
+        // NOTE: It’s so unlikely to fill up 16 KB, maybe we should drop this
+        // altogether?
 
-        // FIXME: Send a proper signal
-        return true;
+        const std::size_t length{formatted_args.length()};
+        std::size_t total_written{0Z};
+        unsigned reattempts{0U};
+        while (total_written < length && reattempts <= max_retries_)
+                [[unlikely]] {
+            const std::ptrdiff_t written{::write(pipe_.fds[1Z],
+                    formatted_args.data() + total_written,
+                    length - total_written)};
+
+            written > 0Z ? total_written += static_cast<std::size_t>(written)
+                         : ++reattempts;
+        }
+        return total_written == length;
     }
 
 } // namespace sst

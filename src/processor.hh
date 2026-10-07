@@ -36,7 +36,8 @@ namespace sst {
          * @param filenames
          * The relative filenames to send
          */
-        bool send_filenames(const std::vector<std::string>& filenames) const;
+        [[nodiscard]] bool send_filenames(
+                const std::vector<std::string>& filenames) const;
 
     private:
         class pipe final {
