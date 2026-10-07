@@ -23,7 +23,9 @@ TEST(SstdTest, TestSendFilenames)
 {
     {
         const sst::processor processor{TEST_PROCESSOR_SEND, kMetadata};
-        (void) processor.send_filenames({"Hello", "World!"});
+        ASSERT_TRUE(processor.send_filenames({}));
+
+        ASSERT_TRUE(processor.send_filenames({"Hello", "World!"}));
     }
 
     std::ifstream infile{TEST_PROCESSOR_SEND_FILE};
