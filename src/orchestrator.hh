@@ -15,13 +15,13 @@ namespace sst {
     namespace orchestrator {
 
         /**
-         * Manually clean up an input directory
+         * Manually clean up a directory
          *
          * @param processor
-         *  An instance of a processor
+         * The processor bridge to ExifTool
          *
          * @param dir_fd
-         * The input directory’s file descriptor
+         * The directory’s file descriptor
          *
          * @param buffer
          * A buffer to save filenames to

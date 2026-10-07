@@ -178,12 +178,12 @@ namespace sst {
     {
         const std::size_t length{args.length()};
         std::size_t total_written{0UZ};
-        unsigned reattempts{0U};
-        while (total_written < length && reattempts <= max_retries_) {
-            const std::ptrdiff_t written{::write(pipe_.fds[1UZ],
+        unsigned retries{0U};
+        while (total_written < length && retries <= max_retries_) {
+            const std::ptrdiff_t bytes_written{::write(pipe_.fds[1UZ],
                     args.data() + total_written, length - total_written)};
 
-            if (written <= 0Z) [[unlikely]] {
+            if (bytes_written <= 0Z) [[unlikely]] {
                 if (errno == EINTR) {
                     continue;
                 }
@@ -193,11 +193,11 @@ namespace sst {
                             "Terminated)\n");
                     break;
                 }
-                ++reattempts;
+                ++retries;
                 continue;
             }
-            total_written += static_cast<std::size_t>(written);
-            reattempts = 0U;
+            total_written += static_cast<std::size_t>(bytes_written);
+            retries = 0U;
         }
 
         return total_written == length;

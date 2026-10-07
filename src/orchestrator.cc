@@ -22,7 +22,7 @@ static inline constexpr unsigned kFSEventStreamFlags{
         ::kFSEventStreamEventFlagItemRenamed};
 
 static void inspect(int dir_fd, const char* filename,
-        std::vector<std::string>& files) noexcept;
+        std::vector<std::string>& files, unsigned max_retries) noexcept;
 
 bool sst::orchestrator::cleanup(const processor& processor, const int dir_fd,
         std::vector<std::string>& buffer, const unsigned max_retries) noexcept
@@ -57,10 +57,10 @@ bool sst::orchestrator::cleanup(const processor& processor, const int dir_fd,
             continue;
         }
 
-        inspect(dir_fd_dup, filename, buffer);
+        inspect(dir_fd_dup, filename, buffer, max_retries);
     }
 
-    if (::fdclosedir(dir_stream) == -1) [[unlikely]] {
+    if (::closedir(dir_stream) == -1) [[unlikely]] {
         std::fprintf(
                 stderr, "[sstd:cleanup] Failed to close directory stream.\n");
         return true;
@@ -101,7 +101,8 @@ void sst::orchestrator::orchestrate(
         }
 
         if ((event_flags[i] & kFSEventStreamFlags) != 0) [[likely]] {
-            inspect(dir_fd, slash + 1, buffer);
+            constexpr unsigned max_retries{5U};
+            inspect(dir_fd, slash + 1, buffer, max_retries);
         }
     }
 
@@ -112,14 +113,14 @@ void sst::orchestrator::orchestrate(
 }
 
 static void inspect(const int dir_fd, const char* filename,
-        std::vector<std::string>& files) noexcept
+        std::vector<std::string>& files, const unsigned max_retries) noexcept
 {
     const int fd{::openat(dir_fd, filename, sst::kIOFlags)};
     if (fd < 0) [[unlikely]] {
         return;
     }
 
-    if (sst::filter::is_image(fd)) [[likely]] {
+    if (sst::filter::is_image(fd, max_retries)) [[likely]] {
         files.emplace_back(filename);
     }
 

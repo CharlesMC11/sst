@@ -2,12 +2,14 @@
 
 #include <unistd.h>
 
+#include <cerrno>
+#include <cstddef>
 #include <cstdint>
 
-constexpr std::int64_t kAlignment{16L};
+constexpr std::ptrdiff_t kAlignment{16Z};
 
 /**
- * Check if a given array of bytes matches an image's magic pattern
+ * Check if a given array of bytes matches an image’s magic pattern
  *
  * @param buffer
  * The bytes to check
@@ -18,11 +20,24 @@ constexpr std::int64_t kAlignment{16L};
 extern "C" [[nodiscard]] bool has_image_signature(
         const std::uint8_t buffer[]) noexcept;
 
-[[nodiscard]] bool sst::filter::is_image(const int fd) noexcept
+[[nodiscard]] bool sst::filter::is_image(
+        const int fd, const unsigned max_retries) noexcept
 {
     alignas(kAlignment) std::uint8_t buffer[kAlignment];
 
-    // TODO: Handle failed reads
-    return read(fd, buffer, sizeof(buffer)) >= kAlignment &&
-            has_image_signature(buffer);
+    unsigned retries{0U};
+    while (retries <= max_retries) {
+        const std::ptrdiff_t bytes_read{::read(fd, buffer, sizeof(buffer))};
+
+        if (bytes_read >= kAlignment) [[likely]] {
+            return has_image_signature(buffer);
+        }
+        if (bytes_read < 0Z && errno == EINTR) [[unlikely]] {
+            continue;
+        }
+        ::lseek(fd, 0Z, SEEK_SET);
+        ++retries;
+    }
+
+    return false;
 }
