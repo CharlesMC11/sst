@@ -71,25 +71,47 @@ int main(const int argc, const char* const argv[])
     }
 
     // Prepare configurations to pass to FSEventStream
-    // TODO: Streamline `monitor`
 
     const ::dispatch_queue_t queue{::dispatch_get_main_queue()};
 
     std::println("[sstd] Initializing watcher…");
-    sst::stream_context monitor{
-            sst::orchestrator::orchestrate, queue, processor, input_dir};
+    sst::stream_context stream_ctx{sst::orchestrator::orchestrate, queue,
+            processor, input_dir, dir_fd, max_retries};
     std::println("[sstd] Initialized to watch: {}.", input_dir);
 
     // Prepare signal handlers for teardown
 
-    const sst::runtime::context context{queue, monitor};
-    sst::runtime::register_signal_handler(SIGTERM, context);
-    sst::runtime::register_signal_handler(SIGINT, context);
+    sst::signals::register_handler(SIGTERM, queue);
+    sst::signals::register_handler(SIGINT, queue);
 
     // Start main loop
 
     std::println("[sstd] Dispatching. Press CTRL-C to stop.");
-    ::dispatch_main();
+    ::CFRunLoopRun();
+
+    // Stop & Invalidate FSEventStream
+    stream_ctx.shutdown();
+
+    // Cleanup
+    const bool graceful_cleanup{sst::orchestrator::cleanup(
+            processor, dir_fd, stream_ctx.buffer(), processor.max_retries())};
+
+    const bool graceful_close{::close(dir_fd) != -1};
+    if (!graceful_close) {
+        std::fprintf(stderr,
+                "[sstd] Did not close directory file "
+                "descriptor gracefully!\n");
+    }
+
+    // Shutdown
+    const bool graceful_shutdown{processor.shutdown()};
+    if (!graceful_shutdown) {
+        std::fprintf(stderr,
+                "[sstd] Processor did not shut down "
+                "gracefully!\n");
+    }
+
+    return (!(graceful_cleanup && graceful_close && graceful_shutdown));
 }
 
 inline std::string get_os_version()

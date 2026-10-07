@@ -2,20 +2,8 @@
 
 #include <dispatch/dispatch.h>
 
-namespace sst {
+namespace sst::signals {
 
-    class stream_context;
+    void register_handler(int sig, dispatch_queue_t queue) noexcept;
 
-    namespace runtime {
-
-        struct context final {
-            ::dispatch_queue_t queue;
-            const sst::stream_context& monitor;
-        };
-
-        void register_signal_handler(
-                int sig, sst::runtime::context context) noexcept;
-
-    } // namespace runtime
-
-} // namespace sst
+} // namespace sst::signals

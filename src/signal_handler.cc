@@ -1,25 +1,25 @@
 #include "signal_handler.hh"
 
+#include <CoreFoundation/CoreFoundation.h>
 #include <dispatch/dispatch.h>
-#include <sysexits.h>
 
 #include <csignal>
-#include <cstdlib>
-#include <iostream>
+#include <cstdio>
 
-void sst::runtime::register_signal_handler(int sig, context context) noexcept
+void sst::signals::register_handler(
+        const int sig, dispatch_queue_t queue) noexcept
 {
     std::signal(sig, SIG_IGN);
+    const auto sig_src{::dispatch_source_create(
+            DISPATCH_SOURCE_TYPE_SIGNAL, sig, 0U, queue)};
 
-    auto signal_source{::dispatch_source_create(
-            DISPATCH_SOURCE_TYPE_SIGNAL, sig, 0U, context.queue)};
+    ::dispatch_source_set_event_handler(sig_src, ^{
+      std::fprintf(stderr,
+              "[sstd:signal_handler] Shutdown signal received. Cleaning "
+              "up…\n");
 
-    ::dispatch_source_set_event_handler(signal_source, ^{
-      std::cerr << "\n[sstd] Shutdown signal received. Cleaning up…\n";
-
-      // FIXME: This prevents the destructors from being called.
-      std::exit(EX_OK);
+      ::CFRunLoopStop(::CFRunLoopGetMain());
     });
 
-    ::dispatch_resume(signal_source);
+    ::dispatch_resume(sig_src);
 }
