@@ -28,16 +28,16 @@ _has_image_signature:
 	movk	w11, #0x2A00, lsl #16
 	ccmp	w9, w11, #4, ne
 
-	// HEIF: 'ftypmif1' or 'ftypheic' at offset 4
+	// HEIF: 'ftypheic' or 'ftypmif1' at offset 4
 	extr	x11, x10, x9, #32
 	movz	x12, #0x7466         	// 'ft'
 	movk	x12, #0x7079, lsl #16	// 'yp'
-	movk	x12, #0x696D, lsl #32	// 'mi'
-	movk	x12, #0x3166, lsl #48	// 'f1'
-	ccmp	x11, x12, #4, ne
-
 	movk	x12, #0x6568, lsl #32	// 'he'
 	movk	x12, #0x6369, lsl #48	// 'ic'
+	ccmp	x11, x12, #4, ne
+
+	movk	x12, #0x696D, lsl #32	// 'mi'
+	movk	x12, #0x3166, lsl #48	// 'f1'
 	ccmp	x11, x12, #4, ne
 
 	cset	w0, eq
