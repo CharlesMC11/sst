@@ -13,23 +13,24 @@ find_library(CORE_SERVICES_FRAMEWORK CoreServices REQUIRED)
 find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
 
 add_library(sstlib STATIC
-        src/metadata.hh
-        src/processor.hh
-        src/processor.cc
-        src/memory.hh
-        src/stream_context.hh
-        src/stream_context.mm
-        src/orchestrator.hh
-        src/orchestrator.cc
-        src/filter.hh
         src/filter.cc
-        src/signatures.s
-        src/sorter.hh
-        src/sorter.cc
+        src/filter.hh
+        src/memory.hh
+        src/metadata.hh
+        src/metadata.mm
         src/notifier.hh
         src/notifier.mm
+        src/processor.cc
+        src/processor.hh
+        src/orchestrator.hh
+        src/orchestrator.cc
         src/signal_handler.hh
-        src/signal_handler.cc
+        src/signal_handler.mm
+        src/signatures.s
+        src/sorter.cc
+        src/sorter.hh
+        src/stream_context.hh
+        src/stream_context.mm
 )
 
 include_directories(
