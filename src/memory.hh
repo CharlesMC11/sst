@@ -18,7 +18,7 @@ namespace sst::memory {
     };
 
     template<>
-    struct cf_releaser<::FSEventStreamRef> {
+    struct cf_releaser<::FSEventStreamRef> final {
         void operator()(::FSEventStreamRef stream) const noexcept
         {
             if (stream) [[likely]] {
