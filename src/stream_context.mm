@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <cstdio>
 #include <format>
 #include <iostream>
 #include <ostream>
@@ -20,8 +21,9 @@
 
 sst::stream_context::stream_context(const ::FSEventStreamCallback callback,
         const ::dispatch_queue_t queue, sst::processor& processor,
-        const char* const input_dir, const CFTimeInterval latency)
-    : processor_{processor}, dir_path_{input_dir}
+        const char* const input_dir, int input_dir_fd,
+        const CFTimeInterval latency)
+    : processor_{processor}, dir_fd_{input_dir_fd}
 {
     const sst::memory::cf_ptr<::CFStringRef> dir_cfstr{
             ::CFStringCreateWithCString(
@@ -47,17 +49,18 @@ sst::stream_context::stream_context(const ::FSEventStreamCallback callback,
 
 sst::stream_context::~stream_context() noexcept
 {
+    if (stream_) [[unlikely]] {
+        shutdown();
+    }
+}
+
+void sst::stream_context::shutdown() noexcept
+{
     if (stream_) [[likely]] {
         ::FSEventStreamStop(stream_.get());
         ::FSEventStreamInvalidate(stream_.get());
+        stream_.reset(nullptr);
     }
 
-    // TODO: This is technically not related to the stream
-    sst::orchestrator::cleanup(processor_, dir_fd_, buffer_);
-
-    if (dir_fd_ != -1 && ::close(dir_fd_) != 0) [[unlikely]] {
-        std::println(std::cerr,
-                "[sstd:stream_context] Failed to close directory '{}'",
-                dir_fd_);
-    };
+    // CRITIAL: This class does not own `dir_fd_`!
 }
