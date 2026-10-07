@@ -1,19 +1,19 @@
 #include "processor.hh"
 
+#include <crt_externs.h>
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include <cerrno>
 #include <cstddef>
+#include <cstdio>
+#include <cstring>
 #include <format>
-#include <iostream>
+#include <print>
 #include <string_view>
 #include <system_error>
 #include <vector>
-
-// FIXME: Apparently this is brittle even though it works
-extern char** environ;
 
 static inline constexpr char kFilenameRegex[]{
         R"(Filename;s/^\D+(\d{4})-(\d{2})-(\d{2}) at (\d{2})\.(\d{2})\.(\d{2})(?: \((\d)\))?.+$)"};
@@ -47,12 +47,13 @@ namespace sst {
             const image::metadata& metadata, const unsigned max_retries)
         : input_dir_{metadata.input_dir}, max_retries_{max_retries}
     {
-        ::posix_spawn_file_actions actions;
+        posix_spawn_file_actions actions;
         ::posix_spawn_file_actions_adddup2(
-                &actions.data, pipe_.fds[0], STDIN_FILENO);
-        ::posix_spawn_file_actions_addclose(&actions.data, pipe_.fds[1]);
+                &actions.data, pipe_.fds[0UZ], STDIN_FILENO);
+        ::posix_spawn_file_actions_addclose(&actions.data, pipe_.fds[1UZ]);
 
-        formatted_args_ = {std::format("-Model={}", metadata.hw_model),
+        const std::string formatted_args[]{
+                std::format("-Model={}", metadata.hw_model),
                 std::format("-Software={}", metadata.os_ver),
                 std::format("-OffsetTime*={}", metadata.timezone),
                 std::format("-AllDates<${{{}/$1:$2:$3 $4:$5:$6{}/}}",
@@ -65,19 +66,20 @@ namespace sst {
         const char* const args[]{exiftool_path, "-stay_open", "True", "-@",
                 "-", "-common_args", "-struct", "-preserve", "-verbose", "-o",
                 metadata.output_dir,
-                formatted_args_[0].c_str(), // hardware
-                formatted_args_[1].c_str(), // software
-                formatted_args_[2].c_str(), // timezone
-                formatted_args_[3].c_str(), // new datetime pattern
-                formatted_args_[4].c_str(), // new filename pattern
+                formatted_args[0UZ].c_str(), // hardware
+                formatted_args[1UZ].c_str(), // software
+                formatted_args[2UZ].c_str(), // timezone
+                formatted_args[3UZ].c_str(), // new datetime pattern
+                formatted_args[4UZ].c_str(), // new filename pattern
                 "-@",
-                formatted_args_[5].c_str(), // charlesmc.args
+                formatted_args[5UZ].c_str(), // charlesmc.args
                 "-@",
-                formatted_args_[6].c_str(), // screenshots.args
+                formatted_args[6UZ].c_str(), // screenshots.args
                 nullptr};
 
         if (::posix_spawn(&pid_, exiftool_path, &actions.data, nullptr,
-                    const_cast<char**>(args), ::environ) != 0) [[unlikely]] {
+                    const_cast<char**>(args), *::_NSGetEnviron()) != 0)
+                [[unlikely]] {
             throw std::system_error{errno, std::generic_category(),
                     "[sstd:processor] Failed to spawn ExifTool."};
         }
@@ -86,80 +88,118 @@ namespace sst {
         std::println("[sstd:processor] ExifTool is now running…");
     }
 
-    processor::~processor()
+    processor::~processor() noexcept
     {
         if (pid_ == -1) [[unlikely]] {
             return;
         }
 
-        // TODO: Grab result here later
-        send("-stay_open\nFalse\n-execute\n");
-        pipe_.close(1UZ);
-
-        ::waitpid(pid_, nullptr, 0);
+        if (!shutdown()) {
+            std::fprintf(stderr,
+                    "[sstd:processor] Did not shut down gracefully!\n");
+        }
     }
 
     // TODO: Could probably clean this up later
     [[nodiscard]] bool processor::send_filenames(
             const std::vector<std::string>& filenames) const
     {
-        std::string formatted_args;
-        formatted_args.reserve(PATH_MAX);
-
-        for (const auto& filename: filenames) {
-            formatted_args += std::format("{}/{} ", input_dir_, filename);
+        if (filenames.empty()) {
+            return true;
         }
 
-        return send(formatted_args);
+        std::size_t length{
+                10UZ + (std::strlen(input_dir_) + 1UZ) * filenames.size()};
+        for (const auto& filename: filenames) {
+            length += filename.length();
+        }
+
+        std::string buffer;
+        buffer.reserve(length);
+
+        for (const auto& filename: filenames) {
+            buffer.append(input_dir_);
+            buffer.push_back('/');
+            buffer.append(filename);
+            buffer.push_back('\n');
+        }
+        buffer.append("-execute\n");
+
+        return send_payload(buffer);
+    }
+
+    [[nodiscard]] bool processor::shutdown() noexcept
+    {
+        if (pid_ == -1) [[unlikely]] {
+            return true;
+        }
+
+        const bool is_exiftool_closed{
+                send_payload("-stay_open\nFalse\n-execute\n")};
+        pipe_.close(1UZ);
+
+        const bool is_reaped{
+                ::waitpid(pid_, nullptr, 0) != -1 && is_exiftool_closed};
+        pid_ = -1;
+
+        return is_reaped;
     }
 
     processor::pipe::pipe()
     {
         if (::pipe(fds) != 0) [[unlikely]] {
             throw std::system_error{errno, std::generic_category(),
-                    "[sstd:processor] Failed to create a pipe."};
+                    "[sstd:processor] Failed to create a pipe.\n"};
         }
     }
 
-    processor::pipe::~pipe()
+    processor::pipe::~pipe() noexcept
     {
         close(0UZ);
         close(1UZ);
     }
 
-    void processor::pipe::close(const std::size_t idx)
+    void processor::pipe::close(const std::size_t idx) noexcept
     {
         if (fds[idx] == -1) [[unlikely]] {
             return;
         }
 
         if (::close(fds[idx]) != 0) [[unlikely]] {
-            std::println(std::cerr, "Could not close file descriptor: {}.",
+            std::fprintf(stderr, "Could not close file descriptor: %d.\n",
                     fds[idx]);
         }
 
         fds[idx] = -1;
     }
 
-    [[nodiscard]] bool processor::send(std::string_view args) const
+    [[nodiscard]] bool processor::send_payload(
+            const std::string_view args) const noexcept
     {
-        const std::string formatted_args{std::format("{}\n-execute\n", args)};
-
-        // NOTE: It’s so unlikely to fill up 16 KB, maybe we should drop this
-        // altogether?
-
-        const std::size_t length{formatted_args.length()};
-        std::size_t total_written{0Z};
+        const std::size_t length{args.length()};
+        std::size_t total_written{0UZ};
         unsigned reattempts{0U};
-        while (total_written < length && reattempts <= max_retries_)
-                [[unlikely]] {
-            const std::ptrdiff_t written{::write(pipe_.fds[1Z],
-                    formatted_args.data() + total_written,
-                    length - total_written)};
+        while (total_written < length && reattempts <= max_retries_) {
+            const std::ptrdiff_t written{::write(pipe_.fds[1UZ],
+                    args.data() + total_written, length - total_written)};
 
-            written > 0Z ? total_written += static_cast<std::size_t>(written)
-                         : ++reattempts;
+            if (written <= 0Z) [[unlikely]] {
+                if (errno == EINTR) {
+                    continue;
+                }
+                if (errno == EPIPE) {
+                    std::fprintf(stderr,
+                            "[sstd:processor] Pipe broken (ExifTool "
+                            "Terminated)\n");
+                    break;
+                }
+                ++reattempts;
+                continue;
+            }
+            total_written += static_cast<std::size_t>(written);
+            reattempts = 0U;
         }
+
         return total_written == length;
     }
 

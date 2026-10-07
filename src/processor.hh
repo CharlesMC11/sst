@@ -4,20 +4,23 @@
 
 #include <array>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "metadata.hh"
 
 namespace sst {
 
+    /**
+     * Manages the lifecycle of an ExifTool subprocess
+     *
+     */
     class processor final {
     public:
         processor(const char* exiftool_path,
                 const sst::image::metadata& metadata,
-                unsigned max_retries = 0U);
+                unsigned max_retries = 5U);
 
-        ~processor();
+        ~processor() noexcept;
 
         processor(const processor&) = delete;
         processor(processor&&) = delete;
@@ -39,13 +42,15 @@ namespace sst {
         [[nodiscard]] bool send_filenames(
                 const std::vector<std::string>& filenames) const;
 
+        [[nodiscard]] bool shutdown() noexcept;
+
     private:
         class pipe final {
         public:
             int fds[2UZ]{-1, -1};
 
             [[nodiscard]] pipe();
-            ~pipe();
+            ~pipe() noexcept;
 
             pipe(const pipe&) = delete;
             pipe(pipe&&) = delete;
@@ -53,21 +58,15 @@ namespace sst {
             auto operator=(const pipe&) -> pipe& = delete;
             auto operator=(pipe&&) -> pipe& = delete;
 
-            void close(std::size_t idx);
-
-            [[nodiscard]] bool is_valid() const noexcept
-            {
-                return fds[0UZ] != -1 && fds[1UZ] != -1;
-            }
+            void close(std::size_t idx) noexcept;
         };
 
         const char* const input_dir_;
         sst::processor::pipe pipe_;
         ::pid_t pid_{-1};
         unsigned max_retries_;
-        std::array<std::string, 7UZ> formatted_args_;
 
-        [[nodiscard]] bool send(std::string_view args) const;
+        [[nodiscard]] bool send_payload(std::string_view args) const noexcept;
     };
 
 } // namespace sst

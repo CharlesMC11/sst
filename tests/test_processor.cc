@@ -25,7 +25,7 @@ TEST(SstdTest, TestSendFilenames)
 {
     {
         const sst::processor processor{TEST_PROCESSOR_SEND, kMetadata};
-        processor.send_filenames({"Hello", "World!"});
+        (void) processor.send_filenames({"Hello", "World!"});
     }
 
     std::ifstream infile{TEST_PROCESSOR_SEND_FILE};
@@ -33,7 +33,10 @@ TEST(SstdTest, TestSendFilenames)
 
     std::string line;
     std::getline(infile, line);
-    ASSERT_TRUE(line.contains("in_dir/Hello in_dir/World!"));
+    ASSERT_TRUE(line.contains("in_dir/Hello"));
+
+    std::getline(infile, line);
+    ASSERT_TRUE(line.contains("in_dir/World!"));
 
     std::getline(infile, line);
     ASSERT_TRUE(line.contains("-execute"));
