@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 
-constexpr std::ptrdiff_t kAlignment{16Z};
+static inline constexpr std::ptrdiff_t kAlignment{16Z};
 
 /**
  * Check if a given array of bytes matches an image’s magic pattern
