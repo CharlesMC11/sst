@@ -35,17 +35,22 @@ bool sst::orchestrator::cleanup(const processor& processor, const int dir_fd,
         return false;
     }
 
-    DIR* dir_stream{::fdopendir(dir_fd_dup)};
-    for (unsigned i{0U}; !dir_stream && i < max_retries; ++i) [[unlikely]] {
+    DIR* dir_stream{nullptr};
+    for (unsigned i{0U}; i < max_retries; ++i) {
+        if ((dir_stream = ::fdopendir(dir_fd_dup))) [[likely]] {
+            break;
+        }
+        if (errno != EINTR) [[unlikely]] {
+            break;
+        }
+    }
+    if (!dir_stream) {
         std::fprintf(stderr,
                 "[sstd:cleanup] Failed to open directory stream for "
                 "file descriptor: %d.\n",
                 dir_fd_dup);
-    }
-    if (!dir_stream && ::close(dir_fd_dup) != 0) {
-        std::fprintf(stderr,
-                "[sstd:cleanup] Failed to close directory file "
-                "descriptor.\n");
+        ::close(dir_fd_dup);
+
         return false;
     }
 
@@ -63,10 +68,13 @@ bool sst::orchestrator::cleanup(const processor& processor, const int dir_fd,
     if (::closedir(dir_stream) == -1) [[unlikely]] {
         std::fprintf(
                 stderr, "[sstd:cleanup] Failed to close directory stream.\n");
-        return true;
+        return false;
     }
 
-    sst::sorter::natural_sort(buffer);
+    if (!buffer.empty()) [[likely]] {
+        sst::sorter::natural_sort(buffer);
+    }
+
     return processor.send_filenames(buffer);
 }
 
@@ -108,7 +116,7 @@ void sst::orchestrator::orchestrate(
 
     if (!buffer.empty()) [[likely]] {
         sst::sorter::natural_sort(buffer);
-        processor.send_filenames(buffer);
+        (void) processor.send_filenames(buffer);
     }
 }
 

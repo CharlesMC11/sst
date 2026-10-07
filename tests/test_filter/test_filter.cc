@@ -2,45 +2,46 @@
 #include <gtest/gtest.h>
 
 #include "filter.hh"
+#include "orchestrator.hh"
 
 TEST(SstdTest, TestIsImage)
 {
-    int fd{::open(TEST_FILTER_PNG, O_RDONLY)};
+    int fd{::open(TEST_FILTER_PNG, sst::kIOFlags)};
     ASSERT_TRUE(fd != -1);
     ASSERT_TRUE(sst::filter::is_image(fd));
     ::close(fd);
 
-    fd = ::open(TEST_FILTER_JPEG, O_RDONLY);
+    fd = ::open(TEST_FILTER_JPEG, sst::kIOFlags);
     ASSERT_TRUE(fd != -1);
     ASSERT_TRUE(sst::filter::is_image(fd));
     ::close(fd);
 
-    fd = ::open(TEST_FILTER_TIFF1, O_RDONLY);
+    fd = ::open(TEST_FILTER_TIFF1, sst::kIOFlags);
     ASSERT_TRUE(fd != -1);
     ASSERT_TRUE(sst::filter::is_image(fd));
     ::close(fd);
 
-    fd = ::open(TEST_FILTER_TIFF2, O_RDONLY);
+    fd = ::open(TEST_FILTER_TIFF2, sst::kIOFlags);
     ASSERT_TRUE(fd != -1);
     ASSERT_TRUE(sst::filter::is_image(fd));
     ::close(fd);
 
-    fd = ::open(TEST_FILTER_HEIC1, O_RDONLY);
+    fd = ::open(TEST_FILTER_HEIC1, sst::kIOFlags);
     ASSERT_TRUE(fd != -1);
     ASSERT_TRUE(sst::filter::is_image(fd));
     ::close(fd);
 
-    fd = ::open(TEST_FILTER_HEIC2, O_RDONLY);
+    fd = ::open(TEST_FILTER_HEIC2, sst::kIOFlags);
     ASSERT_TRUE(fd != -1);
     ASSERT_TRUE(sst::filter::is_image(fd));
     ::close(fd);
 
-    fd = ::open(TEST_FILTER_LONG, O_RDONLY);
+    fd = ::open(TEST_FILTER_LONG, sst::kIOFlags);
     ASSERT_TRUE(fd != -1);
     ASSERT_FALSE(sst::filter::is_image(fd));
     ::close(fd);
 
-    fd = ::open(TEST_FILTER_SHORT, O_RDONLY);
+    fd = ::open(TEST_FILTER_SHORT, sst::kIOFlags);
     ASSERT_TRUE(fd != -1);
     ASSERT_FALSE(sst::filter::is_image(fd));
     ::close(fd);

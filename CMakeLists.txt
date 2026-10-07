@@ -34,6 +34,7 @@ add_library(sstlib STATIC
 
 include_directories(
         src/
+        tests/
 )
 
 add_executable(sstd
@@ -59,8 +60,9 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 add_executable(test_processor
-        tests/test_processor.cc
+        tests/test.hh
         tests/test_filter/test_filter.cc
+        tests/test_orchestrator.cc
         tests/test_processor/test_processor.cc
 )
 
@@ -73,6 +75,7 @@ target_compile_definitions(test_processor PRIVATE
         TEST_FILTER_TIFF2="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/tiff2.bin"
         TEST_FILTER_LONG="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/long.bin"
         TEST_FILTER_SHORT="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/short.bin"
+        TEST_ORCHESTRATOR_CLEANUP="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter"
         TEST_PROCESSOR_IS_RUNNING="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor/test_processor_is_running.py"
         TEST_PROCESSOR_SEND="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor/test_processor_send.py"
         TEST_PROCESSOR_SEND_FILE="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor/test_processor_send.txt"
