@@ -16,7 +16,8 @@ namespace sst {
     public:
         explicit stream_context(::FSEventStreamCallback callback,
                 ::dispatch_queue_t queue, sst::processor& processor,
-                const char* input_dir, CFTimeInterval latency = 0.25);
+                const char* input_dir, int input_dir_fd,
+                CFTimeInterval latency = 0.25);
 
         ~stream_context() noexcept;
 
@@ -33,14 +34,15 @@ namespace sst {
             return buffer_;
         }
 
-        [[nodiscard]] auto processor() const noexcept -> const sst::processor&
+        [[nodiscard]] auto processor() const noexcept -> sst::processor&
         {
             return processor_;
         }
 
+        void shutdown() noexcept;
+
     private:
-        const sst::processor& processor_;
-        const char* const dir_path_{nullptr};
+        sst::processor& processor_;
         int dir_fd_{-1};
         sst::memory::cf_ptr<::FSEventStreamRef> stream_{nullptr};
         std::vector<std::string> buffer_;
