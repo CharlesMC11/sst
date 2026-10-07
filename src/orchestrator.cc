@@ -6,9 +6,8 @@
 #include <unistd.h>
 
 #include <cstddef>
+#include <cstdio>
 #include <cstring>
-#include <iostream>
-#include <print>
 #include <string>
 #include <vector>
 
@@ -17,46 +16,37 @@
 #include "sorter.hh"
 #include "stream_context.hh"
 
-extern "C" const int kIOFlags{O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_CLOFORK};
-
 static inline constexpr unsigned kFSEventStreamFlags{
         ::kFSEventStreamEventFlagItemIsFile |
         ::kFSEventStreamEventFlagItemCreated |
         ::kFSEventStreamEventFlagItemRenamed};
 
-static void inspect(
-        int dir_fd, const char* filename, std::vector<std::string>& files);
+static void inspect(int dir_fd, const char* filename,
+        std::vector<std::string>& files) noexcept;
 
-void sst::orchestrator::cleanup(const processor& processor, int dir_fd,
-        std::vector<std::string>& files)
+bool sst::orchestrator::cleanup(const processor& processor, const int dir_fd,
+        std::vector<std::string>& buffer, const unsigned max_retries) noexcept
 {
-    if (dir_fd == -1) [[unlikely]] {
-        std::println(std::cerr,
-                "[sstd:stream_context] No open directory file descriptor or "
-                "event stream. Cannot start file system stream_context.");
-        return;
+    const int dir_fd_dup{::dup(dir_fd)};
+    if (dir_fd_dup < 0) {
+        std::fprintf(stderr,
+                "[sstd:cleanup] Failed to duplicate file "
+                "descriptor.\n");
+        return false;
     }
 
-    // FIXME:
-    // const int dir_fd_{::dup(dir_fd)};
-    // if (dir_fd_ < 0) {
-    //     std::cerr << "[sstd:stream_context] Failed to duplicate file
-    //     descriptor\n"; return;
-    // }
-
-    DIR* dir_stream{::fdopendir(dir_fd)};
-    if (!dir_stream) [[unlikely]] {
-        std::println(std::cerr,
-                "[sstd:stream_context] Failed to open directory stream for "
-                "file descriptor duplicate: {}",
-                dir_fd);
-
-        if (::close(dir_fd) != 0) {
-            std::println(std::cerr,
-                    "[sstd:stream_context] Failed to close directory file "
-                    "descriptor");
-        }
-        return;
+    DIR* dir_stream{::fdopendir(dir_fd_dup)};
+    for (unsigned i{0U}; !dir_stream && i < max_retries; ++i) [[unlikely]] {
+        std::fprintf(stderr,
+                "[sstd:cleanup] Failed to open directory stream for "
+                "file descriptor: %d.\n",
+                dir_fd_dup);
+    }
+    if (!dir_stream && ::close(dir_fd_dup) != 0) {
+        std::fprintf(stderr,
+                "[sstd:cleanup] Failed to close directory file "
+                "descriptor.\n");
+        return false;
     }
 
     dirent* entry{nullptr};
@@ -67,17 +57,17 @@ void sst::orchestrator::cleanup(const processor& processor, int dir_fd,
             continue;
         }
 
-        inspect(dir_fd, filename, files);
+        inspect(dir_fd_dup, filename, buffer);
     }
 
     if (::fdclosedir(dir_stream) == -1) [[unlikely]] {
-        std::cerr
-                << "[sstd:stream_context] Failed to close directory stream.\n";
-        return;
+        std::fprintf(
+                stderr, "[sstd:cleanup] Failed to close directory stream.\n");
+        return true;
     }
 
-    sst::sorter::natural_sort(files);
-    processor.send_filenames(files);
+    sst::sorter::natural_sort(buffer);
+    return processor.send_filenames(buffer);
 }
 
 void sst::orchestrator::orchestrate(
@@ -122,9 +112,9 @@ void sst::orchestrator::orchestrate(
 }
 
 static void inspect(const int dir_fd, const char* filename,
-        std::vector<std::string>& files)
+        std::vector<std::string>& files) noexcept
 {
-    const int fd{::openat(dir_fd, filename, kIOFlags)};
+    const int fd{::openat(dir_fd, filename, sst::kIOFlags)};
     if (fd < 0) [[unlikely]] {
         return;
     }
@@ -134,6 +124,7 @@ static void inspect(const int dir_fd, const char* filename,
     }
 
     if (::close(fd) != 0) [[unlikely]] {
-        // TODO: Some error message
+        std::fprintf(stderr, "[sstd:cleanup] Failed to close file: %s.\n",
+                filename);
     }
 }

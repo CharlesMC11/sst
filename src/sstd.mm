@@ -25,10 +25,12 @@ std::string get_os_version();
 
 int main(const int argc, const char* const argv[])
 {
-    if (argc < 7) [[unlikely]] {
+    // Parse CLI Arguments / plist Config
+
+    if (argc < 8) [[unlikely]] {
         std::println(std::cerr,
                 "Usage: {} <exiftool_path> <input_dir> <output_dir> "
-                "<tmp_dir> <arg_files_dir> <hw_model>",
+                "<tmp_dir> <arg_files_dir> <hw_model> <max_retries>",
                 argv[0]);
         return EX_USAGE;
     }
@@ -39,6 +41,7 @@ int main(const int argc, const char* const argv[])
     const char* const tmp_dir{argv[4]};
     const char* const arg_files_dir{argv[5]};
     const char* const hw_model{argv[6]};
+    const unsigned max_retries{5U};
 
     std::println("[sstd] Starting daemon…");
 
@@ -48,15 +51,26 @@ int main(const int argc, const char* const argv[])
             hw_model, ::get_os_version()};
 
     std::println("[sstd] Initializing processor…");
-    sst::processor processor{exiftool_path, metadata};
-    std::println("[sstd] Initialized processor with metadata:\n\tOutput "
-                 "Directory: {}\n\tArg Files Directory: {}\n\tHardware: "
-                 "{}\n\tSoftware: {}\n\tTimezone: {}",
-            metadata.output_dir, metadata.arg_files_dir, metadata.hw_model,
-            metadata.os_ver, metadata.timezone);
+    sst::processor processor{exiftool_path, metadata, max_retries};
+
+    const int dir_fd{::open(input_dir, sst::kIOFlags | O_DIRECTORY)};
+    if (dir_fd == -1) [[unlikely]] {
+        throw std::system_error{errno, std::generic_category(),
+                std::format("[sstd] Failed to open directory: '{}'\n.",
+                        input_dir)};
+    }
+
+    std::vector<std::string> buffer;
+
+    // Initial cleanup
+    if (!sst::orchestrator::cleanup(processor, dir_fd, buffer, max_retries)) {
+        throw std::system_error{errno, std::generic_category(),
+                std::format("[sstd] Encountered errors while cleaning up "
+                            "directory: '{}'\n.",
+                        input_dir)};
+    }
 
     // Prepare configurations to pass to FSEventStream
-
     // TODO: Streamline `monitor`
 
     const ::dispatch_queue_t queue{::dispatch_get_main_queue()};
