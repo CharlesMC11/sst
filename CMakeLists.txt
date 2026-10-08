@@ -112,8 +112,8 @@ target_link_options(sstd PRIVATE
 )
 
 add_custom_command(
-    TARGET sstd POST_BUILD
-    COMMAND codesign --force --options runtime --entitlements "${CMAKE_CURRENT_SOURCE_DIR}/Entitlements.plist" -s - $<TARGET_FILE:sstd>
+        TARGET sstd POST_BUILD
+        COMMAND codesign --force --options runtime --entitlements "${CMAKE_CURRENT_SOURCE_DIR}/Entitlements.plist" -s - $<TARGET_FILE:sstd>
 )
 
 # Testing
