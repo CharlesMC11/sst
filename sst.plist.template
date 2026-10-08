@@ -3,20 +3,20 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>${PLIST_NAME%.*}</string>
+  <string>@PLIST_NAME@</string>
 
   <key>ProgramArguments</key>
   <array>
-    <string>${BIN_DIR}/${AGENT_NAME}</string>
-    <string>${EXIFTOOL}</string>
+    <string>@BIN_DIR@/@AGENT_NAME@</string>
+    <string>@EXIFTOOL@</string>
 
-    <string>${INPUT_DIR}</string>
-    <string>${OUTPUT_DIR}</string>
+    <string>@INPUT_DIR@</string>
+    <string>@OUTPUT_DIR@</string>
+    <string>@ARG_FILES_DIR@</string>
 
-    <string>${TMPDIR}</string>
-    <string>${ARG_FILES_DIR}</string>
-
-    <string>${HW_MODEL}</string>
+    <string>@HW_MODEL@</string>
+    <string>@MAX_RETRIES@</string>
+    <string>@LATENCY@</string>
   </array>
   <key>EnvironmentVariables</key>
   <dict>

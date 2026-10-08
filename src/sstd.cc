@@ -23,7 +23,7 @@ int main(const int argc, const char* const argv[])
     if (argc < 8) [[unlikely]] {
         std::println(std::cerr,
                 "Usage: {} <exiftool_path> <input_dir> <output_dir> "
-                "<tmp_dir> <arg_files_dir> <hw_model> <max_retries>",
+                "<arg_files_dir> <hw_model> <max_retries> <latency>",
                 argv[0]);
         return EX_USAGE;
     }
@@ -31,10 +31,10 @@ int main(const int argc, const char* const argv[])
     const char* const exiftool_path{argv[1]};
     const char* const input_dir{argv[2]};
     const char* const output_dir{argv[3]};
-    const char* const tmp_dir{argv[4]};
-    const char* const arg_files_dir{argv[5]};
-    const char* const hw_model{argv[6]};
-    const unsigned max_retries{5U};
+    const char* const arg_files_dir{argv[4]};
+    const char* const hw_model{argv[5]};
+    const auto max_retries{static_cast<unsigned>(std::stoi(argv[6]))};
+    const double latency{std::stod(argv[7])};
 
     std::println("[sstd] Starting daemon…");
 
@@ -68,7 +68,7 @@ int main(const int argc, const char* const argv[])
 
     std::println("[sstd] Initializing watcher…");
     sst::stream_context stream_ctx{sst::orchestrator::orchestrate, queue,
-            processor, input_dir, dir_fd, max_retries};
+            processor, input_dir, dir_fd, latency};
     std::println("[sstd] Initialized to watch directory: '{}'.", input_dir);
 
     // Prepare signal handlers for teardown
