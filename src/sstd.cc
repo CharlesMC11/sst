@@ -76,7 +76,7 @@ int main(const int argc, const char* const argv[])
     sst::signals::register_handler(SIGINT, queue);
 
     // Start main loop
-    std::println("[sstd] Dispatching. Press CTRL-C to stop.");
+    std::println("[sstd] Dispatching… Press CTRL-C to stop.");
     ::CFRunLoopRun();
 
     // Stop & Invalidate FSEventStream
@@ -94,8 +94,8 @@ int main(const int argc, const char* const argv[])
 
     const bool graceful_close{::close(dir_fd) != -1};
     if (!graceful_close) [[unlikely]] {
-        std::fprintf(
-                stderr, "[sstd] Failed to close directory: '%s'\n", input_dir);
+        std::fprintf(stderr, "[sstd] Failed to close directory: '%s'\n.",
+                input_dir);
     }
 
     // Shutdown
@@ -106,7 +106,6 @@ int main(const int argc, const char* const argv[])
                 "gracefully.\n");
     }
 
-    return (graceful_cleanup && graceful_close && graceful_shutdown)
-            ? EX_OK
-            : EX_OSERR;
+    return graceful_cleanup && graceful_close && graceful_shutdown ? EX_OK
+                                                                   : EX_OSERR;
 }
