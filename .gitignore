@@ -1,10 +1,14 @@
-build/
-cmake-build-debug/
-obj/
+.DS_Store
+
+/.git/
+
+/.idea/
+/.vscode/
+
+/build*/
+/cmake-build-*/
 *.link
 tests/**/*.txt
 
-.idea/
-.vscode/
-
-.DS_Store
+__pycache__/
+*.pyc
