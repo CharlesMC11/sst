@@ -1,16 +1,61 @@
 cmake_minimum_required(VERSION 4.1)
-project(sst ASM CXX OBJCXX)
 
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_OSX_ARCHITECTURES "arm64")
+if (NOT DEFINED CMAKE_OSX_ARCHITECTURES)
+    set(CMAKE_OSX_ARCHITECTURES "arm64")
+endif ()
+
+project(sst ASM CXX OBJCXX)
+
+include(CheckIPOSupported)
+
+option(ENABLE_LTO "Enable ThinLTO in Release builds" ON)
+
+# Compiler Flags
+
+set(SST_COMMON_COMPILE_OPTIONS
+        -D_FORTIFY_SOURCE=2
+        -mbranch-protection=standard
+        -falign-functions=16
+        -fcolor-diagnostics
+        -fstrict-aliasing
+        -Wall
+        -Wextra
+        -Wpedantic
+)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_definitions(DEBUG_MODE)
+    list(APPEND SST_COMMON_COMPILE_OPTIONS
+            -O0
+            -g
+#            -fsanitize=address
+#            -fsanitize=undefined
+            -fno-omit-frame-pointer
+            -fno-optimize-sibling-calls
+    )
+#    set(SST_SANITIZER_LINK_FLAGS -fsanitize=address -fsanitize=undefined)
+else ()
+    add_compile_definitions(NDEBUG)
+    list(APPEND SST_COMMON_COMPILE_OPTIONS -O2 -fomit-frame-pointer)
+    if (ENABLE_LTO)
+        check_ipo_supported(RESULT ipo_supported)
+        if (ipo_supported)
+            set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+        endif ()
+    endif ()
+endif ()
+
+# Frameworks
 
 find_library(CORE_FOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
 find_library(CORE_SERVICES_FRAMEWORK CoreServices REQUIRED)
 find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
+
+# Core Library
 
 add_library(sstlib STATIC
         src/filter.cc
@@ -26,19 +71,18 @@ add_library(sstlib STATIC
         src/signal_handler.cc
         src/signal_handler.hh
         src/signatures.s
-        src/sorter.cc
-        src/sorter.hh
         src/stream_context.cc
         src/stream_context.hh
 )
 
-include_directories(
-        src/
-        tests/
+target_include_directories(sstlib PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tests>
 )
 
-add_executable(sstd
-        src/sstd.cc
+target_compile_options(sstlib PRIVATE
+        ${SST_COMMON_COMPILE_OPTIONS}
+        $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
 )
 
 target_link_libraries(sstlib PUBLIC
@@ -47,9 +91,32 @@ target_link_libraries(sstlib PUBLIC
         ${FOUNDATION_FRAMEWORK}
 )
 
-target_link_libraries(sstd PRIVATE
-        sstlib
+if (SST_SANITIZER_LINK_FLAGS)
+    target_link_options(sstlib PUBLIC ${SST_SANITIZER_LINK_FLAGS})
+endif ()
+
+# Executable
+
+add_executable(sstd src/sstd.cc)
+
+target_compile_options(sstd PRIVATE
+        ${SST_COMMON_COMPILE_OPTIONS}
+        $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
 )
+
+target_link_libraries(sstd PRIVATE sstlib)
+
+target_link_options(sstd PRIVATE
+        -Wl,-dead_strip
+        -Wl,-no_warn_duplicate_libraries
+)
+
+add_custom_command(
+    TARGET sstd POST_BUILD
+    COMMAND codesign --force --options runtime --entitlements "${CMAKE_CURRENT_SOURCE_DIR}/Entitlements.plist" -s - $<TARGET_FILE:sstd>
+)
+
+# Testing
 
 include(FetchContent)
 FetchContent_Declare(
@@ -59,16 +126,17 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
-add_executable(test_processor
+add_executable(tests
         tests/test.hh
         tests/test_filter/test_filter.cc
         tests/test_orchestrator.cc
         tests/test_processor/test_processor.cc
-        tests/test_sorter.cc
         tests/test_stream_context.cc
 )
 
-target_compile_definitions(test_processor PRIVATE
+target_compile_options(tests PRIVATE ${SST_COMMON_COMPILE_OPTIONS})
+
+target_compile_definitions(tests PRIVATE
         TEST_FILTER_HEIC1="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/heic1.bin"
         TEST_FILTER_HEIC2="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/heic2.bin"
         TEST_FILTER_JPEG="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_filter/jpeg.bin"
@@ -83,10 +151,20 @@ target_compile_definitions(test_processor PRIVATE
         TEST_PROCESSOR_SEND_FILE="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_processor/test_processor_send.txt"
 )
 
-target_link_libraries(test_processor
-        sstlib
-        GTest::gtest_main
-)
+target_link_libraries(tests PRIVATE sstlib GTest::gtest_main)
 
 include(GoogleTest)
-gtest_discover_tests(test_processor)
+gtest_discover_tests(tests)
+
+# Launchd
+
+set(SERVICE_NAME "sst")
+set(AUTHOR "charlesmc")
+set(RDNN "me.${AUTHOR}.${SERVICE_NAME}")
+set(PLIST_NAME "${RDNN}.plist")
+
+configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/${SERVICE_NAME}.plist.template"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PLIST_NAME}"
+        @ONLY
+)
