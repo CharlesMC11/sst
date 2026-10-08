@@ -10,7 +10,6 @@ sequenceDiagram
     participant FS@{ type: boundary } as FSEvents / Kernel
     participant O as Orchestrator Callback
     participant F as Filter
-    participant S as Sorter
     participant P as Processor
   end
 
@@ -38,12 +37,7 @@ sequenceDiagram
         F -->> O : Valid Filenames
       deactivate F
 
-    O ->> S : Sort Filenames
-    activate S
-      S -->> O : Sorted List
-    deactivate S
-
-    O ->> P : Construct ExifTool Args List
+    O ->> P : Send Filenames to Process
     activate P
       P ->> ET : Write Filenames to Pipe
       activate ET

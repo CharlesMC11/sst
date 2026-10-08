@@ -20,8 +20,7 @@ flowchart
     Add --> Close[[Close File]]
   end
 
-  Filter --> Sorter{{Sort Filenames}}
-  Sorter --> Processor
+  Filter --> Processor
 
   subgraph Processor
     Args{{Construct ExifTool Args List}} --> Pipe[[Write to Pipe]]

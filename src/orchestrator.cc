@@ -13,7 +13,6 @@
 
 #include "filter.hh"
 #include "processor.hh"
-#include "sorter.hh"
 #include "stream_context.hh"
 
 static inline constexpr unsigned kFSEventStreamFlags{
@@ -71,10 +70,6 @@ bool sst::orchestrator::cleanup(const processor& processor, const int dir_fd,
         return false;
     }
 
-    if (!buffer.empty()) [[likely]] {
-        sst::sorter::natural_sort(buffer);
-    }
-
     return processor.send_filenames(buffer);
 }
 
@@ -114,10 +109,7 @@ void sst::orchestrator::orchestrate(
         }
     }
 
-    if (!buffer.empty()) [[likely]] {
-        sst::sorter::natural_sort(buffer);
-        (void) processor.send_filenames(buffer);
-    }
+    (void) processor.send_filenames(buffer);
 }
 
 static void inspect(const int dir_fd, const char* filename,
