@@ -34,7 +34,7 @@ bool sst::orchestrator::cleanup(const processor& processor, const int dir_fd,
         return false;
     }
 
-    DIR* dir_stream{nullptr};
+    ::DIR* dir_stream{nullptr};
     for (unsigned i{0U}; i < max_retries; ++i) {
         if ((dir_stream = ::fdopendir(dir_fd_dup))) [[likely]] {
             break;
@@ -53,7 +53,7 @@ bool sst::orchestrator::cleanup(const processor& processor, const int dir_fd,
         return false;
     }
 
-    dirent* entry{nullptr};
+    ::dirent* entry{nullptr};
     while ((entry = ::readdir(dir_stream))) {
         const char* filename{entry->d_name};
 
