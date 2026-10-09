@@ -43,8 +43,9 @@ void sst::orchestrator::run(
             continue;
         }
 
+        const char* const filename{slash + 1};
         if ((event_flags[i] & kFSEventStreamFlags) != 0) [[likely]] {
-            orchestrator->inspect(slash + 1);
+            orchestrator->inspect(filename, std::strlen(filename));
         }
     }
 
@@ -103,7 +104,7 @@ bool sst::orchestrator::cleanup() const noexcept
             continue;
         }
 
-        inspect(filename);
+        inspect(filename, entry->d_namlen);
     }
 
     if (::closedir(dir_stream) == -1) [[unlikely]] {
@@ -115,7 +116,8 @@ bool sst::orchestrator::cleanup() const noexcept
     return processor_.send_to_exiftool(buffer_);
 }
 
-void sst::orchestrator::inspect(const char* filename) const noexcept
+void sst::orchestrator::inspect(
+        const char* filename, const std::size_t length) const noexcept
 {
     const int fd{::openat(input_dir_fd_, filename, sst::kIOFlags)};
     if (fd < 0) [[unlikely]] {
@@ -123,10 +125,8 @@ void sst::orchestrator::inspect(const char* filename) const noexcept
     }
 
     if (sst::filter::is_image(fd, max_retries_)) [[likely]] {
-        buffer_.append(input_dir_path_);
-        buffer_.push_back('/');
-        buffer_.append(filename);
-        buffer_.push_back('\n');
+        buffer_.append(input_dir_path_).push_back('/');
+        buffer_.append(filename, length).push_back('\n');
     }
 
     if (::close(fd) != 0) [[unlikely]] {

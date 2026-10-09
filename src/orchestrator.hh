@@ -59,7 +59,7 @@ namespace sst {
         unsigned max_retries_;
         std::string& buffer_;
 
-        void inspect(const char* filename) const noexcept;
+        void inspect(const char* filename, std::size_t length) const noexcept;
     };
 
 } // namespace sst
