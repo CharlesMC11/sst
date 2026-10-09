@@ -2,13 +2,12 @@
 #include <dispatch/dispatch.h>
 #include <sysexits.h>
 
+#include <bit>
 #include <csignal>
-#include <cstdlib>
 #include <format>
 #include <iostream>
 #include <print>
 #include <string>
-#include <vector>
 
 #include "orchestrator.hh"
 #include "processor.hh"
@@ -16,6 +15,9 @@
 #include "stream_context.hh"
 
 // TODO: Use os/log.h
+
+static inline constexpr std::size_t kAvgFilenameLength{45UZ};
+static inline constexpr std::size_t kAvgFileCount{16UZ};
 
 int main(const int argc, const char* const argv[])
 {
@@ -28,6 +30,8 @@ int main(const int argc, const char* const argv[])
         return EX_USAGE;
     }
 
+    std::println("[sstd] Starting daemon…");
+
     const char* const exiftool_path{argv[1]};
     const char* const input_dir{argv[2]};
     const char* const output_dir{argv[3]};
@@ -36,14 +40,18 @@ int main(const int argc, const char* const argv[])
     const auto max_retries{static_cast<unsigned>(std::stoi(argv[6]))};
     const double latency{std::stod(argv[7])};
 
-    std::println("[sstd] Starting daemon…");
+    const std::size_t min_buffer_size{
+            std::strlen(input_dir) + kAvgFilenameLength};
+    const std::size_t init_reserve_size{
+            std::bit_ceil(min_buffer_size * kAvgFileCount)};
 
     // Prepare configurations to pass to ExifTool
     const sst::image::metadata metadata{
             input_dir, output_dir, arg_files_dir, hw_model};
 
     std::println("[sstd] Initializing processor…");
-    sst::processor processor{exiftool_path, metadata, max_retries};
+    sst::processor processor{
+            exiftool_path, metadata, max_retries, init_reserve_size * 2UZ};
 
     const int dir_fd{::open(input_dir, sst::kIOFlags | O_DIRECTORY)};
     if (dir_fd == -1) [[unlikely]] {
@@ -52,11 +60,14 @@ int main(const int argc, const char* const argv[])
                         input_dir)};
     }
 
-    std::vector<std::string> buffer;
+    std::string buffer;
+    buffer.reserve(init_reserve_size);
+
+    sst::orchestrator orchestrator{
+            processor, input_dir, dir_fd, buffer, max_retries};
 
     // Initial cleanup
-    if (!sst::orchestrator::cleanup(processor, dir_fd, buffer, max_retries))
-            [[unlikely]] {
+    if (!orchestrator.cleanup()) [[unlikely]] {
         throw std::system_error{errno, std::generic_category(),
                 std::format("[sstd] Encountered errors while cleaning up "
                             "directory: '{}'.\n.",
@@ -67,8 +78,7 @@ int main(const int argc, const char* const argv[])
     const ::dispatch_queue_t queue{::dispatch_get_main_queue()};
 
     std::println("[sstd] Initializing watcher…");
-    sst::stream_context stream_ctx{sst::orchestrator::orchestrate, queue,
-            processor, input_dir, dir_fd, latency};
+    sst::stream_context stream_ctx{orchestrator, queue, latency};
     std::println("[sstd] Initialized to watch directory: '{}'.", input_dir);
 
     // Prepare signal handlers for teardown
@@ -83,8 +93,7 @@ int main(const int argc, const char* const argv[])
     stream_ctx.shutdown();
 
     // Cleanup
-    const bool graceful_cleanup{sst::orchestrator::cleanup(
-            processor, dir_fd, stream_ctx.buffer(), processor.max_retries())};
+    const bool graceful_cleanup{orchestrator.cleanup()};
     if (!graceful_cleanup) [[unlikely]] {
         std::fprintf(stderr,
                 "[sstd] Encountered errors while cleaning up "

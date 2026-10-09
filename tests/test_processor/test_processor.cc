@@ -22,10 +22,9 @@ TEST(SstdTest, TestIsRunning)
 TEST(SstdTest, TestSendFilenames)
 {
     {
-        const sst::processor processor{TEST_PROCESSOR_SEND, kMetadata};
-        ASSERT_TRUE(processor.send_filenames({}));
-
-        ASSERT_TRUE(processor.send_filenames({"Hello", "World!"}));
+        sst::processor processor{TEST_PROCESSOR_SEND, kMetadata};
+        ASSERT_TRUE(processor.send_to_exiftool(""));
+        ASSERT_TRUE(processor.send_to_exiftool("Hello\nWorld!\n"));
     }
 
     std::ifstream infile{TEST_PROCESSOR_SEND_FILE};
@@ -33,12 +32,10 @@ TEST(SstdTest, TestSendFilenames)
 
     std::string line;
     std::getline(infile, line);
-    ASSERT_TRUE(
-            line.contains(std::format("{}/{}", kMetadata.input_dir, "Hello")));
+    ASSERT_TRUE(line.contains("Hello"));
 
     std::getline(infile, line);
-    ASSERT_TRUE(line.contains(
-            std::format("{}/{}", kMetadata.input_dir, "World!")));
+    ASSERT_TRUE(line.contains("World!"));
 
     std::getline(infile, line);
     ASSERT_TRUE(line.contains("-execute"));
@@ -52,11 +49,10 @@ TEST(SstdTest, TestSendFilenames)
 
 TEST(SstdTest, TestResend)
 {
-    const sst::processor processor{TEST_PROCESSOR_IS_RUNNING, kMetadata, 3Z};
+    sst::processor processor{TEST_PROCESSOR_IS_RUNNING, kMetadata, 3Z};
 
-    char long_string[PIPE_BUF];
+    char long_string[PATH_MAX];
     std::fill(std::begin(long_string), std::end(long_string), '?');
-    const std::vector<std::string> lots_of_files(PIPE_BUF, long_string);
 
-    ASSERT_TRUE(processor.send_filenames(lots_of_files));
+    ASSERT_TRUE(processor.send_to_exiftool(long_string));
 }

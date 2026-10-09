@@ -2,8 +2,10 @@
 
 #include <sys/types.h>
 
+#include <climits>
+#include <cstddef>
 #include <string>
-#include <vector>
+#include <string_view>
 
 #include "metadata.hh"
 
@@ -17,7 +19,8 @@ namespace sst {
     public:
         processor(const char* exiftool_path,
                 const sst::image::metadata& metadata,
-                unsigned max_retries = 5U);
+                unsigned max_retries = 5U,
+                std::size_t init_buffer_size = PATH_MAX);
 
         ~processor() noexcept;
 
@@ -32,21 +35,20 @@ namespace sst {
             return pid_ != -1;
         }
 
-        /**
-         * Send the filenames to ExifTool
-         *
-         * @param filenames
-         * The relative filenames to send
-         */
-        [[nodiscard]] bool send_filenames(
-                const std::vector<std::string>& filenames) const;
-
-        [[nodiscard]] bool shutdown() noexcept;
-
-        [[nodiscard]] unsigned max_retries() const noexcept
+        [[nodiscard]] constexpr unsigned max_retries() const noexcept
         {
             return max_retries_;
         }
+
+        /**
+         * Send a string of line feed-separated file paths to ExifTool
+         *
+         * @param file_paths
+         * The absolute filenames to send
+         */
+        [[nodiscard]] bool send_to_exiftool(std::string_view file_paths);
+
+        [[nodiscard]] bool shutdown() noexcept;
 
     private:
         class pipe final {
@@ -65,12 +67,14 @@ namespace sst {
             void close(std::size_t idx) noexcept;
         };
 
-        const char* const input_dir_;
-        sst::processor::pipe pipe_;
+        sst::processor::pipe outbound_pipe_;
+        sst::processor::pipe inbound_pipe_;
         ::pid_t pid_{-1};
         unsigned max_retries_;
+        std::string buffer_;
 
-        [[nodiscard]] bool send_payload(std::string_view args) const noexcept;
+        [[nodiscard]] bool send_payload() const noexcept;
+        [[nodiscard]] bool wait() const noexcept;
     };
 
 } // namespace sst

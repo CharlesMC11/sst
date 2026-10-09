@@ -11,9 +11,9 @@
 #include <cstdio>
 #include <format>
 #include <print>
+#include <string>
 #include <string_view>
 #include <system_error>
-#include <vector>
 
 static inline constexpr char kFilenameRegex[]{
         R"(Filename;s/^\D+(\d{4})-(\d{2})-(\d{2}) at (\d{2})\.(\d{2})\.(\d{2})(?: \((\d)\))?.+$)"};
@@ -47,13 +47,20 @@ namespace {
 namespace sst {
 
     processor::processor(const char* const exiftool_path,
-            const image::metadata& metadata, const unsigned max_retries)
-        : input_dir_{metadata.input_dir}, max_retries_{max_retries}
+            const image::metadata& metadata, const unsigned max_retries,
+            std::size_t init_buffer_size)
+        : max_retries_{max_retries}
     {
         posix_spawn_file_actions actions;
         ::posix_spawn_file_actions_adddup2(
-                &actions.data, pipe_.fds[0UZ], STDIN_FILENO);
-        ::posix_spawn_file_actions_addclose(&actions.data, pipe_.fds[1UZ]);
+                &actions.data, outbound_pipe_.fds[0UZ], STDIN_FILENO);
+        ::posix_spawn_file_actions_addclose(
+                &actions.data, outbound_pipe_.fds[1UZ]);
+
+        ::posix_spawn_file_actions_adddup2(
+                &actions.data, inbound_pipe_.fds[1UZ], STDOUT_FILENO);
+        ::posix_spawn_file_actions_addclose(
+                &actions.data, inbound_pipe_.fds[0UZ]);
 
         const std::string timezone{get_timezone()};
 
@@ -64,13 +71,13 @@ namespace sst {
                 std::format("-AllDates<${{{}/$1:$2:$3 $4:$5:$6{}/}}",
                         kFilenameRegex, timezone),
                 std::format(
-                        R"(-Filename<${{{}/my $N = $7 ? sprintf("%02d", $7) : "";"$1$2$3-$4$5$6{}_$N"/e}}%-c%lE)",
+                        R"(-Filename<${{{}/my $N = defined($7) ? sprintf("_%02d", $7) : ""; "$1$2$3-$4$5$6{}$N"/e}}%-c%lE)",
                         kFilenameRegex, timezone),
                 std::format("{}/charlesmc.args", metadata.arg_files_dir),
                 std::format("{}/screenshot.args", metadata.arg_files_dir)};
 
         const char* const args[]{exiftool_path, "-stay_open", "True", "-@",
-                "-", "-common_args", "-struct", "-preserve", "-verbose", "-o",
+                "-", "-common_args", "-struct", "-preserve", "-o",
                 metadata.output_dir,
                 formatted_args[0UZ].c_str(), // hardware
                 formatted_args[1UZ].c_str(), // software
@@ -90,8 +97,18 @@ namespace sst {
                     "[sstd:processor] Failed to spawn ExifTool."};
         }
 
-        pipe_.close(0UZ);
-        std::println("[sstd:processor] ExifTool is now running…");
+        outbound_pipe_.close(0UZ);
+        inbound_pipe_.close(1UZ);
+
+        buffer_.reserve(init_buffer_size);
+
+        //        if (!(send_payload("-execute\n") && wait())) {
+        //            throw std::runtime_error{"[sstd:processor] Exiftool
+        //            failed to "
+        //                                     "send a ready signal."};
+        //        }
+
+        std::println("[sstd:processor] ExifTool is now running.");
     }
 
     processor::~processor() noexcept
@@ -106,32 +123,17 @@ namespace sst {
         }
     }
 
-    // TODO: Could probably clean this up later
-    [[nodiscard]] bool processor::send_filenames(
-            const std::vector<std::string>& filenames) const
+    [[nodiscard]] bool processor::send_to_exiftool(std::string_view file_paths)
     {
-        if (filenames.empty()) {
+        if (file_paths.empty()) {
             return true;
         }
 
-        std::size_t length{
-                10UZ + (std::strlen(input_dir_) + 1UZ) * filenames.size()};
-        for (const auto& filename: filenames) {
-            length += filename.length();
-        }
+        buffer_.clear();
+        buffer_.append(file_paths);
+        buffer_.append("-execute\n");
 
-        std::string buffer;
-        buffer.reserve(length);
-
-        for (const auto& filename: filenames) {
-            buffer.append(input_dir_);
-            buffer.push_back('/');
-            buffer.append(filename);
-            buffer.push_back('\n');
-        }
-        buffer.append("-execute\n");
-
-        return send_payload(buffer);
+        return send_payload();
     }
 
     [[nodiscard]] bool processor::shutdown() noexcept
@@ -140,12 +142,15 @@ namespace sst {
             return true;
         }
 
-        const bool is_exiftool_closed{
-                send_payload("-stay_open\nFalse\n-execute\n")};
-        pipe_.close(1UZ);
+        buffer_.clear();
+        buffer_.append("-stay_open\nFalse\n-execute\n");
+        const bool has_exiftool_closed{send_payload()};
+
+        outbound_pipe_.close(1UZ);
+        inbound_pipe_.close(0UZ);
 
         const bool is_reaped{
-                ::waitpid(pid_, nullptr, 0) != -1 && is_exiftool_closed};
+                ::waitpid(pid_, nullptr, 0) != -1 && has_exiftool_closed};
         pid_ = -1;
 
         return is_reaped;
@@ -179,15 +184,14 @@ namespace sst {
         fds[idx] = -1;
     }
 
-    [[nodiscard]] bool processor::send_payload(
-            const std::string_view args) const noexcept
+    [[nodiscard]] bool processor::send_payload() const noexcept
     {
-        const std::size_t length{args.length()};
+        const std::size_t length{buffer_.length()};
         std::size_t total_written{0UZ};
         unsigned retries{0U};
         while (total_written < length && retries <= max_retries_) {
-            const std::ptrdiff_t bytes_written{::write(pipe_.fds[1UZ],
-                    args.data() + total_written, length - total_written)};
+            const std::ptrdiff_t bytes_written{::write(outbound_pipe_.fds[1UZ],
+                    buffer_.data() + total_written, length - total_written)};
 
             if (bytes_written <= 0Z) [[unlikely]] {
                 if (errno == EINTR) {
@@ -207,6 +211,30 @@ namespace sst {
         }
 
         return total_written == length;
+    }
+
+    [[nodiscard]] bool processor::wait() const noexcept
+    {
+        std::string buffer;
+        char ch;
+        while (true) {
+            const std::ptrdiff_t bytes_read{
+                    ::read(inbound_pipe_.fds[0UZ], &ch, 1UZ)};
+            if (bytes_read < 0Z) [[unlikely]] {
+                if (errno == EINTR) {
+                    continue;
+                }
+                return false;
+            }
+            if (bytes_read == 0UZ) {
+                return false;
+            }
+            buffer.push_back(ch);
+            if (buffer.length() >= 8UZ &&
+                    buffer.rfind("{ready}") != std::string::npos) {
+                return true;
+            }
+        }
     }
 
 } // namespace sst
