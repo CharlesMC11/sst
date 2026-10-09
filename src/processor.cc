@@ -124,8 +124,7 @@ namespace sst {
         }
 
         buffer_.clear();
-        buffer_.append(file_paths);
-        buffer_.append("-execute\n");
+        buffer_.append(file_paths).append("-execute\n");
 
         return send_payload();
     }
