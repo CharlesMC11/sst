@@ -47,8 +47,7 @@ namespace sst {
         posix_spawn_file_actions actions;
         ::posix_spawn_file_actions_adddup2(
                 &actions.data, pipe_.fds[0UZ], STDIN_FILENO);
-        ::posix_spawn_file_actions_addclose(
-                &actions.data, pipe_.fds[1UZ]);
+        ::posix_spawn_file_actions_addclose(&actions.data, pipe_.fds[1UZ]);
 
         // TODO: Build ExifTool args in main / sst::image::metadata
         const char* const timezone{sst::image::metadata::timezone()};
