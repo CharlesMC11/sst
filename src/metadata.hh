@@ -9,7 +9,6 @@ namespace sst::image {
         [[nodiscard]] static const char* os_version();
         [[nodiscard]] static const char* timezone();
 
-        const char* const input_dir;
         const char* const output_dir;
         const char* const arg_files_dir;
         const char* const hw_model;
