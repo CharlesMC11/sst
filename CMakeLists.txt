@@ -28,7 +28,7 @@ set(SST_COMMON_COMPILE_OPTIONS
 )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_definitions(DEBUG_MODE)
+    add_compile_definitions(DEBUG)
     list(APPEND SST_COMMON_COMPILE_OPTIONS
             -O0
             -g
@@ -38,6 +38,9 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
             -fno-optimize-sibling-calls
     )
 #    set(SST_SANITIZER_LINK_FLAGS -fsanitize=address -fsanitize=undefined)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -gdwarf-4")
+    set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
+    set(GET_TASK_ALLOW "true")
 else ()
     add_compile_definitions(NDEBUG)
     list(APPEND SST_COMMON_COMPILE_OPTIONS -O2 -fomit-frame-pointer)
@@ -47,6 +50,7 @@ else ()
             set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
         endif ()
     endif ()
+    set(GET_TASK_ALLOW "false")
 endif ()
 
 # Frameworks
@@ -114,13 +118,20 @@ target_link_options(sstd PRIVATE
 
 add_custom_command(
         TARGET sstd POST_BUILD
-        COMMAND codesign --force --options runtime --entitlements "${CMAKE_CURRENT_SOURCE_DIR}/Entitlements.plist" -s - $<TARGET_FILE:sstd>
+        COMMAND dsymutil $<TARGET_FILE:sstd>
+        COMMENT "Generating dSYM bundle for sstd…"
+)
+
+configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/Entitlements.plist.template"
+        "${CMAKE_CURRENT_BINARY_DIR}/Entitlements.plist"
+        @ONLY
 )
 
 add_custom_command(
         TARGET sstd POST_BUILD
-        COMMAND dsymutil $<TARGET_FILE:sstd>
-        COMMENT "Generating dSYM bundle for sstd…"
+        COMMAND codesign --force --options runtime --entitlements "${CMAKE_CURRENT_BINARY_DIR}/Entitlements.plist" -s - $<TARGET_FILE:sstd>
+        COMMENT "Signing ${PROJECT_NAME} executable with entitlements…"
 )
 
 # Testing
