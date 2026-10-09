@@ -67,14 +67,12 @@ namespace sst {
             void close(std::size_t idx) noexcept;
         };
 
-        sst::processor::pipe outbound_pipe_;
-        sst::processor::pipe inbound_pipe_;
+        sst::processor::pipe pipe_;
         ::pid_t pid_{-1};
         unsigned max_retries_;
         std::string buffer_;
 
         [[nodiscard]] bool send_payload() const noexcept;
-        [[nodiscard]] bool wait() const noexcept;
     };
 
 } // namespace sst

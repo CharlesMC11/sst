@@ -41,23 +41,17 @@ namespace sst {
 
     processor::processor(const char* const exiftool_path,
             const image::metadata& metadata, const unsigned max_retries,
-            std::size_t init_buffer_size)
+            const std::size_t init_buffer_size)
         : max_retries_{max_retries}
     {
         posix_spawn_file_actions actions;
         ::posix_spawn_file_actions_adddup2(
-                &actions.data, outbound_pipe_.fds[0UZ], STDIN_FILENO);
+                &actions.data, pipe_.fds[0UZ], STDIN_FILENO);
         ::posix_spawn_file_actions_addclose(
-                &actions.data, outbound_pipe_.fds[1UZ]);
-
-        ::posix_spawn_file_actions_adddup2(
-                &actions.data, inbound_pipe_.fds[1UZ], STDOUT_FILENO);
-        ::posix_spawn_file_actions_addclose(
-                &actions.data, inbound_pipe_.fds[0UZ]);
+                &actions.data, pipe_.fds[1UZ]);
 
         // TODO: Build ExifTool args in main / sst::image::metadata
         const char* const timezone{sst::image::metadata::timezone()};
-
         const std::string formatted_args[]{
                 std::format("-Model={}", metadata.hw_model),
                 std::format(
@@ -92,16 +86,8 @@ namespace sst {
                     "[sstd:processor] Failed to spawn ExifTool."};
         }
 
-        outbound_pipe_.close(0UZ);
-        inbound_pipe_.close(1UZ);
-
+        pipe_.close(0UZ);
         buffer_.reserve(init_buffer_size);
-
-        //        if (!(send_payload("-execute\n") && wait())) {
-        //            throw std::runtime_error{"[sstd:processor] Exiftool
-        //            failed to "
-        //                                     "send a ready signal."};
-        //        }
 
         std::println("[sstd:processor] ExifTool is now running.");
     }
@@ -140,8 +126,7 @@ namespace sst {
         buffer_.append("-stay_open\nFalse\n-execute\n");
         const bool has_exiftool_closed{send_payload()};
 
-        outbound_pipe_.close(1UZ);
-        inbound_pipe_.close(0UZ);
+        pipe_.close(1UZ);
 
         const bool is_reaped{
                 ::waitpid(pid_, nullptr, 0) != -1 && has_exiftool_closed};
@@ -184,7 +169,7 @@ namespace sst {
         std::size_t total_written{0UZ};
         unsigned retries{0U};
         while (total_written < length && retries <= max_retries_) {
-            const std::ptrdiff_t bytes_written{::write(outbound_pipe_.fds[1UZ],
+            const std::ptrdiff_t bytes_written{::write(pipe_.fds[1UZ],
                     buffer_.data() + total_written, length - total_written)};
 
             if (bytes_written <= 0Z) [[unlikely]] {
@@ -205,30 +190,6 @@ namespace sst {
         }
 
         return total_written == length;
-    }
-
-    [[nodiscard]] bool processor::wait() const noexcept
-    {
-        std::string buffer;
-        char ch;
-        while (true) {
-            const std::ptrdiff_t bytes_read{
-                    ::read(inbound_pipe_.fds[0UZ], &ch, 1UZ)};
-            if (bytes_read < 0Z) [[unlikely]] {
-                if (errno == EINTR) {
-                    continue;
-                }
-                return false;
-            }
-            if (bytes_read == 0UZ) {
-                return false;
-            }
-            buffer.push_back(ch);
-            if (buffer.length() >= 8UZ &&
-                    buffer.rfind("{ready}") != std::string::npos) {
-                return true;
-            }
-        }
     }
 
 } // namespace sst
