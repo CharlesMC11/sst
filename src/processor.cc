@@ -1,6 +1,5 @@
 #include "processor.hh"
 
-#import <Foundation/Foundation.h>
 #include <crt_externs.h>
 #include <spawn.h>
 #include <sys/wait.h>
@@ -14,9 +13,6 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-
-static inline constexpr char kFilenameRegex[]{
-        R"(Filename;s/^\D+(\d{4})-(\d{2})-(\d{2}) at (\d{2})\.(\d{2})\.(\d{2})(?: \((\d)\))?.+$)"};
 
 namespace {
 
@@ -39,9 +35,6 @@ namespace {
                 -> posix_spawn_file_actions& = delete;
     };
 
-    [[nodiscard]] std::string get_timezone();
-    [[nodiscard]] std::string get_os_version();
-
 } // unnamed namespace
 
 namespace sst {
@@ -62,17 +55,18 @@ namespace sst {
         ::posix_spawn_file_actions_addclose(
                 &actions.data, inbound_pipe_.fds[0UZ]);
 
-        const std::string timezone{get_timezone()};
+        const char* const timezone{sst::image::metadata::timezone()};
 
         const std::string formatted_args[]{
                 std::format("-Model={}", metadata.hw_model),
-                std::format("-Software={}", get_os_version()),
+                std::format(
+                        "-Software={}", sst::image::metadata::os_version()),
                 std::format("-OffsetTime*={}", timezone),
-                std::format("-AllDates<${{{}/$1:$2:$3 $4:$5:$6{}/}}",
-                        kFilenameRegex, timezone),
+                std::format("-AllDates<${{{}}}",
+                        sst::image::metadata::kRegexReplacePrefix, timezone),
                 std::format(
                         R"(-Filename<${{{}/my $N = defined($7) ? sprintf("_%02d", $7) : ""; "$1$2$3-$4$5$6{}$N"/e}}%-c%lE)",
-                        kFilenameRegex, timezone),
+                        sst::image::metadata::kRegexReplacePrefix, timezone),
                 std::format("{}/charlesmc.args", metadata.arg_files_dir),
                 std::format("{}/screenshot.args", metadata.arg_files_dir)};
 
@@ -238,24 +232,3 @@ namespace sst {
     }
 
 } // namespace sst
-
-namespace {
-    [[nodiscard]] std::string get_timezone()
-    {
-        const NSTimeZone* local_timezone{[NSTimeZone localTimeZone]};
-        const long offset_seconds{[local_timezone secondsFromGMT]};
-        const long offset_hours{offset_seconds / 3600L};
-
-        return std::format("{:03d}00", offset_hours);
-    }
-
-    [[nodiscard]] std::string get_os_version()
-    {
-        const NSOperatingSystemVersion os_ver{
-                [NSProcessInfo processInfo].operatingSystemVersion};
-
-        return std::format("{}.{}.{}", os_ver.majorVersion,
-                os_ver.minorVersion, os_ver.patchVersion);
-    }
-
-} // unnamed namespace
