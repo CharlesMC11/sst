@@ -24,9 +24,7 @@ extern "C" [[nodiscard]] bool has_image_signature(
         const int fd, const unsigned max_retries) noexcept
 {
     alignas(kAlignment) std::uint8_t buffer[kAlignment];
-
-    unsigned retries{0U};
-    while (retries <= max_retries) {
+    for (unsigned retries{0U}; retries < max_retries; ++retries) {
         const std::ptrdiff_t bytes_read{::read(fd, buffer, sizeof(buffer))};
 
         if (bytes_read >= kAlignment) [[likely]] {
@@ -36,7 +34,6 @@ extern "C" [[nodiscard]] bool has_image_signature(
             continue;
         }
         ::lseek(fd, 0Z, SEEK_SET);
-        ++retries;
     }
 
     return false;
