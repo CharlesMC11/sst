@@ -116,6 +116,12 @@ add_custom_command(
         COMMAND codesign --force --options runtime --entitlements "${CMAKE_CURRENT_SOURCE_DIR}/Entitlements.plist" -s - $<TARGET_FILE:sstd>
 )
 
+add_custom_command(
+        TARGET sstd POST_BUILD
+        COMMAND dsymutil $<TARGET_FILE:sstd>
+        COMMENT "Generating dSYM bundle for sstd…"
+)
+
 # Testing
 
 include(FetchContent)
