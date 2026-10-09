@@ -94,15 +94,6 @@ int main(const int argc, const char* const argv[])
     // Stop & Invalidate FSEventStream
     stream_ctx.shutdown();
 
-    // Cleanup
-    const bool graceful_cleanup{orchestrator.cleanup()};
-    if (!graceful_cleanup) [[unlikely]] {
-        std::fprintf(stderr,
-                "[sstd] Encountered errors while cleaning up "
-                "directory: '%s'\n.",
-                input_dir);
-    }
-
     const bool graceful_close{::close(dir_fd) != -1};
     if (!graceful_close) [[unlikely]] {
         std::fprintf(stderr, "[sstd] Failed to close directory: '%s'\n.",
@@ -117,6 +108,5 @@ int main(const int argc, const char* const argv[])
                 "gracefully.\n");
     }
 
-    return graceful_cleanup && graceful_close && graceful_shutdown ? EX_OK
-                                                                   : EX_OSERR;
+    return graceful_close && graceful_shutdown ? EX_OK : EX_OSERR;
 }
