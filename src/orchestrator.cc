@@ -2,89 +2,29 @@
 
 #include <CoreServices/CoreServices.h>
 #include <dirent.h>
-#include <fcntl.h>
 #include <unistd.h>
 
-#include <cstddef>
 #include <cstdio>
 #include <cstring>
 #include <string>
-#include <vector>
 
 #include "filter.hh"
 #include "processor.hh"
-#include "stream_context.hh"
 
 static inline constexpr unsigned kFSEventStreamFlags{
         ::kFSEventStreamEventFlagItemIsFile |
         ::kFSEventStreamEventFlagItemCreated |
         ::kFSEventStreamEventFlagItemRenamed};
 
-static void inspect(int dir_fd, const char* filename,
-        std::vector<std::string>& files, unsigned max_retries) noexcept;
-
-bool sst::orchestrator::cleanup(const processor& processor, const int dir_fd,
-        std::vector<std::string>& buffer, const unsigned max_retries) noexcept
-{
-    const int dir_fd_dup{::dup(dir_fd)};
-    if (dir_fd_dup < 0) {
-        std::fprintf(stderr,
-                "[sstd:cleanup] Failed to duplicate file "
-                "descriptor.\n");
-        return false;
-    }
-
-    ::DIR* dir_stream{nullptr};
-    for (unsigned i{0U}; i < max_retries; ++i) {
-        if ((dir_stream = ::fdopendir(dir_fd_dup))) [[likely]] {
-            break;
-        }
-        if (errno != EINTR) [[unlikely]] {
-            break;
-        }
-    }
-    if (!dir_stream) {
-        std::fprintf(stderr,
-                "[sstd:cleanup] Failed to open directory stream for "
-                "file descriptor: %d.\n",
-                dir_fd_dup);
-        ::close(dir_fd_dup);
-
-        return false;
-    }
-
-    ::dirent* entry{nullptr};
-    while ((entry = ::readdir(dir_stream))) {
-        const char* filename{entry->d_name};
-
-        if (filename[0] == '.' || entry->d_type != DT_REG) [[unlikely]] {
-            continue;
-        }
-
-        inspect(dir_fd_dup, filename, buffer, max_retries);
-    }
-
-    if (::closedir(dir_stream) == -1) [[unlikely]] {
-        std::fprintf(
-                stderr, "[sstd:cleanup] Failed to close directory stream.\n");
-        return false;
-    }
-
-    return processor.send_filenames(buffer);
-}
-
-void sst::orchestrator::orchestrate(
+void sst::orchestrator::run(
         [[maybe_unused]] ::ConstFSEventStreamRef stream_ref,
         void* client_callback_info, const std::size_t num_events,
         void* const event_paths, const ::FSEventStreamEventFlags event_flags[],
         [[maybe_unused]] const ::FSEventStreamEventId event_ids[])
 {
-    const auto monitor{
-            static_cast<sst::stream_context*>(client_callback_info)};
-    const sst::processor& processor{monitor->processor()};
-    const int dir_fd{monitor->dir_fd()};
-
-    std::vector<std::string>& buffer{monitor->buffer()};
+    const auto orchestrator{
+            static_cast<sst::orchestrator*>(client_callback_info)};
+    std::string& buffer{orchestrator->buffer()};
     buffer.clear();
 
     const auto paths{static_cast<const char* const*>(event_paths)};
@@ -104,24 +44,89 @@ void sst::orchestrator::orchestrate(
         }
 
         if ((event_flags[i] & kFSEventStreamFlags) != 0) [[likely]] {
-            constexpr unsigned max_retries{5U};
-            inspect(dir_fd, slash + 1, buffer, max_retries);
+            orchestrator->inspect(slash + 1);
         }
     }
 
-    (void) processor.send_filenames(buffer);
+    (void) orchestrator->processor().send_to_exiftool(buffer);
 }
 
-static void inspect(const int dir_fd, const char* filename,
-        std::vector<std::string>& files, const unsigned max_retries) noexcept
+sst::orchestrator::orchestrator(sst::processor& processor,
+        const char* const input_dir_path, const int input_dir_fd,
+        std::string& buffer, const unsigned max_retries)
+    : processor_{processor}, input_dir_path_{input_dir_path},
+      input_dir_fd_{input_dir_fd}, max_retries_{max_retries}, buffer_{buffer}
 {
-    const int fd{::openat(dir_fd, filename, sst::kIOFlags)};
+    if (!processor.is_running() || input_dir_path == nullptr ||
+            input_dir_fd == -1) [[unlikely]] {
+        throw std::runtime_error{
+                "[sstd:orchestrator] Failed to instantiate orchestrator."};
+    }
+}
+
+bool sst::orchestrator::cleanup() const noexcept
+{
+    const int dir_fd_dup{::dup(input_dir_fd_)};
+    if (dir_fd_dup < 0) {
+        std::fprintf(stderr,
+                "[sstd:cleanup] Failed to duplicate file "
+                "descriptor.\n");
+        return false;
+    }
+
+    ::DIR* dir_stream{nullptr};
+    for (unsigned i{0U}; i < max_retries_; ++i) {
+        if ((dir_stream = ::fdopendir(dir_fd_dup))) [[likely]] {
+            break;
+        }
+        if (errno != EINTR) [[unlikely]] {
+            break;
+        }
+    }
+    if (!dir_stream) {
+        std::fprintf(stderr,
+                "[sstd:cleanup] Failed to open directory stream for "
+                "file descriptor: %d.\n",
+                dir_fd_dup);
+        ::close(dir_fd_dup);
+
+        return false;
+    }
+
+    buffer_.clear();
+
+    ::dirent* entry{nullptr};
+    while ((entry = ::readdir(dir_stream))) {
+        const char* filename{entry->d_name};
+
+        if (filename[0] == '.' || entry->d_type != DT_REG) [[unlikely]] {
+            continue;
+        }
+
+        inspect(filename);
+    }
+
+    if (::closedir(dir_stream) == -1) [[unlikely]] {
+        std::fprintf(
+                stderr, "[sstd:cleanup] Failed to close directory stream.\n");
+        return false;
+    }
+
+    return processor_.send_to_exiftool(buffer_);
+}
+
+void sst::orchestrator::inspect(const char* filename) const noexcept
+{
+    const int fd{::openat(input_dir_fd_, filename, sst::kIOFlags)};
     if (fd < 0) [[unlikely]] {
         return;
     }
 
-    if (sst::filter::is_image(fd, max_retries)) [[likely]] {
-        files.emplace_back(filename);
+    if (sst::filter::is_image(fd, max_retries_)) [[likely]] {
+        buffer_.append(input_dir_path_);
+        buffer_.push_back('/');
+        buffer_.append(filename);
+        buffer_.push_back('\n');
     }
 
     if (::close(fd) != 0) [[unlikely]] {

@@ -5,26 +5,24 @@
 #include <dispatch/dispatch.h>
 
 #include "memory.hh"
+#include "orchestrator.hh"
 
-sst::stream_context::stream_context(const ::FSEventStreamCallback callback,
-        const ::dispatch_queue_t queue, sst::processor& processor,
-        const char* const input_dir, const int input_dir_fd,
-        const CFTimeInterval latency)
-    : processor_{processor}, dir_fd_{input_dir_fd}
+sst::stream_context::stream_context(sst::orchestrator& orchestrator,
+        const ::dispatch_queue_t queue, const CFTimeInterval latency)
 {
     const sst::memory::cf_ptr<::CFStringRef> dir_cfstr{
-            ::CFStringCreateWithCString(
-                    nullptr, input_dir, ::kCFStringEncodingUTF8)};
+            ::CFStringCreateWithCString(nullptr, orchestrator.input_dir_path(),
+                    ::kCFStringEncodingUTF8)};
     const void* dir_container[]{dir_cfstr.get()};
     const sst::memory::cf_ptr<::CFArrayRef> paths{::CFArrayCreate(
             nullptr, dir_container, 1Z, &::kCFTypeArrayCallBacks)};
 
     FSEventStreamContext context{.version = 0Z,
-            .info = this,
+            .info = &orchestrator,
             .retain = nullptr,
             .release = nullptr,
             .copyDescription = nullptr};
-    stream_.reset(::FSEventStreamCreate(nullptr, callback, &context,
+    stream_.reset(::FSEventStreamCreate(nullptr, orchestrator::run, &context,
             paths.get(), ::kFSEventStreamEventIdSinceNow, latency,
             ::kFSEventStreamCreateFlagFileEvents));
 
