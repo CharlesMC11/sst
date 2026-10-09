@@ -46,6 +46,7 @@ int main(const int argc, const char* const argv[])
             std::bit_ceil(min_buffer_size * kAvgFileCount)};
 
     // Prepare configurations to pass to ExifTool
+    // TODO: Build ExifTool args here instead
     const sst::image::metadata metadata{
             input_dir, output_dir, arg_files_dir, hw_model};
 
