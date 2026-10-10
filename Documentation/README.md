@@ -27,8 +27,7 @@
 
 1. Capture interrupts
 2. Stop and release `FSEventStream`
-3. Manually process `$INPUT_DIR` to clean up leftover files
-4. Close `ExifTool` and clean up resources
+3. Close `ExifTool` and clean up resources
 
 ## Abstractions
 
@@ -36,36 +35,28 @@
 2. `FSEventStream` handler (context creation, releaser)
 3. `dispatch_queue` (enqueueing, dequeueing)
 4. Signal handler (capturing interrupts)
-5. Orchestrator callback function
+5. Orchestrator (callback)
 6. Filter (checking name & magic bytes)
 7. Archiver (monthly archive)
 8. `UNUserNotificationCenter` handler (banner)
 
 ## Component Specification
 
-1. Photo metadata
-    - input_dir : string
+1. ExifTool arguments
+    - input_dir : string / fd
+    - executable_path: string
     - output_dir : string
-    - arg_files_dir : string
-    - artist : string
-    - copyright : string
-    - filename_regex : string
-    - timezone : string
-    - hardware_make : string
-    - hardware_model : string
-    - macOS_version : string
+    - arg_file_path : string
+    - -stay_open argv: string list
 
 2. `ExifTool` handler
-    - executable_path : string
-    - is_running : bool
     - formatted_arg : string list
+    - is_running : bool
     - IPC_file_descriptors : integer pair
     - max_retries : integer
 
 3. `FSEventStreamContext` handler
     - callback_function : Orchestrator callback
-    - input_dir : string
-    - input_dir_fd : integer
     - queue_handle : queue ptr
     - stream_handle : stream ptr
     - latency : float
@@ -83,6 +74,7 @@
     - input_dir_fd : int
     - file_paths : string list
     - output_dir : string
+    - max_retries : integer
 
 7. Filter function
     - file_paths : string list
