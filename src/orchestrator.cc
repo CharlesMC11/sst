@@ -53,13 +53,12 @@ void sst::orchestrator::run(
 }
 
 sst::orchestrator::orchestrator(sst::processor& processor,
-        const char* const input_dir_path, const int input_dir_fd,
+        std::string_view input_dir_path, const int input_dir_fd,
         std::string& buffer, const unsigned max_retries)
     : processor_{processor}, input_dir_path_{input_dir_path},
       input_dir_fd_{input_dir_fd}, max_retries_{max_retries}, buffer_{buffer}
 {
-    if (!processor.is_running() || input_dir_path == nullptr ||
-            input_dir_fd == -1) [[unlikely]] {
+    if (!processor.is_running() || input_dir_fd == -1) [[unlikely]] {
         throw std::runtime_error{
                 "[sstd:orchestrator] Failed to instantiate orchestrator."};
     }
@@ -125,7 +124,6 @@ void sst::orchestrator::inspect(
     }
 
     if (sst::filter::is_image(fd, max_retries_)) [[likely]] {
-        buffer_.append(input_dir_path_).push_back('/');
         buffer_.append(filename, length).push_back('\n');
     }
 

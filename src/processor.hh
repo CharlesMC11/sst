@@ -1,13 +1,12 @@
 #pragma once
 
 #include <sys/types.h>
+#include <sys/uio.h>
 
-#include <climits>
 #include <cstddef>
-#include <string>
 #include <string_view>
 
-#include "metadata.hh"
+#include "exiftool_args.hh"
 
 namespace sst {
 
@@ -17,10 +16,7 @@ namespace sst {
      */
     class processor final {
     public:
-        processor(const char* exiftool_path,
-                const sst::image::metadata& metadata,
-                unsigned max_retries = 5U,
-                std::size_t init_buffer_size = PATH_MAX);
+        explicit processor(const sst::exiftool_args& args, unsigned max_retries = 5U);
 
         ~processor() noexcept;
 
@@ -46,11 +42,19 @@ namespace sst {
          * @param file_paths
          * The absolute filenames to send
          */
-        [[nodiscard]] bool send_to_exiftool(std::string_view file_paths);
+        [[nodiscard]] bool send_to_exiftool(std::string_view file_paths) const;
 
         [[nodiscard]] bool shutdown() noexcept;
 
     private:
+        static constexpr ::iovec kExecuteCmd{
+                .iov_base = const_cast<char*>("-execute\n"), .iov_len = 9UZ};
+
+        static constexpr ::iovec kShutdownCmd[2UZ]{
+                {.iov_base = const_cast<char*>("-stay_open\nFalse\n"),
+                        .iov_len = 17UZ},
+                kExecuteCmd};
+
         class pipe final {
         public:
             int fds[2UZ]{-1, -1};
@@ -67,12 +71,12 @@ namespace sst {
             void close(std::size_t idx) noexcept;
         };
 
-        sst::processor::pipe pipe_;
+        sst::processor::pipe stdout_pipe_;
+        sst::processor::pipe stdin_pipe_;
         ::pid_t pid_{-1};
         unsigned max_retries_;
-        std::string buffer_;
 
-        [[nodiscard]] bool send_payload() const noexcept;
+        [[nodiscard]] bool send_payload(const ::iovec[]) const noexcept;
     };
 
 } // namespace sst

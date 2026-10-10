@@ -22,7 +22,7 @@ namespace sst {
         auto operator=(const stream_context&) -> stream_context& = delete;
         auto operator=(stream_context&&) -> stream_context& = delete;
 
-        void shutdown() noexcept;
+        void stop() noexcept;
 
     private:
         sst::memory::cf_ptr<::FSEventStreamRef> stream_{nullptr};

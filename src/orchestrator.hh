@@ -19,16 +19,16 @@ namespace sst {
                 const ::FSEventStreamEventFlags event_flags[],
                 const ::FSEventStreamEventId event_ids[]);
 
-        orchestrator(sst::processor& processor, const char* input_dir_path,
-                int input_dir_fd, std::string& buffer,
-                unsigned max_retries = 5U);
+        orchestrator(sst::processor& processor,
+                std::string_view input_dir_path, int input_dir_fd,
+                std::string& buffer, unsigned max_retries = 5U);
 
         [[nodiscard]] auto processor() const noexcept -> sst::processor&
         {
             return processor_;
         }
 
-        [[nodiscard]] auto input_dir_path() const noexcept -> const char*
+        [[nodiscard]] auto input_dir_path() const noexcept -> std::string_view
         {
             return input_dir_path_;
         }
@@ -54,7 +54,7 @@ namespace sst {
 
     private:
         sst::processor& processor_;
-        const char* const input_dir_path_;
+        std::string_view input_dir_path_;
         int input_dir_fd_;
         unsigned max_retries_;
         std::string& buffer_;

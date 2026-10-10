@@ -2,15 +2,14 @@
 
 #include <crt_externs.h>
 #include <spawn.h>
+#include <sys/uio.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
-#include <format>
 #include <print>
-#include <string>
 #include <string_view>
 #include <system_error>
 
@@ -39,54 +38,29 @@ namespace {
 
 namespace sst {
 
-    processor::processor(const char* const exiftool_path,
-            const image::metadata& metadata, const unsigned max_retries,
-            const std::size_t init_buffer_size)
+    processor::processor(const exiftool_args& args, const unsigned max_retries)
         : max_retries_{max_retries}
     {
         posix_spawn_file_actions actions;
         ::posix_spawn_file_actions_adddup2(
-                &actions.data, pipe_.fds[0UZ], STDIN_FILENO);
-        ::posix_spawn_file_actions_addclose(&actions.data, pipe_.fds[1UZ]);
+                &actions.data, stdout_pipe_.fds[0UZ], STDIN_FILENO);
+        ::posix_spawn_file_actions_addclose(
+                &actions.data, stdout_pipe_.fds[1UZ]);
 
-        // TODO: Build ExifTool args in main / sst::image::metadata
-        const char* const timezone{sst::image::metadata::timezone()};
-        const std::string formatted_args[]{
-                std::format("-Model={}", metadata.hw_model),
-                std::format(
-                        "-Software={}", sst::image::metadata::os_version()),
-                std::format("-OffsetTime*={}", timezone),
-                std::format("-AllDates<${{{}}}",
-                        sst::image::metadata::kRegexReplacePrefix, timezone),
-                std::format(
-                        R"(-Filename<${{{}/my $N = defined($7) ? sprintf("_%02d", $7) : ""; "$1$2$3-$4$5$6{}$N"/e}}%-c%lE)",
-                        sst::image::metadata::kRegexReplacePrefix, timezone),
-                std::format("{}/charlesmc.args", metadata.arg_files_dir),
-                std::format("{}/screenshot.args", metadata.arg_files_dir)};
+        ::posix_spawn_file_actions_adddup2(
+                &actions.data, stdin_pipe_.fds[1UZ], STDOUT_FILENO);
+        ::posix_spawn_file_actions_addclose(
+                &actions.data, stdin_pipe_.fds[0UZ]);
 
-        const char* const args[]{exiftool_path, "-stay_open", "True", "-@",
-                "-", "-common_args", "-struct", "-preserve", "-o",
-                metadata.output_dir,
-                formatted_args[0UZ].c_str(), // hardware
-                formatted_args[1UZ].c_str(), // software
-                formatted_args[2UZ].c_str(), // timezone
-                formatted_args[3UZ].c_str(), // new datetime pattern
-                formatted_args[4UZ].c_str(), // new filename pattern
-                "-@",
-                formatted_args[5UZ].c_str(), // charlesmc.args
-                "-@",
-                formatted_args[6UZ].c_str(), // screenshots.args
-                nullptr};
+        ::posix_spawn_file_actions_addfchdir(&actions.data, args.input_dir_fd);
 
-        if (::posix_spawn(&pid_, exiftool_path, &actions.data, nullptr,
-                    const_cast<char**>(args), *::_NSGetEnviron()) != 0)
+        if (::posix_spawn(&pid_, args.path(), &actions.data, nullptr,
+                    const_cast<char**>(args.argv()), *::_NSGetEnviron()) != 0)
                 [[unlikely]] {
             throw std::system_error{errno, std::generic_category(),
                     "[sstd:processor] Failed to spawn ExifTool."};
         }
-
-        pipe_.close(0UZ);
-        buffer_.reserve(init_buffer_size);
+        stdout_pipe_.close(0UZ);
 
         std::println("[sstd:processor] ExifTool is now running.");
     }
@@ -103,16 +77,18 @@ namespace sst {
         }
     }
 
-    [[nodiscard]] bool processor::send_to_exiftool(std::string_view file_paths)
+    [[nodiscard]] bool processor::send_to_exiftool(
+            std::string_view file_paths) const
     {
         if (file_paths.empty()) {
             return true;
         }
 
-        buffer_.clear();
-        buffer_.append(file_paths).append("-execute\n");
+        const ::iovec cmd[]{{.iov_base = const_cast<char*>(file_paths.data()),
+                                    .iov_len = file_paths.length()},
+                kExecuteCmd};
 
-        return send_payload();
+        return send_payload(cmd);
     }
 
     [[nodiscard]] bool processor::shutdown() noexcept
@@ -121,11 +97,8 @@ namespace sst {
             return true;
         }
 
-        buffer_.clear();
-        buffer_.append("-stay_open\nFalse\n-execute\n");
-        const bool has_exiftool_closed{send_payload()};
-
-        pipe_.close(1UZ);
+        const bool has_exiftool_closed{send_payload(kShutdownCmd)};
+        stdout_pipe_.close(1UZ);
 
         const bool is_reaped{
                 ::waitpid(pid_, nullptr, 0) != -1 && has_exiftool_closed};
@@ -162,14 +135,17 @@ namespace sst {
         fds[idx] = -1;
     }
 
-    [[nodiscard]] bool processor::send_payload() const noexcept
+    [[nodiscard]] bool processor::send_payload(
+            const ::iovec vec[]) const noexcept
     {
-        const std::size_t length{buffer_.length()};
+        const std::size_t first_len{vec[0UZ].iov_len};
+        const std::size_t total_len{first_len + kExecuteCmd.iov_len};
         std::size_t total_written{0UZ};
+
         unsigned retries{0U};
-        while (total_written < length && retries <= max_retries_) {
-            const std::ptrdiff_t bytes_written{::write(pipe_.fds[1UZ],
-                    buffer_.data() + total_written, length - total_written)};
+        while (total_written < total_len && retries <= max_retries_) {
+            const std::ptrdiff_t bytes_written{
+                    ::writev(stdout_pipe_.fds[1UZ], vec, 2UZ)};
 
             if (bytes_written <= 0Z) [[unlikely]] {
                 if (errno == EINTR) {
@@ -186,9 +162,11 @@ namespace sst {
             }
             total_written += static_cast<std::size_t>(bytes_written);
             retries = 0U;
+
+            // FIXME: Partial writes
         }
 
-        return total_written == length;
+        return total_written == total_len;
     }
 
 } // namespace sst

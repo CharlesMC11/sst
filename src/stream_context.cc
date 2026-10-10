@@ -11,7 +11,8 @@ sst::stream_context::stream_context(sst::orchestrator& orchestrator,
         const ::dispatch_queue_t queue, const CFTimeInterval latency)
 {
     const sst::memory::cf_ptr<::CFStringRef> dir_cfstr{
-            ::CFStringCreateWithCString(nullptr, orchestrator.input_dir_path(),
+            ::CFStringCreateWithCString(nullptr,
+                    orchestrator.input_dir_path().data(),
                     ::kCFStringEncodingUTF8)};
     const void* dir_container[]{dir_cfstr.get()};
     const sst::memory::cf_ptr<::CFArrayRef> paths{::CFArrayCreate(
@@ -35,11 +36,11 @@ sst::stream_context::stream_context(sst::orchestrator& orchestrator,
 sst::stream_context::~stream_context() noexcept
 {
     if (stream_) [[unlikely]] {
-        shutdown();
+        stop();
     }
 }
 
-void sst::stream_context::shutdown() noexcept
+void sst::stream_context::stop() noexcept
 {
     if (stream_) [[likely]] {
         ::FSEventStreamStop(stream_.get());

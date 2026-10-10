@@ -36,24 +36,10 @@ int main(const int argc, const char* const argv[])
     const char* const input_dir{argv[2]};
     const char* const output_dir{argv[3]};
     const char* const arg_files_dir{argv[4]};
-    const char* const hw_model{argv[5]};
     const auto max_retries{static_cast<unsigned>(std::stoi(argv[6]))};
     const double latency{std::stod(argv[7])};
 
-    const std::size_t min_buffer_size{
-            std::strlen(input_dir) + kAvgFilenameLength};
-    const std::size_t init_reserve_size{
-            std::bit_ceil(min_buffer_size * kAvgFileCount)};
-
-    // Prepare configurations to pass to ExifTool
-    // TODO: Build ExifTool args here instead
-    const sst::image::metadata metadata{.output_dir = output_dir,
-            .arg_files_dir = arg_files_dir,
-            .hw_model = hw_model};
-
-    std::println("[sstd] Initializing processor…");
-    sst::processor processor{
-            exiftool_path, metadata, max_retries, init_reserve_size * 2UZ};
+    // Open directory
 
     const int dir_fd{::open(input_dir, sst::kIOFlags | O_DIRECTORY)};
     if (dir_fd == -1) [[unlikely]] {
@@ -61,6 +47,18 @@ int main(const int argc, const char* const argv[])
                 std::format("[sstd] Failed to open directory: '{}'\n.",
                         input_dir)};
     }
+
+    // Prepare configurations to pass to ExifTool
+    const sst::exiftool_args exiftool_args{
+            dir_fd, exiftool_path, output_dir, arg_files_dir};
+
+    std::println("[sstd] Initializing processor…");
+    sst::processor processor{exiftool_args, max_retries};
+
+    const std::size_t min_buffer_size{
+            std::strlen(input_dir) + kAvgFilenameLength};
+    const std::size_t init_reserve_size{
+            std::bit_ceil(min_buffer_size * kAvgFileCount)};
 
     std::string buffer;
     buffer.reserve(init_reserve_size);
@@ -92,7 +90,7 @@ int main(const int argc, const char* const argv[])
     ::CFRunLoopRun();
 
     // Stop & Invalidate FSEventStream
-    stream_ctx.shutdown();
+    stream_ctx.stop();
 
     const bool graceful_close{::close(dir_fd) != -1};
     if (!graceful_close) [[unlikely]] {
