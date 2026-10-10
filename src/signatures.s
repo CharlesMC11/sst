@@ -18,16 +18,16 @@
  * w6: TIFF 'II' magic bytes
  * w7: TIFF 'MM' magic bytes
  *
- * x9: Extracted bytes for HEIC
- * x10: 'ftypheic' magic bytes
- * x11: 'ftypmif1' magic bytes
+ * x8: Extracted bytes for HEIC
+ * x9: 'ftypheic' magic bytes
+ * x10: 'ftypmif1' magic bytes
  *
  * w3: PNG cmp
  * w5: JPEG cmp
  * w6: 'II' cmp
  * w7: 'MM' cmp
- * w10: 'ftypheic' cmp
- * w11: 'ftypmif1' cmp
+ * w9: 'ftypheic' cmp
+ * w10: 'ftypmif1' cmp
  *
  * w0: 1 if a match is found; 0 otherwise
  */
