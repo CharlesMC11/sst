@@ -8,6 +8,7 @@
 #include <iostream>
 #include <print>
 #include <string>
+#include <system_error>
 
 #include "orchestrator.hh"
 #include "processor.hh"

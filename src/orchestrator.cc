@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <stdexcept>
 #include <string>
 
 #include "filter.hh"
