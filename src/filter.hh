@@ -9,11 +9,12 @@ namespace sst::filter {
      * The file descriptor
      *
      * @param max_retries
-     * The number of attempts to make if an I/O problem is encountered
+     * The number of retries to make if an I/O problem occurs
      *
      * @return
      * `true` if the file is an image; `false` otherwise
      */
-    [[nodiscard]] bool is_image(int fd, unsigned max_retries = 5U) noexcept;
+    extern "C" [[nodiscard]] bool is_image(
+            int fd, unsigned max_retries = 5U) noexcept;
 
 } // namespace sst::filter

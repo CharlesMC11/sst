@@ -62,8 +62,8 @@ find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
 # Core Library
 
 add_library(sstlib STATIC
-        src/filter.cc
         src/filter.hh
+        src/filter.s
         src/memory.hh
         src/exiftool_args.hh
         src/exiftool_args.mm
