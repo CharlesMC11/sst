@@ -75,7 +75,6 @@ add_library(sstlib STATIC
         src/orchestrator.cc
         src/signal_handler.cc
         src/signal_handler.hh
-        src/signatures.s
         src/stream_context.cc
         src/stream_context.hh
 )
