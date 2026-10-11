@@ -16,7 +16,8 @@ namespace sst {
      */
     class processor final {
     public:
-        explicit processor(const sst::exiftool_args& args, unsigned max_retries = 5U);
+        explicit processor(
+                const sst::exiftool_args& args, unsigned max_retries = 5U);
 
         ~processor() noexcept;
 
