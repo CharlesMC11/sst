@@ -66,7 +66,7 @@ add_library(sstlib STATIC
         src/filter.s
         src/memory.hh
         src/exiftool_args.hh
-        src/exiftool_args.mm
+        src/exiftool_args.cc
         src/notifier.hh
         src/notifier.mm
         src/processor.cc
