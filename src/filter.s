@@ -1,6 +1,6 @@
 .section __TEXT,__text,regular,pure_instructions
 .globl _is_image
-.p2align 4
+.p2align 7
 
 .equiv BUFFER_SIZE, 16
 
@@ -9,28 +9,31 @@
  *
  * w0: The file descriptor
  * w1: The number of reattempts to make if an I/O problem occurs
- * sp: -16 to read 16 bytes from the file header
+ * sp: -48
  *
- * w9: The file descriptor
- * w10: The number of retries to
- * w11: The error number from `read`
+ * w19: The file descriptor
+ * w20: The number of retries to
+ * w9: The error number from `read`
  *
  * w0: 1 if the file is an image; 0 otherwise
  */
 _is_image:
 	.cfi_startproc
-	stp 	x29, x30, [sp, #-32]!
-	.cfi_def_cfa_offset 32
+	stp 	x29, x30, [sp, #-48]!
+	.cfi_def_cfa_offset 48
 	.cfi_offset w30, -8
 	.cfi_offset w29, -16
+	stp 	x19, x20, [sp, #16]
+	.cfi_offset x20, -24
+	.cfi_offset x19, -32
 	mov 	x29, sp
 
-	mov 	w9, w0              	// fd
-	mov 	w10, w1             	// max_retries
+	mov 	w19, w0             	// fd
+	mov 	w20, w1             	// max_retries
 
 	// w0 still contains fd
 L.loop:
-	add 	x1, sp, #16
+	add 	x1, sp, #32
 	mov 	w2, #BUFFER_SIZE
 	bl  	_read
 
@@ -41,22 +44,23 @@ L.loop:
 	b.gt 	L.lseek
 
 	bl  	___error
-	ldr 	w11, [x0]
-	cmp 	w11, #4
+	ldr 	w9, [x0]
+	cmp 	w9, #4
 	b.eq	L.loop
 
 L.lseek:
-	mov 	w0, w9
+	mov 	w0, w19
 	mov 	w1, wzr
 	mov 	w2, wzr
 	bl  	_lseek
 
-	sub 	w10, w10, #1
+	sub 	w20, w20, #1
 	b.ge	L.loop
 
 	mov 	w0, wzr
 L.end:
-	ldp 	x29, x30, [sp], #32
+	ldp 	x19, x20, [sp, #16]
+	ldp 	x29, x30, [sp], #48
 	ret
 	.cfi_endproc
 
@@ -116,7 +120,7 @@ L.end:
  * w0: 1 if a match is found; 0 otherwise
  */
 L.check_header:
-	ldp 	x1, x2, [sp, #16]
+	ldp 	x1, x2, [sp, #32]
 
 	movz	x3, #PNG_LO16
 	movk	x3, #PNG_HI16, lsl #16
