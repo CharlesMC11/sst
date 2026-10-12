@@ -17,7 +17,7 @@ namespace sst {
     class processor final {
     public:
         explicit processor(
-                const sst::exiftool_args& args, unsigned max_retries = 5U);
+                const exiftool_args& args, unsigned max_retries = 5U);
 
         ~processor() noexcept;
 
@@ -72,8 +72,7 @@ namespace sst {
             void close(std::size_t idx) noexcept;
         };
 
-        sst::processor::pipe stdout_pipe_;
-        sst::processor::pipe stdin_pipe_;
+        pipe stdout_pipe_;
         ::pid_t pid_{-1};
         unsigned max_retries_;
 

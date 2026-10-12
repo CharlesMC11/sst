@@ -12,8 +12,6 @@
 #include <string_view>
 #include <system_error>
 
-extern const ::os_log_t g_logger;
-
 namespace {
 
     class posix_spawn_file_actions final {
@@ -38,6 +36,8 @@ namespace {
 } // unnamed namespace
 
 namespace sst {
+
+    extern const ::os_log_t g_logger;
 
     processor::processor(const exiftool_args& args, const unsigned max_retries)
         : max_retries_{max_retries}

@@ -6,22 +6,26 @@
 
 #include <csignal>
 
-extern const ::os_log_t g_logger;
+namespace sst {
 
-void sst::signals::register_handler(
-        const int sig, dispatch_queue_t queue) noexcept
-{
-    std::signal(sig, SIG_IGN);
-    const auto sig_src{::dispatch_source_create(
-            DISPATCH_SOURCE_TYPE_SIGNAL, sig, 0U, queue)};
+    extern const ::os_log_t g_logger;
 
-    ::dispatch_source_set_event_handler(sig_src, ^{
-      os_log_error(g_logger,
-              "[sstd:signal_handler] Shutdown signal received. Cleaning "
-              "up…\n");
+    void signals::register_handler(
+            const int sig, dispatch_queue_t queue) noexcept
+    {
+        std::signal(sig, SIG_IGN);
+        const auto sig_src{::dispatch_source_create(
+                DISPATCH_SOURCE_TYPE_SIGNAL, sig, 0U, queue)};
 
-      ::CFRunLoopStop(::CFRunLoopGetMain());
-    });
+        ::dispatch_source_set_event_handler(sig_src, ^{
+          os_log_error(g_logger,
+                  "[sstd:signal_handler] Shutdown signal received. Cleaning "
+                  "up…\n");
 
-    ::dispatch_resume(sig_src);
-}
+          ::CFRunLoopStop(::CFRunLoopGetMain());
+        });
+
+        ::dispatch_resume(sig_src);
+    }
+
+} // namespace sst

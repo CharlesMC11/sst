@@ -25,7 +25,7 @@ namespace sst {
         void stop() noexcept;
 
     private:
-        sst::memory::cf_ptr<::FSEventStreamRef> stream_{nullptr};
+        memory::cf_ptr<::FSEventStreamRef> stream_{nullptr};
     };
 
 } // namespace sst

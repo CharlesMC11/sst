@@ -7,46 +7,48 @@
 #include "memory.hh"
 #include "orchestrator.hh"
 
-sst::stream_context::stream_context(sst::orchestrator& orchestrator,
-        const ::dispatch_queue_t queue, const CFTimeInterval latency)
-{
-    const sst::memory::cf_ptr<::CFStringRef> dir_cfstr{
-            ::CFStringCreateWithCString(nullptr,
-                    orchestrator.input_dir_path().data(),
-                    ::kCFStringEncodingUTF8)};
-    const void* dir_container[]{dir_cfstr.get()};
-    const sst::memory::cf_ptr<::CFArrayRef> paths{::CFArrayCreate(
-            nullptr, dir_container, 1Z, &::kCFTypeArrayCallBacks)};
+namespace sst {
 
-    FSEventStreamContext context{.version = 0Z,
-            .info = &orchestrator,
-            .retain = nullptr,
-            .release = nullptr,
-            .copyDescription = nullptr};
-    stream_.reset(::FSEventStreamCreate(nullptr, orchestrator::run, &context,
-            paths.get(), ::kFSEventStreamEventIdSinceNow, latency,
-            ::kFSEventStreamCreateFlagFileEvents));
+    stream_context::stream_context(orchestrator& orchestrator,
+            const ::dispatch_queue_t queue, const CFTimeInterval latency)
+    {
+        const memory::cf_ptr<::CFStringRef> dir_cfstr{
+                ::CFStringCreateWithCString(nullptr,
+                        orchestrator.input_dir_path().data(),
+                        ::kCFStringEncodingUTF8)};
+        const void* dir_container[]{dir_cfstr.get()};
+        const memory::cf_ptr<::CFArrayRef> paths{::CFArrayCreate(
+                nullptr, dir_container, 1Z, &::kCFTypeArrayCallBacks)};
 
-    if (stream_) [[likely]] {
-        ::FSEventStreamSetDispatchQueue(stream_.get(), queue);
-        ::FSEventStreamStart(stream_.get());
-    }
-}
+        FSEventStreamContext context{.version = 0Z,
+                .info = &orchestrator,
+                .retain = nullptr,
+                .release = nullptr,
+                .copyDescription = nullptr};
+        stream_.reset(::FSEventStreamCreate(nullptr, orchestrator::run,
+                &context, paths.get(), ::kFSEventStreamEventIdSinceNow,
+                latency, ::kFSEventStreamCreateFlagFileEvents));
 
-sst::stream_context::~stream_context() noexcept
-{
-    if (stream_) [[unlikely]] {
-        stop();
-    }
-}
-
-void sst::stream_context::stop() noexcept
-{
-    if (stream_) [[likely]] {
-        ::FSEventStreamStop(stream_.get());
-        ::FSEventStreamInvalidate(stream_.get());
-        stream_.reset(nullptr);
+        if (stream_) [[likely]] {
+            ::FSEventStreamSetDispatchQueue(stream_.get(), queue);
+            ::FSEventStreamStart(stream_.get());
+        }
     }
 
-    // CRITIAL: This class does not own `dir_fd_`!
-}
+    stream_context::~stream_context() noexcept
+    {
+        if (stream_) [[unlikely]] {
+            stop();
+        }
+    }
+
+    void stream_context::stop() noexcept
+    {
+        if (stream_) [[likely]] {
+            ::FSEventStreamStop(stream_.get());
+            ::FSEventStreamInvalidate(stream_.get());
+            stream_.reset(nullptr);
+        }
+    }
+
+} // namespace sst

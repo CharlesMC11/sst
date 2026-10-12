@@ -7,7 +7,6 @@
 #include <csignal>
 #include <format>
 #include <iostream>
-#include <print>
 #include <string>
 #include <system_error>
 
@@ -16,23 +15,27 @@
 #include "signal_handler.hh"
 #include "stream_context.hh"
 
-static inline constexpr std::size_t kAvgFilenameLength{45UZ};
-static inline constexpr std::size_t kAvgFileCount{16UZ};
+namespace sst {
 
-::os_log_t g_logger{::os_log_create("me.charlesmc.sst", "daemon")};
+    static inline constexpr std::size_t kAvgFilenameLength{45UZ};
+    static inline constexpr std::size_t kAvgFileCount{16UZ};
+
+    ::os_log_t g_logger{::os_log_create("me.charlesmc.sst", "daemon")};
+
+} // namespace sst
 
 int main(const int argc, const char* const argv[])
 {
     // Parse CLI Arguments / plist Config
     if (argc < 7) [[unlikely]] {
-        os_log_error(g_logger,
+        os_log_error(sst::g_logger,
                 "Usage: %s <exiftool_path> <input_dir> <output_dir> "
                 "<arg_files_dir> <max_retries> <latency>",
                 argv[0]);
         return EX_USAGE;
     }
 
-    os_log(g_logger, "[sstd] Starting daemon…");
+    os_log(sst::g_logger, "[sstd] Starting daemon…");
 
     const char* const exiftool_path{argv[1]};
     const char* const input_dir{argv[2]};
@@ -54,13 +57,13 @@ int main(const int argc, const char* const argv[])
     const sst::exiftool_args exiftool_args{
             dir_fd, exiftool_path, output_dir, arg_files_dir};
 
-    os_log_info(g_logger, "[sstd] Initializing processor…");
+    os_log_info(sst::g_logger, "[sstd] Initializing processor…");
     sst::processor processor{exiftool_args, max_retries};
 
     const std::size_t min_buffer_size{
-            std::strlen(input_dir) + kAvgFilenameLength};
+            std::strlen(input_dir) + sst::kAvgFilenameLength};
     const std::size_t init_reserve_size{
-            std::bit_ceil(min_buffer_size * kAvgFileCount)};
+            std::bit_ceil(min_buffer_size * sst::kAvgFileCount)};
 
     std::string buffer;
     buffer.reserve(init_reserve_size);
@@ -79,9 +82,9 @@ int main(const int argc, const char* const argv[])
     // Prepare configurations to pass to FSEventStream
     const ::dispatch_queue_t queue{::dispatch_get_main_queue()};
 
-    os_log_info(g_logger, "[sstd] Initializing watcher…");
+    os_log_info(sst::g_logger, "[sstd] Initializing watcher…");
     sst::stream_context stream_ctx{orchestrator, queue, latency};
-    os_log_info(g_logger, "[sstd] Initialized to watch directory: '%s'.",
+    os_log_info(sst::g_logger, "[sstd] Initialized to watch directory: '%s'.",
             input_dir);
 
     // Prepare signal handlers for teardown
@@ -89,7 +92,7 @@ int main(const int argc, const char* const argv[])
     sst::signals::register_handler(SIGINT, queue);
 
     // Start main loop
-    os_log(g_logger, "[sstd] Dispatching… Press CTRL-C to stop.");
+    os_log(sst::g_logger, "[sstd] Dispatching… Press CTRL-C to stop.");
     ::CFRunLoopRun();
 
     // Stop & Invalidate FSEventStream
@@ -97,14 +100,14 @@ int main(const int argc, const char* const argv[])
 
     const bool graceful_close{::close(dir_fd) != -1};
     if (!graceful_close) [[unlikely]] {
-        os_log_error(g_logger, "[sstd] Failed to close directory: '%s'\n.",
-                input_dir);
+        os_log_error(sst::g_logger,
+                "[sstd] Failed to close directory: '%s'\n.", input_dir);
     }
 
     // Shutdown
     const bool graceful_shutdown{processor.shutdown()};
     if (!graceful_shutdown) [[unlikely]] {
-        os_log_error(g_logger,
+        os_log_error(sst::g_logger,
                 "[sstd] Processor failed to shut down "
                 "gracefully.\n");
     }
