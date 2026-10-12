@@ -2,15 +2,17 @@
 
 #include <CoreServices/CoreServices.h>
 #include <dirent.h>
+#include <os/log.h>
 #include <unistd.h>
 
-#include <cstdio>
 #include <cstring>
 #include <stdexcept>
 #include <string>
 
 #include "filter.hh"
 #include "processor.hh"
+
+extern const ::os_log_t g_logger;
 
 static inline constexpr unsigned kFSEventStreamFlags{
         ::kFSEventStreamEventFlagItemIsFile |
@@ -69,7 +71,7 @@ bool sst::orchestrator::cleanup() const noexcept
 {
     const int dir_fd_dup{::dup(input_dir_fd_)};
     if (dir_fd_dup < 0) {
-        std::fprintf(stderr,
+        os_log_error(g_logger,
                 "[sstd:cleanup] Failed to duplicate file "
                 "descriptor.\n");
         return false;
@@ -85,7 +87,7 @@ bool sst::orchestrator::cleanup() const noexcept
         }
     }
     if (!dir_stream) {
-        std::fprintf(stderr,
+        os_log_error(g_logger,
                 "[sstd:cleanup] Failed to open directory stream for "
                 "file descriptor: %d.\n",
                 dir_fd_dup);
@@ -108,8 +110,8 @@ bool sst::orchestrator::cleanup() const noexcept
     }
 
     if (::closedir(dir_stream) == -1) [[unlikely]] {
-        std::fprintf(
-                stderr, "[sstd:cleanup] Failed to close directory stream.\n");
+        os_log_error(g_logger,
+                "[sstd:cleanup] Failed to close directory stream.\n");
         return false;
     }
 
@@ -129,7 +131,7 @@ void sst::orchestrator::inspect(
     }
 
     if (::close(fd) != 0) [[unlikely]] {
-        std::fprintf(stderr, "[sstd:cleanup] Failed to close file: %s.\n",
+        os_log_error(g_logger, "[sstd:cleanup] Failed to close file: %s.\n",
                 filename);
     }
 }

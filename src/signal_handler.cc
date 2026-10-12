@@ -2,9 +2,11 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <dispatch/dispatch.h>
+#include <os/log.h>
 
 #include <csignal>
-#include <cstdio>
+
+extern const ::os_log_t g_logger;
 
 void sst::signals::register_handler(
         const int sig, dispatch_queue_t queue) noexcept
@@ -14,7 +16,7 @@ void sst::signals::register_handler(
             DISPATCH_SOURCE_TYPE_SIGNAL, sig, 0U, queue)};
 
     ::dispatch_source_set_event_handler(sig_src, ^{
-      std::fprintf(stderr,
+      os_log_error(g_logger,
               "[sstd:signal_handler] Shutdown signal received. Cleaning "
               "up…\n");
 

@@ -1,6 +1,7 @@
 #include "processor.hh"
 
 #include <crt_externs.h>
+#include <os/log.h>
 #include <spawn.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
@@ -8,10 +9,10 @@
 
 #include <cerrno>
 #include <cstddef>
-#include <cstdio>
-#include <print>
 #include <string_view>
 #include <system_error>
+
+extern const ::os_log_t g_logger;
 
 namespace {
 
@@ -62,7 +63,7 @@ namespace sst {
         }
         stdout_pipe_.close(0UZ);
 
-        std::println("[sstd:processor] ExifTool is now running.");
+        os_log_info(g_logger, "[sstd:processor] ExifTool is now running.");
     }
 
     processor::~processor() noexcept
@@ -72,7 +73,7 @@ namespace sst {
         }
 
         if (!shutdown()) {
-            std::fprintf(stderr,
+            os_log_error(g_logger,
                     "[sstd:processor] Did not shut down gracefully!\n");
         }
     }
@@ -128,7 +129,7 @@ namespace sst {
         }
 
         if (::close(fds[idx]) != 0) [[unlikely]] {
-            std::fprintf(stderr, "Could not close file descriptor: %d.\n",
+            os_log_error(g_logger, "Could not close file descriptor: %d.\n",
                     fds[idx]);
         }
 
@@ -152,7 +153,7 @@ namespace sst {
                     continue;
                 }
                 if (errno == EPIPE) {
-                    std::fprintf(stderr,
+                    os_log_error(g_logger,
                             "[sstd:processor] Pipe broken (ExifTool "
                             "Terminated)\n");
                     break;

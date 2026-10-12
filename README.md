@@ -37,5 +37,4 @@ With the exception of `Software`, the metadata arguments are stored in a `-@ arg
 ## TODOs
 
 - Implement `UNUserNotificationCenter` banner
-- Switch from `std::fprintf` to `os_log`
 - Handwrite the C-string path slicer and filter in assembly
