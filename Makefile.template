@@ -1,8 +1,9 @@
+.DELETE_ON_ERROR:
+
 # System Environment
 ZSH						:= $(shell which zsh)
 SHELL					:= $(ZSH)
 .SHELLFLAGS				:= -fc
-.DELETE_ON_ERROR:
 
 CONFIGS					:= Makefile
 
@@ -13,7 +14,7 @@ BUILD_DIR				:= ./cmake-build-debug
 TEMP_DIR				:= @BIN_DIR@/tmp
 PENDING_LIST			:= $(TEMP_DIR)/pending.fifo
 PROCESSED_LIST			:= $(TEMP_DIR)/processed.txt
-LOG_FILE				:= $(TEMP_DIR)/$(SERVICE_NAME).log
+LOG_FILE				:= $(TEMP_DIR)/@SERVICE_NAME@.log
 AA_LOG					:= $(TEMP_DIR)/aa.log
 EXIFTOOL_LOG			:= $(TEMP_DIR)/exiftool.log
 export SYSTEM_LOG		:= $(HOME)/Library/Logs/@RDNN@.log
