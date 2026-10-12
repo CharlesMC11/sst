@@ -9,6 +9,7 @@ Makefile.template text eol=lf linguist-language=Makefile
 *.hh*             text eol=lf diff=cpp
 *.cc              text eol=lf diff=cpp
 *.mm              text eol=lf diff=objc
+*.py              text eol=lf diff=python
 *.s               text eol=lf
 
 *.bin             binary
