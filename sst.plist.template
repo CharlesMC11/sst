@@ -27,7 +27,7 @@
   <key>KeepAlive</key>
   <true/>
 
-  <key>RunAtLoad></key>
+  <key>RunAtLoad</key>
   <true>
 
   <key>ProcessType</key>
