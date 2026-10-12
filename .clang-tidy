@@ -1,0 +1,24 @@
+---
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-narrowing-conversions,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-special-member-functions
+  misc-const-correctness,
+  modernize-use-nodiscard,
+  modernize-use-override,
+  modernize-use-constexpr,
+  performance-*,
+  readability-const-return-type,
+  readability-uppercase-literal-suffix,
+
+CheckOptions:
+  - key:   modernize-use-nodiscard.ReplacementString
+    value: '[[nodiscard]]'
+  - key: misc-const-correctness.WarnOnMissingConst
+    value: true
+
+HeaderFilterRegex: '^src/'
+
+WarningsAsErrors: 'bugprone-use-after-move, performance-implicit-conversion-in-loop'
