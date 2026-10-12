@@ -4,18 +4,19 @@
 #include <limits>
 #include <system_error>
 
-#include "metadata.hh"
+#include "exiftool_args.hh"
 #include "processor.hh"
 #include "test.hh"
 
-TEST(SstdTest, TestConstructorFail)
+// FIXME
+TEST_F(sst_test, TestConstructorFail)
 {
-    ASSERT_THROW(sst::processor("prog", kMetadata), std::system_error);
+    ASSERT_THROW(sst::processor(argv), std::system_error);
 }
 
-TEST(SstdTest, TestIsRunning)
+TEST(sst_test, TestIsRunning)
 {
-    const sst::processor processor{TEST_PROCESSOR_IS_RUNNING, kMetadata};
+    const sst::processor processor{argv};
     ASSERT_TRUE(processor.is_running());
 }
 
