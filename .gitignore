@@ -9,7 +9,9 @@
 /cmake-build-*/
 *.link
 Makefile
+
 tests/**/*.txt
 
+/ruff_cache/
 __pycache__/
 *.pyc

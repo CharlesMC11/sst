@@ -1,13 +1,14 @@
 *                 text=auto
 
-*.template text eol=lf
-*.md       text diff=markdown
-*.mmd      text
-.git*      text
+*.plist.template  text eol=lf linguist-language=XML
+*.md              text diff=markdown
+*.mmd             text
+.git*             text
+Makefile.template text eol=lf linguist-language=Makefile
 
-*.hh       text diff=cpp
-*.cc       text diff=cpp
-*.mm       text diff=objc
-*.s        text
+*.hh*             text eol=lf diff=cpp
+*.cc              text eol=lf diff=cpp
+*.mm              text eol=lf diff=objc
+*.s               text eol=lf
 
-*.bin      binary
+*.bin             binary
