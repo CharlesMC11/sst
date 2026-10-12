@@ -23,10 +23,10 @@ static inline constexpr std::size_t kAvgFileCount{16UZ};
 int main(const int argc, const char* const argv[])
 {
     // Parse CLI Arguments / plist Config
-    if (argc < 8) [[unlikely]] {
+    if (argc < 7) [[unlikely]] {
         std::println(std::cerr,
                 "Usage: {} <exiftool_path> <input_dir> <output_dir> "
-                "<arg_files_dir> <hw_model> <max_retries> <latency>",
+                "<arg_files_dir> <max_retries> <latency>",
                 argv[0]);
         return EX_USAGE;
     }
@@ -37,8 +37,8 @@ int main(const int argc, const char* const argv[])
     const char* const input_dir{argv[2]};
     const char* const output_dir{argv[3]};
     const char* const arg_files_dir{argv[4]};
-    const auto max_retries{static_cast<unsigned>(std::stoi(argv[6]))};
-    const double latency{std::stod(argv[7])};
+    const auto max_retries{static_cast<unsigned>(std::stoi(argv[5]))};
+    const double latency{std::stod(argv[6])};
 
     // Open directory
 

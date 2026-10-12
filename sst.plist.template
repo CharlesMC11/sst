@@ -14,7 +14,6 @@
     <string>@OUTPUT_DIR@</string>
     <string>@ARG_FILES_DIR@</string>
 
-    <string>@HW_MODEL@</string>
     <string>@MAX_RETRIES@</string>
     <string>@LATENCY@</string>
   </array>
@@ -28,7 +27,7 @@
   <true/>
 
   <key>RunAtLoad</key>
-  <true>
+  <true/>
 
   <key>ProcessType</key>
   <string>Adaptive</string>
