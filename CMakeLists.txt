@@ -53,6 +53,48 @@ else ()
     set(GET_TASK_ALLOW "false")
 endif ()
 
+# Launchd
+
+execute_process(
+        COMMAND command -v exiftool
+        OUTPUT_VARIABLE EXIFTOOL
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+set(SERVICE_NAME "sst")
+set(AUTHOR "charlesmc")
+set(RDNN "me.${AUTHOR}.${SERVICE_NAME}")
+
+set(WORKBENCH "/Volumes/Workbench")
+set(BIN_DIR "${WORKBENCH}/${SERVICE_NAME}")
+set(INPUT_DIR "${WORKBENCH}/Screenshots")
+set(OUTPUT_DIR "$ENV{HOME}/MyFiles/Pictures/Screenshots")
+set(ARG_FILES_DIR "$ENV{HOME}/.local/share/exiftool")
+
+set(AGENT_NAME "${SERVICE_NAME}d")
+set(PLIST_NAME "${RDNN}.plist")
+
+set(MAX_RETRIES 3)
+set(LATENCY 0.25)
+
+configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/config.hh.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/config.hh"
+        @ONLY
+)
+
+configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/${SERVICE_NAME}.plist.template"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PLIST_NAME}"
+        @ONLY
+)
+
+configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/Makefile.template"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Makefile"
+        @ONLY
+)
+
 # Frameworks
 
 find_library(CORE_FOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
@@ -102,6 +144,10 @@ endif ()
 # Executable
 
 add_executable(sstd src/sstd.cc)
+
+target_include_directories(sstd PRIVATE
+        "${CMAKE_CURRENT_BINARY_DIR}"
+)
 
 target_compile_options(sstd PRIVATE
         ${SST_COMMON_COMPILE_OPTIONS}
@@ -172,45 +218,3 @@ target_link_libraries(tests PRIVATE sstlib GTest::gtest_main)
 
 include(GoogleTest)
 gtest_discover_tests(tests)
-
-# Launchd
-
-execute_process(
-        COMMAND command -v exiftool
-        OUTPUT_VARIABLE EXIFTOOL
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-set(SERVICE_NAME "sst")
-set(AUTHOR "charlesmc")
-set(RDNN "me.${AUTHOR}.${SERVICE_NAME}")
-
-set(WORKBENCH "/Volumes/Workbench")
-set(BIN_DIR "${WORKBENCH}/${SERVICE_NAME}")
-set(INPUT_DIR "${WORKBENCH}/Screenshots")
-set(OUTPUT_DIR "$ENV{HOME}/MyFiles/Pictures/Screenshots")
-set(ARG_FILES_DIR "$ENV{HOME}/.local/share/exiftool")
-
-set(AGENT_NAME "${SERVICE_NAME}d")
-set(PLIST_NAME "${RDNN}.plist")
-
-set(MAX_RETRIES 3)
-set(LATENCY 0.25)
-
-execute_process(
-        COMMAND /bin/sh -c "system_profiler SPHardwareDataType | sed -En 's/^.*Model Name: //p'"
-        OUTPUT_VARIABLE HW_MODEL
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/${SERVICE_NAME}.plist.template"
-        "${CMAKE_CURRENT_BINARY_DIR}/${PLIST_NAME}"
-        @ONLY
-)
-
-configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/Makefile.template"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Makefile"
-        @ONLY
-)

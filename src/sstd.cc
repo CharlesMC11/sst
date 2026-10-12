@@ -1,3 +1,5 @@
+#include "config.hh"
+
 #include <CoreFoundation/CoreFoundation.h>
 #include <dispatch/dispatch.h>
 #include <os/log.h>
@@ -20,7 +22,7 @@ namespace sst {
     static inline constexpr std::size_t kAvgFilenameLength{45UZ};
     static inline constexpr std::size_t kAvgFileCount{16UZ};
 
-    ::os_log_t g_logger{::os_log_create("me.charlesmc.sst", "daemon")};
+    ::os_log_t g_logger{::os_log_create(kSubsystem, "daemon")};
 
 } // namespace sst
 

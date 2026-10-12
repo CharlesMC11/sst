@@ -1,0 +1,7 @@
+#pragma once
+
+namespace sst {
+
+    inline constexpr const char* const kSubsystem{"@RDNN@"};
+
+} // namespace sst
