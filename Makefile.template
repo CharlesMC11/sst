@@ -10,7 +10,7 @@ CONFIGS					:= Makefile
 BUILD_DIR				:= ./cmake-build-debug
 
 # Transient Paths
-TEMP_DIR				:= $(BIN_DIR)/tmp
+TEMP_DIR				:= @BIN_DIR@/tmp
 PENDING_LIST			:= $(TEMP_DIR)/pending.fifo
 PROCESSED_LIST			:= $(TEMP_DIR)/processed.txt
 LOG_FILE				:= $(TEMP_DIR)/$(SERVICE_NAME).log
@@ -51,8 +51,8 @@ $(UNINSTALLER): $(CONFIGS)
 
 # Lifecycle
 
-install: check-ram-disk $(UNINSTALLER) | @BIN_DIR@/.dirstamp $(TEMP_DIR)/.dirstamp \
-		$(INPUT_DIR)/.dirstamp
+install: check-ram-disk $(UNINSTALLER) | @BIN_DIR@/.dirstamp \
+		$(TEMP_DIR)/.dirstamp @INPUT_DIR@/.dirstamp
 	@$(INSTALL) $(BUILD_DIR)/@AGENT_NAME@ @BIN_DIR@/
 	@$(INSTALL) $(BUILD_DIR)/@PLIST_NAME@ $(PLIST_PATH)
 	@$(INSTALL) $(BUILD_DIR)/uninstall @BIN_DIR@/
@@ -78,6 +78,8 @@ uninstall: stop
 
 clean:
 	-rm -fr "$(BUILD_DIR)" "$(TEMP_DIR)"
+
+# Telemetry & Logs
 
 status:
 	@launchctl list | grep "@RDNN@" || print -- "'@SERVICE_NAME@' is not running."
