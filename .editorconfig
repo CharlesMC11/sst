@@ -12,6 +12,6 @@ trim_trailing_whitespace = true
 [{*.{mmd,plist,plist.template},CMakeLists.txt}]
 indent_size = 2
 
-[{*.s,Makefile}]
+[{*.s,Makefile*}]
 indent_style = tab
 tab_width = 4

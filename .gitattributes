@@ -1,13 +1,13 @@
-*                text=auto
+*                 text=auto
 
-*.plist.template text eol=lf
-*.md             text diff=markdown
-*.mmd            text
-.git*            text
+*.template text eol=lf
+*.md       text diff=markdown
+*.mmd      text
+.git*      text
 
-*.hh             text diff=cpp
-*.cc             text diff=cpp
-*.mm             text diff=objc
-*.s              text
+*.hh       text diff=cpp
+*.cc       text diff=cpp
+*.mm       text diff=objc
+*.s        text
 
-*.bin            binary
+*.bin      binary

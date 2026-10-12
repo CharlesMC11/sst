@@ -6,17 +6,8 @@ SHELL					:= $(ZSH)
 
 CONFIGS					:= Makefile
 
-# Identity
-SERVICE_NAME			:= sst
-AUTHOR					:= charlesmc
-RDNN					:= me.$(AUTHOR).$(SERVICE_NAME)
-
 # Primary Paths
 BUILD_DIR				:= ./cmake-build-debug
-
-WORKBENCH				:= /Volumes/Workbench
-export BIN_DIR			:= $(WORKBENCH)/$(SERVICE_NAME)
-export INPUT_DIR		:= $(WORKBENCH)/Screenshots
 
 # Transient Paths
 TEMP_DIR				:= $(BIN_DIR)/tmp
@@ -25,19 +16,17 @@ PROCESSED_LIST			:= $(TEMP_DIR)/processed.txt
 LOG_FILE				:= $(TEMP_DIR)/$(SERVICE_NAME).log
 AA_LOG					:= $(TEMP_DIR)/aa.log
 EXIFTOOL_LOG			:= $(TEMP_DIR)/exiftool.log
-export SYSTEM_LOG		:= $(HOME)/Library/Logs/$(RDNN).log
+export SYSTEM_LOG		:= $(HOME)/Library/Logs/@RDNN@.log
 
 # Tool Configuration
-export AGENT_NAME		:= $(SERVICE_NAME)d
-export PLIST_NAME		:= $(RDNN).plist
-PLIST_PATH				:= $(HOME)/Library/LaunchAgents/$(PLIST_NAME)
+PLIST_PATH				:= $(HOME)/Library/LaunchAgents/@PLIST_NAME@
 
 # Preferences & System Info
 SCREENCAPTURE_PREF		:= com.apple.screencapture location
 
 # Commands
 INSTALL					:= install -pv -m 755
-UNINSTALLER				:= $(BIN_DIR)/uninstall
+UNINSTALLER				:= @BIN_DIR@/uninstall
 
 .PHONY: all install start stop uninstall clean status open-log clean-log check-ram-disk
 
@@ -45,8 +34,8 @@ all: start
 
 check-ram-disk:
 # return 78: BSD EX_CONFIG
-	@if [[ ! -d "$(WORKBENCH)" ]]; then \
-		print -- '"$(WORKBENCH)" is not loaded'; \
+	@if [[ ! -d "@WORKBENCH@" ]]; then \
+		print -- '"@WORKBENCH@" is not loaded'; \
 		exit 78; \
 	fi
 
@@ -55,18 +44,18 @@ $(UNINSTALLER): $(CONFIGS)
 		'#!/bin/sh' \
 		'launchctl bootout gui/$(shell id -u) "$(PLIST_PATH)"' \
 		'rm -f "$(PLIST_PATH)"' \
-		'rm -rf "$(BIN_DIR)"' \
+		'rm -rf "@BIN_DIR@"' \
 		'defaults delete $(SCREENCAPTURE_PREF)' \
 		'killall SystemUIServer' > "$@"
 	@chmod 755 "$@"
 
 # Lifecycle
 
-install: check-ram-disk $(UNINSTALLER) | $(BIN_DIR)/.dirstamp $(TEMP_DIR)/.dirstamp \
+install: check-ram-disk $(UNINSTALLER) | @BIN_DIR@/.dirstamp $(TEMP_DIR)/.dirstamp \
 		$(INPUT_DIR)/.dirstamp
-	@$(INSTALL) $(BUILD_DIR)/$(AGENT_NAME) $(BIN_DIR)/
-	@$(INSTALL) $(BUILD_DIR)/$(PLIST_NAME) $(PLIST_PATH)
-	@$(INSTALL) $(BUILD_DIR)/uninstall $(BIN_DIR)/
+	@$(INSTALL) $(BUILD_DIR)/@AGENT_NAME@ @BIN_DIR@/
+	@$(INSTALL) $(BUILD_DIR)/@PLIST_NAME@ $(PLIST_PATH)
+	@$(INSTALL) $(BUILD_DIR)/uninstall @BIN_DIR@/
 
 %/.dirstamp:
 	@if [[ -e "$(@D)" && ! -d "$(@D)" ]]; then rm "$(@D)"; fi
@@ -75,7 +64,7 @@ install: check-ram-disk $(UNINSTALLER) | $(BIN_DIR)/.dirstamp $(TEMP_DIR)/.dirst
 start: install
 	@-launchctl bootout gui/$(shell id -u) "$(PLIST_PATH)" 2>/dev/null || true
 	launchctl bootstrap gui/$(shell id -u) "$(PLIST_PATH)"
-	defaults write $(SCREENCAPTURE_PREF) -string "$(INPUT_DIR)"
+	defaults write $(SCREENCAPTURE_PREF) -string "@INPUT_DIR@"
 	@killall SystemUIServer
 
 stop:
@@ -85,13 +74,13 @@ stop:
 
 uninstall: stop
 	-rm -f "$(PLIST_PATH)"
-	-rm -rf "$(BIN_DIR)"
+	-rm -rf "@BIN_DIR@"
 
 clean:
-	-rm -fr "$(BUILD_DIR)" "$(OBJ_DIR)" "$(TEMP_DIR)"
+	-rm -fr "$(BUILD_DIR)" "$(TEMP_DIR)"
 
 status:
-	@launchctl list | grep "$(RDNN)" || print -- "'$(SERVICE_NAME)' is not running."
+	@launchctl list | grep "@RDNN@" || print -- "'@SERVICE_NAME@' is not running."
 
 log:
 	@tail -n 1 "$(SYSTEM_LOG)"

@@ -206,4 +206,11 @@ execute_process(
 configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/${SERVICE_NAME}.plist.template"
         "${CMAKE_CURRENT_BINARY_DIR}/${PLIST_NAME}"
+        @ONLY
+)
+
+configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/Makefile.template"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Makefile"
+        @ONLY
 )

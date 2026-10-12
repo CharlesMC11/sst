@@ -8,6 +8,7 @@
 /build*/
 /cmake-build-*/
 *.link
+Makefile
 tests/**/*.txt
 
 __pycache__/
