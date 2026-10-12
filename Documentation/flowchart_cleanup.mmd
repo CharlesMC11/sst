@@ -1,15 +1,17 @@
 ---
-title: Cleanup
+title: SST Initial Cleanup
 ---
 flowchart
-  OpenDir[[Open $INPUT_DIR Stream]] --> |Failure| EXIT([EXIT NONZERO])
+  Dup[[Duplicate $INPUT_DIR File Descriptor]] --> OpenDir[[Open $INPUT_DIR Stream]]
+  OpenDir--> |Failure: RETURN FALSE| EXIT([RETURN])
   OpenDir --> |Failure| OpenDir?{Max Attempts Exhausted?}
-  OpenDir? --> |Yes| EXIT
+  OpenDir? --> |Yes: RETURN FALSE| EXIT
   OpenDir? --> |No| OpenDir
   OpenDir --> |Success| Orchestrator((Orchestrator))
 
   Orchestrator --> |Check for Skip| Orchestrator?{Skipped?}
-  Orchestrator? --> |Yes| EXIT
+  Orchestrator? --> |Yes: RETURN FALSE| EXIT
   Orchestrator? --> |No| CloseDir[[Close $INPUT_DIR Stream]]
-  CloseDir --> |Failure| EXIT
+  CloseDir --> |Failure: RETURN FALSE| EXIT
   CloseDir --> |Success| ClosedDir[/$INPUT_DIR Stream Closed/]
+  ClosedDir --> |RETURN TRUE| EXIT([RETURN])

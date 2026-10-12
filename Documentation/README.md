@@ -20,8 +20,7 @@
 4. Add the paths of valid files into a list
 5. Send paths to `ExifTool` for metadata injection and renaming
 6. `ExifTool` writes the processed files to `$OUTPUT_DIR`
-7. Store originals of successfully processed files in a monthly archive
-8. `UNUserNotificationCenter` announces that $N$ screenshots were successfully processed
+7. `UNUserNotificationCenter` announces that $N$ screenshots were successfully processed
 
 ## Teardown
 
@@ -37,8 +36,7 @@
 4. Signal handler (capturing interrupts)
 5. Orchestrator (callback)
 6. Filter (checking name & magic bytes)
-7. Archiver (monthly archive)
-8. `UNUserNotificationCenter` handler (banner)
+7. `UNUserNotificationCenter` handler (banner)
 
 ## Component Specification
 
@@ -83,12 +81,5 @@
     - magic_bytes : bytes
     - max_retries : integer
 
-8. Archiver function
-    - file_paths : string list
-    - archiver : executable / header
-    - current_date : datetime / string
-    - output_dir : string
-    - max_retries : integer
-
-9. `UNUserNotificationCenter` handler
+8. `UNUserNotificationCenter` handler
     - number_of_processed_originals : integer

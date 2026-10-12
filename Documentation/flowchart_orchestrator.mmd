@@ -31,5 +31,5 @@ flowchart
     ExifTool --> Write[/Write to $OUTPUT_DIR/]
   end
 
-  Processor --> Success{{Gather Originals of Successfully Processed Files}}
+  Processor --> Success{{Send Number of Successfully Processed Original Files}}
   Success --> Async[[Background Queue]]

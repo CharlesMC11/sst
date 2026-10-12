@@ -1,9 +1,11 @@
 ---
-title: Startup
+title: SST Startup
 ---
 flowchart
   IN([Daemon Invoked]) --> Parse{{Parse CLI Arguments / plist Config}}
-  Parse --> ExifTool
+  Parse --> FDOpen[[Open $INPUT_DIR File Descriptor]]
+  FDOpen --> |Failure| Throw2([Throw])
+  FDOpen --> |Success| ExifTool
 
   subgraph ExifTool [Spawn ExifTool Subprocess]
     direction TB
@@ -14,10 +16,8 @@ flowchart
     Spawn --> |Success| Run(ExifTool Running)
   end
 
-  ExifTool --> FDOpen[[Open $INPUT_DIR File Descriptor]]
-  FDOpen --> |Failure| Throw2([Throw])
-  FDOpen --> |Success| Cleanup((Cleanup $INPUT_DIR))
-
+  ExifTool --> |Failure| Throw2
+  ExifTool --> |Success| Cleanup((Cleanup $INPUT_DIR))
   Cleanup --> Dispatch[[Get Dispatch Queue]]
   Dispatch --> Signals{{Set-Up Signal Handlers}}
   Signals --> FSEvent[[Create FSEventStreamContext]]

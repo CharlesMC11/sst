@@ -37,7 +37,7 @@ sequenceDiagram
         F -->> O : Valid Filenames
       deactivate F
 
-    O ->> P : Send Filenames to Process
+    O ->> P : Send Filenames to Processor
     activate P
       P ->> ET : Write Filenames to Pipe
       activate ET
@@ -47,16 +47,11 @@ sequenceDiagram
     deactivate P
 
     Note over O,BG: Async Process
-    O --) BG : Send Paths of Originals of Processed Files
+    O --) BG : Send Number of Originals Processed
     activate BG
       O -->> FS : Done
 
   deactivate O
-
-      BG ->> A : Add Originals to Monthly Archive
-      activate A
-      A -->> BG : Done
-      deactivate A
 
       BG ->> N : Request Banner Notification (N Screenshots Tagged)
 
