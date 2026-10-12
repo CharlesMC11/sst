@@ -25,20 +25,25 @@ BraceWrapping:
   SplitEmptyFunction: true
   SplitEmptyRecord: true
   SplitEmptyNamespace: true
+BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Custom
 ColumnLimit: 79
 ContinuationIndentWidth: 8
+DerivePointerAlignment: false
+FixNamespaceComments: true
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^<.*\.h'
+  - Regex: '^"config\.h'
+    Priority: -1
+  - Regex: '^<[^<>]+\.h'
     Priority: 1
-  - Regex: '^<.*'
+  - Regex: '^<[^<>]+'
     Priority: 2
-  - Regex: '^".*\.h"'
+  - Regex: '^"[^<>]+\.h"'
     Priority: 4
-  - Regex: '^".*'
+  - Regex: '^".+'
     Priority: 5
-  - Regex: '.*'
+  - Regex: '.+'
     Priority: 9
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IndentWidth: 4
@@ -49,10 +54,12 @@ MacroBlockEnd: ''
 NamespaceIndentation: All
 PointerAlignment: Left
 QualifierAlignment: Left
-SortIncludes: true
+SortIncludes: CaseSensitive
 SpaceAfterCStyleCast: true
 SpaceAfterTemplateKeyword: false
+SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: false
+SpacesInAngles: false
 SpacesInConditionalStatement: false
 SpacesInCStyleCastParentheses: false
 TabWidth: 4
