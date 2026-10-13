@@ -20,7 +20,8 @@
 4. Add the paths of valid files into a list
 5. Send paths to `ExifTool` for metadata injection and renaming
 6. `ExifTool` writes the processed files to `$OUTPUT_DIR`
-7. `UNUserNotificationCenter` announces that $N$ screenshots were successfully processed
+7. Add originals to a monthly archive
+8. `UNUserNotificationCenter` announces that $N$ screenshots were successfully processed
 
 ## Teardown
 
@@ -31,12 +32,13 @@
 ## Abstractions
 
 1. `ExifTool` handler (piping, spawning)
-2. `FSEventStream` handler (context creation, releaser)
-3. `dispatch_queue` (enqueueing, dequeueing)
+2. `FSEventStream` handler (creation, release)
+3. `dispatch_queue` (attaching, detaching)
 4. Signal handler (capturing interrupts)
 5. Orchestrator (callback)
 6. Filter (checking name & magic bytes)
-7. `UNUserNotificationCenter` handler (banner)
+7. Archiver (archive originals)
+8. `UNUserNotificationCenter` handler (banner)
 
 ## Component Specification
 
@@ -81,5 +83,9 @@
     - magic_bytes : bytes
     - max_retries : integer
 
-8. `UNUserNotificationCenter` handler
+8. Archiver function
+   - file_paths : string list
+   - output_dir : string
+
+9. `UNUserNotificationCenter` handler
     - number_of_processed_originals : integer

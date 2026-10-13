@@ -18,7 +18,8 @@ stateDiagram-v2
     Async --> Idle : Async Process Dispatched
 
     state "Background Queue" as Async {
-      [*] --> [*] : Display Notification Banner
+      [*] --> Archiving : Paths Received
+      Archiving --> [*] : Display Notification Banner
     }
   }
 

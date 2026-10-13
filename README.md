@@ -48,5 +48,6 @@ With the exception of `Software`, the meta­data arguments are stored in a `-@ a
 
 ## TODOs
 
+- Implement Archiver
 - Implement `UNUserNotificationCenter` banner
 - Handwrite the C‑string path slicer and filter in assembly

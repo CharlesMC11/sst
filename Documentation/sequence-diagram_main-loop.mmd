@@ -47,11 +47,16 @@ sequenceDiagram
     deactivate P
 
     Note over O,BG: Async Process
-    O --) BG : Send Number of Originals Processed
+    O --) BG : Send Originals Successfully Processed
     activate BG
       O -->> FS : Done
 
   deactivate O
+
+      BG ->> A : Archive Successfully Processed Originals
+      activate A
+        A -->> BG : Added to Monthly Archive
+      deactivate A
 
       BG ->> N : Request Banner Notification (N Screenshots Tagged)
 
