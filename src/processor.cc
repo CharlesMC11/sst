@@ -48,10 +48,10 @@ namespace sst {
         ::posix_spawn_file_actions_addclose(
                 &actions.data, stdout_pipe_.fds[1UZ]);
 
-        ::posix_spawn_file_actions_adddup2(
-                &actions.data, stdin_pipe_.fds[1UZ], STDOUT_FILENO);
-        ::posix_spawn_file_actions_addclose(
-                &actions.data, stdin_pipe_.fds[0UZ]);
+        // ::posix_spawn_file_actions_adddup2(
+        // &actions.data, stdin_pipe_.fds[1UZ], STDOUT_FILENO);
+        // ::posix_spawn_file_actions_addclose(
+        // &actions.data, stdin_pipe_.fds[0UZ]);
 
         ::posix_spawn_file_actions_addfchdir(&actions.data, args.input_dir_fd);
 

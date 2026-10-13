@@ -73,6 +73,7 @@ namespace sst {
         };
 
         pipe stdout_pipe_;
+        // sst::processor::pipe stdin_pipe_;
         ::pid_t pid_{-1};
         unsigned max_retries_;
 
