@@ -32,12 +32,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND SST_COMMON_COMPILE_OPTIONS
             -O0
             -g
-#            -fsanitize=address
-#            -fsanitize=undefined
+            # -fsanitize=address
+            # -fsanitize=undefined
             -fno-omit-frame-pointer
             -fno-optimize-sibling-calls
     )
-#    set(SST_SANITIZER_LINK_FLAGS -fsanitize=address -fsanitize=undefined)
+    # set(SST_SANITIZER_LINK_FLAGS -fsanitize=address -fsanitize=undefined)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -gdwarf-4")
     set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT dwarf-with-dsym)
     set(GET_TASK_ALLOW "true")
@@ -100,6 +100,7 @@ configure_file(
 find_library(CORE_FOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
 find_library(CORE_SERVICES_FRAMEWORK CoreServices REQUIRED)
 find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
+find_library(USER_NOTIFICATIONS_FRAMEWORK UserNotifications REQUIRED)
 
 # Core Library
 
@@ -135,6 +136,7 @@ target_link_libraries(sstlib PUBLIC
         ${CORE_FOUNDATION_FRAMEWORK}
         ${CORE_SERVICES_FRAMEWORK}
         ${FOUNDATION_FRAMEWORK}
+        ${USER_NOTIFICATIONS_FRAMEWORK}
 )
 
 if (SST_SANITIZER_LINK_FLAGS)
