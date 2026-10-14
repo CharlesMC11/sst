@@ -16,7 +16,7 @@ namespace sst {
 
     extern const ::os_log_t g_logger;
 
-    static inline constexpr unsigned kFSEventStreamFlags{
+    static inline constexpr FSEventStreamEventFlags kFSEventStreamFlags{
             ::kFSEventStreamEventFlagItemIsFile |
             ::kFSEventStreamEventFlagItemCreated |
             ::kFSEventStreamEventFlagItemRenamed};
@@ -37,19 +37,19 @@ namespace sst {
 
             const char* const path{paths[i]};
             // Is there even a possibility of FSEvents sending an empty string?
-            if (path[0] == '\0') [[unlikely]] {
+            if (path[0UZ] == '\0') [[unlikely]] {
                 continue;
             }
 
             // The watched directory is guaranteed to have no subdirectories
             const char* const slash{std::strrchr(path, '/')};
-            if (slash == nullptr || slash[1] == '\0' || slash[1] == '.')
+            if (slash == nullptr || slash[1UZ] == '\0' || slash[1UZ] == '.')
                     [[unlikely]] {
                 continue;
             }
 
-            const char* const filename{slash + 1};
-            if ((event_flags[i] & kFSEventStreamFlags) != 0) [[likely]] {
+            const char* const filename{slash + 1UZ};
+            if ((event_flags[i] & kFSEventStreamFlags) != 0U) [[likely]] {
                 orchestrator->inspect(filename, std::strlen(filename));
             }
         }
@@ -106,7 +106,7 @@ namespace sst {
         while ((entry = ::readdir(dir_stream))) {
             const char* filename{entry->d_name};
 
-            if (filename[0] == '.' || entry->d_type != DT_REG) [[unlikely]] {
+            if (filename[0UZ] == '.' || entry->d_type != DT_REG) [[unlikely]] {
                 continue;
             }
 
