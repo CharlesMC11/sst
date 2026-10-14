@@ -1,13 +1,14 @@
 #pragma once
 
 #include <CoreServices/CoreServices.h>
+#include <fcntl.h>
 
 #include <cstddef>
 #include <string>
 
 namespace sst {
 
-    constexpr int kIOFlags{O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_CLOFORK};
+    constexpr unsigned kIOFlags{O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_CLOFORK};
 
     class processor;
 
@@ -19,9 +20,9 @@ namespace sst {
                 const ::FSEventStreamEventFlags event_flags[],
                 const ::FSEventStreamEventId event_ids[]);
 
-        orchestrator(processor& processor, std::string_view input_dir_path,
-                int input_dir_fd, std::string& buffer,
-                unsigned max_retries = 5U);
+        explicit orchestrator(processor& processor,
+                std::string_view input_dir_path, int input_dir_fd,
+                std::string& buffer, unsigned max_retries = 5U);
 
         [[nodiscard]] auto processor() const noexcept -> processor&
         {

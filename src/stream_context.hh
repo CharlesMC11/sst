@@ -12,7 +12,7 @@ namespace sst {
     class stream_context final {
     public:
         explicit stream_context(orchestrator& orchestrator,
-                ::dispatch_queue_t queue, CFTimeInterval latency = 0.25);
+                ::dispatch_queue_t queue, ::CFTimeInterval latency = 0.25);
 
         ~stream_context() noexcept;
 

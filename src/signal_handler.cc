@@ -11,7 +11,7 @@ namespace sst {
     extern const ::os_log_t g_logger;
 
     void signals::register_handler(
-            const int sig, dispatch_queue_t queue) noexcept
+            const int sig, ::dispatch_queue_t queue) noexcept
     {
         std::signal(sig, SIG_IGN);
         const auto sig_src{::dispatch_source_create(

@@ -33,18 +33,18 @@ int main(const int argc, const char* const argv[])
         os_log_error(sst::g_logger,
                 "Usage: %s <exiftool_path> <input_dir> <output_dir> "
                 "<arg_files_dir> <max_retries> <latency>",
-                argv[0]);
+                argv[0UZ]);
         return EX_USAGE;
     }
 
     os_log(sst::g_logger, "[sstd] Starting daemon…");
 
-    const char* const exiftool_path{argv[1]};
-    const char* const input_dir{argv[2]};
-    const char* const output_dir{argv[3]};
-    const char* const arg_files_dir{argv[4]};
-    const auto max_retries{static_cast<unsigned>(std::stoi(argv[5]))};
-    const double latency{std::stod(argv[6])};
+    const char* const exiftool_path{argv[1UZ]};
+    const char* const input_dir{argv[2UZ]};
+    const char* const output_dir{argv[3UZ]};
+    const char* const arg_files_dir{argv[4UZ]};
+    const auto max_retries{static_cast<unsigned>(std::stoi(argv[5UZ]))};
+    const double latency{std::stod(argv[6UZ])};
 
     // Open directory
 

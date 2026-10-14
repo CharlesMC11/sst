@@ -55,9 +55,9 @@ namespace sst {
 
         ::posix_spawn_file_actions_addfchdir(&actions.data, args.input_dir_fd);
 
-        if (::posix_spawn(&pid_, args.path(), &actions.data, nullptr,
-                    const_cast<char**>(args.argv()), *::_NSGetEnviron()) != 0)
-                [[unlikely]] {
+        if (::posix_spawn(&pid_, args.executable_path(), &actions.data,
+                    nullptr, const_cast<char**>(args.argv()),
+                    *::_NSGetEnviron()) != 0) [[unlikely]] {
             throw std::system_error{errno, std::generic_category(),
                     "[sstd:processor] Failed to spawn ExifTool."};
         }

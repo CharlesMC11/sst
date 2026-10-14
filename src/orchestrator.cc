@@ -82,7 +82,8 @@ namespace sst {
 
         ::DIR* dir_stream{nullptr};
         for (unsigned i{0U}; i < max_retries_; ++i) {
-            if ((dir_stream = ::fdopendir(dir_fd_dup))) [[likely]] {
+            dir_stream = ::fdopendir(dir_fd_dup);
+            if (dir_stream) [[likely]] {
                 break;
             }
             if (errno != EINTR) [[unlikely]] {
