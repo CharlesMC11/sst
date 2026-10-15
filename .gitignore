@@ -1,17 +1,16 @@
 .DS_Store
 
-/.git/
+.idea/
+.vscode/
 
-/.idea/
-/.vscode/
-
-/build*/
-/cmake-build-*/
-*.link
+build/
+cmake-build-debug/
+cmake-build-release/
 Makefile
+*.link
 
 tests/**/*.txt
 
-/.ruff_cache/
+.ruff_cache/
 __pycache__/
 *.pyc
