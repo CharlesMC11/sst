@@ -54,7 +54,7 @@ L.lseek:
 	mov 	w2, wzr
 	bl  	_lseek
 
-	sub 	w20, w20, #1
+	subs	w20, w20, #1
 	b.ge	L.loop
 
 	mov 	w0, wzr
